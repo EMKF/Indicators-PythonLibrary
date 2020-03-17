@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="637abf27-333d-4348-83f3-9e2bdd28a388" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kauffman_data/pep.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/pep.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -42,7 +44,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.pep">
+  <component name="RunManager" selected="Python.pep (1)">
     <configuration name="bfs" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="downwardata" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -56,6 +58,27 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/admin_data/bfs.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pep (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="downwardata" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kauffman_data" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kauffman_data/pep.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -87,6 +110,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.pep (1)" />
         <item itemvalue="Python.pep" />
         <item itemvalue="Python.bfs" />
       </list>
@@ -126,28 +150,28 @@
       <screen x="-1920" y="23" width="1920" height="1057" />
     </state>
     <state x="-1346" y="239" key="FileChooserDialogImpl/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1579027886397" />
-    <state width="1899" height="190" key="GridCell.Tab.0.bottom" timestamp="1584389640861">
+    <state width="1899" height="190" key="GridCell.Tab.0.bottom" timestamp="1584468069777">
       <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="190" key="GridCell.Tab.0.bottom/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584389640861" />
+    <state width="1899" height="190" key="GridCell.Tab.0.bottom/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069777" />
     <state width="1899" height="335" key="GridCell.Tab.0.bottom/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921617" />
     <state width="1419" height="190" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1584388148811" />
-    <state width="1899" height="190" key="GridCell.Tab.0.center" timestamp="1584389640860">
+    <state width="1899" height="190" key="GridCell.Tab.0.center" timestamp="1584468069776">
       <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="190" key="GridCell.Tab.0.center/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584389640860" />
+    <state width="1899" height="190" key="GridCell.Tab.0.center/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069776" />
     <state width="1899" height="335" key="GridCell.Tab.0.center/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921616" />
     <state width="1419" height="190" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1584388148809" />
-    <state width="1899" height="190" key="GridCell.Tab.0.left" timestamp="1584389640859">
+    <state width="1899" height="190" key="GridCell.Tab.0.left" timestamp="1584468069775">
       <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="190" key="GridCell.Tab.0.left/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584389640859" />
+    <state width="1899" height="190" key="GridCell.Tab.0.left/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069775" />
     <state width="1899" height="335" key="GridCell.Tab.0.left/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921615" />
     <state width="1419" height="190" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1584388148809" />
-    <state width="1899" height="190" key="GridCell.Tab.0.right" timestamp="1584389640860">
+    <state width="1899" height="190" key="GridCell.Tab.0.right" timestamp="1584468069776">
       <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="190" key="GridCell.Tab.0.right/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584389640860" />
+    <state width="1899" height="190" key="GridCell.Tab.0.right/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069776" />
     <state width="1899" height="335" key="GridCell.Tab.0.right/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921617" />
     <state width="1419" height="190" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1584388148810" />
     <state x="-1625" y="116" key="SettingsEditor" timestamp="1579027899793">
@@ -171,16 +195,5 @@
     <state x="513" y="252" width="670" height="676" key="search.everywhere.popup/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584366286876" />
     <state x="-1407" y="252" width="670" height="676" key="search.everywhere.popup/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584012939325" />
     <state x="385" y="213" key="search.everywhere.popup/0.23.1440.877@0.23.1440.877" timestamp="1577378923178" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/kauffman_data/pep.py</url>
-          <line>11</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

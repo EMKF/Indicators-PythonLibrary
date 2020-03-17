@@ -1,4 +1,6 @@
 import os
+import sys
+import joblib
 import requests
 import pandas as pd
 from kauffman_data import constants as c
@@ -25,34 +27,40 @@ def _format_population(df):
         assign(population=lambda x: x['population'] * 1000)
 
 
-def _data_transform(region, df):
+def _json_to_pandas_construct(state_dict):
+    df = pd.DataFrame()
+    for region, values in state_dict.items():
+        df = df.append(
+            pd.DataFrame(values) \
+                [['date', 'value']]. \
+                pipe(_format_year). \
+                pipe(_format_population). \
+                assign(region=region)
+        )
+    return df
+
+
+def _data_transform(region, state_dict):
     if region == 'us':
         series_id = 'B230RC0A052NBEA'  # yearly data
         # series_id = 'POPTHM'  # monthly data
     else:
         series_id = region + 'POP'
 
-    # FRED_key = os.getenv('FRED_KEY')
-    FRED_key = 'b6602eab475fc27e3ea2feaedd7ff81b'
-    url = 'https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={key}&file_type=json'.format(series_id=series_id, key=FRED_key)
+    url = 'https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={key}&file_type=json'.format(series_id=series_id, key='b6602eab475fc27e3ea2feaedd7ff81b')
     r = requests.get(url)
-    return df.append(
-        pd.DataFrame(r.json()['observations']) \
-            [['date', 'value']]. \
-            pipe(_format_year).\
-            pipe(_format_population).\
-            assign(region=region)
-    )
+    state_dict[region] = r.json()['observations']
 
 
 def _observations_filter(df, start_year, end_year):
-    return df.\
-        query('year >= {start_year}'.format(start_year=start_year)). \
-        query('year <= {end_year}'.format(end_year=end_year)). \
-        reset_index(drop=True)
+    if start_year:
+        df.query('year >= {start_year}'.format(start_year=start_year), inplace=True)
+    if end_year:
+        df.query('year <= {end_year}'.format(end_year=end_year), inplace=True)
+    return df.reset_index(drop=True)
 
 
-def get_data(obs_level, start_year, end_year=None):
+def get_data(obs_level, start_year=None, end_year=None):
     """
     Collects population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
     register here: https://research.stlouisfed.org/useraccount/apikey. For now, I'm just including my key until we
@@ -68,20 +76,21 @@ def get_data(obs_level, start_year, end_year=None):
     end_year: latest end year is 2019
     """
     print('Collecting data for...')
-    df = pd.DataFrame()
+    region_dict = {}
     if obs_level == 'state':
         for state in c.states:
             print(state)
-            df = df.append(_data_transform(state, df))
+            _data_transform(state, region_dict)
     elif obs_level == 'us':
         print(obs_level)
-        df = df.append(_data_transform('us', df))
-    return df.pipe(_observations_filter, start_year, end_year)
+        _data_transform('us', region_dict)
+    return _json_to_pandas_construct(region_dict). \
+        pipe(_observations_filter, start_year, end_year)
 
 
 if __name__ == '__main__':
-    df = get_data('state', 2011, 2018)
-    # df = get_data('us', 2011, 2018)
+    # df = get_data('state', 2011, 2018)
+    df = get_data('us', 2011, 2018)
     print(df.head())
     print(df.info())
     print(df.shape)
