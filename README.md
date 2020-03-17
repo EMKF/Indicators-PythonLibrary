@@ -3,7 +3,10 @@ In the terminal, type
 ```bash
 pip3 install git+https://github.com/EMKF/downwardata.git#egg=kcr
 ```
-We are still developing this library, obviously, so local updating will be necessary occasionally.
+We are still developing this library, obviously, so local updating will be necessary occasionally. To do this, type
+```bash
+pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kcr
+```
 
 # Examples
 I added a docstring in the ```get_data``` function for both bfs and pep modules.
