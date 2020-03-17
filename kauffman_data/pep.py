@@ -31,7 +31,10 @@ def _data_transform(region, df):
         # series_id = 'POPTHM'  # monthly data
     else:
         series_id = region + 'POP'
-    url = 'https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={key}&file_type=json'.format(series_id=series_id, key=os.getenv('FRED_KEY'))
+
+    # FRED_key = os.getenv('FRED_KEY')
+    FRED_key = 'b6602eab475fc27e3ea2feaedd7ff81b'
+    url = 'https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={key}&file_type=json'.format(series_id=series_id, key=FRED_key)
     r = requests.get(url)
     return df.append(
         pd.DataFrame(r.json()['observations']) \
@@ -52,7 +55,8 @@ def _observations_filter(df, start_year, end_year):
 def get_data(obs_level, start_year, end_year=None):
     """
     Collects population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
-    register here: https://research.stlouisfed.org/useraccount/apikey.
+    register here: https://research.stlouisfed.org/useraccount/apikey. For now, I'm just including my key until we
+    figure out the best way to do this.
 
     (as of 2020.03.16)
     obs_level:
