@@ -7,3 +7,5 @@
 *.doc
 *.png
 __pycache__
+
+.idea/
