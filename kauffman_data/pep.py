@@ -79,7 +79,7 @@ def get_data(obs_level, start_year=None, end_year=None):
     region_dict = {}
     if obs_level == 'state':
         for state in c.states:
-            print(state)
+            print(state, end='...')
             _data_transform(state, region_dict)
     elif obs_level == 'us':
         print(obs_level)
