@@ -26,7 +26,7 @@ class PublicDataHelpers:
     #     lon = self._obj.longitude
     #     return (float(lon.mean()), float(lat.mean()))
 
-    def plot(self, var_lst, strata_dic=None, show=True, save_path=None):
+    def plot(self, var_lst, strata_dic=None, show=True, save_path=None, title=None):
         """
         var_lst: list or dict
             If dict, the keys are the column names from the dataframe and the values are corresponding descriptions. If
@@ -35,11 +35,10 @@ class PublicDataHelpers:
             Dictionary with keys equal to stratifying columns in the dataframe. The values are the stratifying values.
         """
 
-        df = self._obj
+        df_in = self._obj
         if strata_dic:
             for pair in zip(strata_dic.keys(), strata_dic.values()):
-                df.query('{key} == "{value}"'.format(key=pair[0], value=pair[1]), inplace=True)
-            df.reset_index(inplace=True, drop=True)
+                df = df_in.query('{key} == "{value}"'.format(key=pair[0], value=pair[1])).reset_index(drop=True)
         if isinstance(var_lst, list):
             var_label_lst = zip(var_lst, var_lst)
         else:
@@ -54,7 +53,8 @@ class PublicDataHelpers:
             ax.set_ylabel(var[1])
             ax.legend(loc='upper left')
 
-        # plt.title('Number of startups and the unemployment rate ($r = {}$)'.format(round(r, 2)))
+        if title:
+            plt.title(title)
         if save_path:
             plt.savefig(save_path)
         if show:
