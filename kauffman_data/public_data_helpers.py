@@ -38,7 +38,13 @@ class PublicDataHelpers:
         df_in = self._obj
         if strata_dic:
             for pair in zip(strata_dic.keys(), strata_dic.values()):
-                df = df_in.query('{key} == "{value}"'.format(key=pair[0], value=pair[1])).reset_index(drop=True)
+                if isinstance(pair[1], list):
+                    df = df_in.query('{key} in {value}'.format(key=pair[0], value=pair[1])).\
+                        drop([pair[0], 'us'], 1).\
+                        groupby('time').sum(). \
+                        reset_index()
+                else:
+                    df = df_in.query('{key} == "{value}"'.format(key=pair[0], value=pair[1])).reset_index(drop=True)
         if isinstance(var_lst, list):
             var_label_lst = zip(var_lst, var_lst)
         else:
