@@ -1,6 +1,7 @@
 import sys
 import requests
 import pandas as pd
+import kauffman_data.public_data_helpers
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -9,17 +10,17 @@ pd.set_option('display.max_rows', 30000)
 pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
-
 def _make_header(df):
     df.columns = df.iloc[0]
     return df.iloc[1:]
 
 def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=True, annualize=True):
     """
-    series_lst: lst
+    series_lst: lst; see https://www.census.gov/content/dam/Census/programs-surveys/business-dynamics-statistics/BDS_Codebook.pdf.
         net_job_creation
         fage4
         fsize
+        age4 is not a valid variable
 
     obs_level: lst
         us:
@@ -49,4 +50,9 @@ def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=Tr
 
 
 if __name__ == '__main__':
-    df = get_data(['net_job_creation', 'fage4', 'fsize'], 'us', 2003)
+    df = get_data(['estabs', 'firms', 'fage4', 'fsize'], 'us', 2013).\
+        astype({'time': 'int', 'estabs': 'int', 'firms': 'int'})
+    print('\n')
+
+    # df.pub.plot(['firms', 'estabs'], {'fage4': 'm', 'fsize': 'm'})
+    df.pub.plot({'firms': 'Firms', 'estabs': 'Establishments'}, {'fage4': 'm', 'fsize': 'm'})

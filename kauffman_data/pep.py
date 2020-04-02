@@ -4,6 +4,7 @@ import joblib
 import requests
 import pandas as pd
 from kauffman_data import constants as c
+import kauffman_data.public_data_helpers
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
