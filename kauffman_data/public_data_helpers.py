@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import kauffman_data.constants as c
 
 @pd.api.extensions.register_dataframe_accessor("pub")
 class PublicDataHelpers:
@@ -14,8 +15,8 @@ class PublicDataHelpers:
         # verify there is a column latitude and a column longitude
         if 'time' not in obj.columns:  # todo: probably want to change this to year
             raise AttributeError("Must have 'time'.")
-        if obj['time'].dtype in ['object', 'str']:  # todo: probably want to change this to year
-            raise AttributeError("'time' is wrong type.")
+        # if obj['time'].dtype in ['object', 'str']:
+        #     raise AttributeError("'time' is wrong type.")
 
 
     # @property
@@ -25,7 +26,7 @@ class PublicDataHelpers:
     #     lon = self._obj.longitude
     #     return (float(lon.mean()), float(lat.mean()))
 
-    def plot(self, var_lst, strata_dic=None):
+    def plot(self, var_lst, strata_dic=None, show=True, save_path=None):
         """
         var_lst: list or dict
             If dict, the keys are the column names from the dataframe and the values are corresponding descriptions. If
@@ -54,5 +55,8 @@ class PublicDataHelpers:
             ax.legend(loc='upper left')
 
         # plt.title('Number of startups and the unemployment rate ($r = {}$)'.format(round(r, 2)))
-        plt.show()
-        # plt.savefig(c.filenamer('bds/data/firmcount_unemployment.png'))
+        if save_path:
+            plt.savefig(save_path)
+        if show:
+            plt.show()
+

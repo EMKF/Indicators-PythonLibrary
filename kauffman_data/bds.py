@@ -46,12 +46,14 @@ def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=Tr
             pd.DataFrame(r.json()).\
                 pipe(_make_header)
         )
+    # todo: convert the outcome variables to int or float
+    # todo: time should be a string? might need to sort
     return df
 
 
 if __name__ == '__main__':
     df = get_data(['estabs', 'firms', 'fage4', 'fsize'], 'us', 2013).\
-        astype({'time': 'int', 'estabs': 'int', 'firms': 'int'})
+        astype({'estabs': 'int', 'firms': 'int'})
     print('\n')
 
     # df.pub.plot(['firms', 'estabs'], {'fage4': 'm', 'fsize': 'm'})
