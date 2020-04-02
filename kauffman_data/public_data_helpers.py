@@ -39,7 +39,7 @@ class PublicDataHelpers:
         if strata_dic:
             for pair in zip(strata_dic.keys(), strata_dic.values()):
                 df.query('{key} == "{value}"'.format(key=pair[0], value=pair[1]), inplace=True)
-
+            df.reset_index(inplace=True, drop=True)
         if isinstance(var_lst, list):
             var_label_lst = zip(var_lst, var_lst)
         else:
@@ -49,7 +49,7 @@ class PublicDataHelpers:
         fig = plt.figure(figsize=(12, 8))
         for ind, var in enumerate(var_label_lst):
             ax = fig.add_subplot(len(var_lst), 1, ind + 1)
-            sns.lineplot(x='time', y=var[0], data=df, ax=ax, label=var[1])
+            sns.lineplot(x='time', y=var[0], data=df, ax=ax, label=var[1], sort=False)
             ax.set_xlabel(None)
             ax.set_ylabel(var[1])
             ax.legend(loc='upper left')
