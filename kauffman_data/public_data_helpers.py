@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import kauffman_data.constants as c
 
@@ -41,7 +42,7 @@ class PublicDataHelpers:
         return (((df - initial) / initial) + 1) * 100
 
     def plot(self, var_lst, strata_dic=None, show=True, save_path=None, title=None, to_index=False, years='All',
-             recessions=False):
+             recessions=False, filter=False):
         """
         var_lst: list or dict
             If dict, the keys are the column names from the dataframe and the values are corresponding descriptions. If
@@ -75,14 +76,24 @@ class PublicDataHelpers:
                             pipe(_grouper, len(values)).\
                             query('time in {}'.format(list(years_lst))). \
                             pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
-
                         sns.lineplot(data=df, ax=ax, label=label, sort=False)
+                        if filter:
+                            cycle, trend = sm.tsa.filters.hpfilter(df, lamb=6.25)
+                            ax.lines[-1].set_linestyle("--")
+                            ax.lines[-1]._alpha = .5
+                            sns.lineplot(data=trend, ax=ax, sort=False, color=ax.lines[-1].get_color())
+
             else:
                 df = df_in \
                     [['time', var[0]]]. \
                     query('time in {}'.format(list(years_lst))). \
                     pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
                 sns.lineplot(x='time', y=var[0], data=df, ax=ax, label=var[1], sort=False)
+                if filter:
+                    cycle, trend = sm.tsa.filters.hpfilter(df, lamb=6.25)
+                    ax.lines[-1].set_linestyle("--")
+                    ax.lines[-1]._alpha = .5
+                    sns.lineplot(data=trend, ax=ax, sort=False, color=ax.lines[-1].get_color())
 
             if recessions:
                 for rec in [(1980, 1980 + (7/12)), (1981 + (7 / 12), 1982 + (11/12)), (1990 + (7 / 12), 1991 + (3/12)), (2001 + (3 / 12), 2001 + (11/12)), (2007 + (12 / 12), 2009 + (6/12))]:
