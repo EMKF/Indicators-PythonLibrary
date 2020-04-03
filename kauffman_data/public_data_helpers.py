@@ -73,13 +73,14 @@ class PublicDataHelpers:
                             query('{key} in {value}'.format(key=strat_var, value=values)) \
                             [['time', var[0]]]. \
                             pipe(_grouper, len(values)).\
-                            pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]]).\
-                            loc[lambda x: x.index.isin(years_lst)]
+                            query('time in {}'.format(list(years_lst))). \
+                            pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
 
                         sns.lineplot(data=df, ax=ax, label=label, sort=False)
             else:
                 df = df_in \
                     [['time', var[0]]]. \
+                    query('time in {}'.format(list(years_lst))). \
                     pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
                 sns.lineplot(x='time', y=var[0], data=df, ax=ax, label=var[1], sort=False)
 
@@ -90,7 +91,7 @@ class PublicDataHelpers:
 
             ax.set_xlabel(None)
             ax.set_ylabel(var[1])
-            ax.legend(loc='upper left')
+            ax.legend()
 
         if title:
             plt.title(title)
