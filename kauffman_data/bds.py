@@ -94,7 +94,6 @@ if __name__ == '__main__':
         strata_dic={'fage4': {'Startups': ['a'], 'Non-startups': ['g', 'h', 'i', 'j', 'k', 'l'], 'Young': ['a', 'b', 'c', 'd', 'e', 'f']}},
         # strata_dic={'fage4': {'Startups': ['a'], 'Non-startups': ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'], 'Young': ['a', 'b', 'c', 'd', 'e', 'f']}},
         to_index=False,
-        years=list(range(1982, 2017))
+        years=list(range(1982, 2017)),
+        recessions=True
     )
-
-    # I need to be able to add shading for recessions

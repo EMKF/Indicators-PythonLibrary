@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -39,7 +40,8 @@ class PublicDataHelpers:
         initial = df.iloc[0]
         return (((df - initial) / initial) + 1) * 100
 
-    def plot(self, var_lst, strata_dic=None, show=True, save_path=None, title=None, to_index=False, years='All'):
+    def plot(self, var_lst, strata_dic=None, show=True, save_path=None, title=None, to_index=False, years='All',
+             recessions=False):
         """
         var_lst: list or dict
             If dict, the keys are the column names from the dataframe and the values are corresponding descriptions. If
@@ -74,6 +76,11 @@ class PublicDataHelpers:
             else:
                 df = df_in.pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
                 sns.lineplot(x='time', y=var[0], data=df, ax=ax, label=var[1], sort=False)
+
+            if recessions:
+                for rec in [(1980, 1980 + (7/12)), (1981 + (7 / 12), 1982 + (11/12)), (1990 + (7 / 12), 1991 + (3/12)), (2001 + (3 / 12), 2001 + (11/12)), (2007 + (12 / 12), 2009 + (6/12))]:
+                    if rec[0] >= min(years) and rec[1] <= max(years):
+                        ax.axvspan(rec[0], rec[1], alpha=0.3, color='gray')
 
             ax.set_xlabel(None)
             ax.set_ylabel(var[1])
