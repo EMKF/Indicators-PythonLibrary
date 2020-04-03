@@ -5,8 +5,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import kauffman_data.constants as c
 
-def _grouper(df, values):  # todo: should I put this inside the class?
-    if len(values) > 1:
+def _grouper(df, lvalues):  # todo: should I put this inside the class?
+    if lvalues > 1:
         return df. \
             groupby('time').sum(). \
             reset_index()
@@ -66,15 +66,17 @@ class PublicDataHelpers:
                 for strat_var, strat_values_dict in strata_dic.items():
                     for label, values in strat_values_dict.items():
                         df = df_in. \
-                            query('{key} in {value}'.format(key=strat_var, value=values)). \
-                            drop([strat_var, 'us'], 1). \
-                            pipe(_grouper, values).\
+                            query('{key} in {value}'.format(key=strat_var, value=values)) \
+                            [['time', var[0]]]. \
+                            pipe(_grouper, len(values)).\
                             pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]]).\
                             pipe(lambda x: x if years == 'All' else x.loc[x.index.isin(years)])
 
                         sns.lineplot(data=df, ax=ax, label=label, sort=False)
             else:
-                df = df_in.pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
+                df = df_in \
+                    [['time', var[0]]]. \
+                    pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
                 sns.lineplot(x='time', y=var[0], data=df, ax=ax, label=var[1], sort=False)
 
             if recessions:
