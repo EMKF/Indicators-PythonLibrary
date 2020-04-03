@@ -50,12 +50,16 @@ class PublicDataHelpers:
             Dictionary with keys equal to stratifying columns in the dataframe. The values are a dictionary containing
             the stratifying values and their labels as keys.
         """
-
         df_in = self._obj
         if isinstance(var_lst, list):
             var_label_lst = zip(var_lst, var_lst)
         else:
             var_label_lst = zip(var_lst.keys(), var_lst.values())
+
+        if years == 'All':
+            years_lst = list(range(df_in['time'].min(), df_in['time'].max() + 1))
+        else:
+            years_lst = years
 
         sns.set_style("whitegrid")  #, {'axes.grid': False})
         fig = plt.figure(figsize=(12, 8))
@@ -70,7 +74,7 @@ class PublicDataHelpers:
                             [['time', var[0]]]. \
                             pipe(_grouper, len(values)).\
                             pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]]).\
-                            pipe(lambda x: x if years == 'All' else x.loc[x.index.isin(years)])
+                            loc[lambda x: x.index.isin(years_lst)]
 
                         sns.lineplot(data=df, ax=ax, label=label, sort=False)
             else:
@@ -81,7 +85,7 @@ class PublicDataHelpers:
 
             if recessions:
                 for rec in [(1980, 1980 + (7/12)), (1981 + (7 / 12), 1982 + (11/12)), (1990 + (7 / 12), 1991 + (3/12)), (2001 + (3 / 12), 2001 + (11/12)), (2007 + (12 / 12), 2009 + (6/12))]:
-                    if rec[0] >= min(years) and rec[1] <= max(years):
+                    if rec[0] >= min(years_lst) and rec[1] <= max(years_lst):
                         ax.axvspan(rec[0], rec[1], alpha=0.3, color='gray')
 
             ax.set_xlabel(None)
