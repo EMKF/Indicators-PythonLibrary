@@ -47,6 +47,16 @@ def get_data_api(series_lst='self_employed', obs_level='us', start_year=None, en
 
 
 def get_data(series_lst='self_employed', obs_level='us', start_year=None, end_year=None, seasonally_adj=True):
+    """
+    The self-employment data for sub-US levels must come from IRS SOI data: https://www.irs.gov/statistics/soi-tax-stats-individual-income-tax-statistics-2017-zip-code-data-soi.
+    Still holding out for https://download.bls.gov/pub/time.series/la/    local area unemployment statistics.
+
+    series_lst: int
+        LNU02048984 --- Employment level of incorporated, self-employed workers; not seasonally adjusted; number
+            reported in thousands of dollars.
+        LNU02027714 --- Employment level of unincorporated, self-employed workers; not seasonally adjusted; number
+            reported in thousands of dollars.
+    """
     if not start_year:
         start_year = 0
     if not end_year:
