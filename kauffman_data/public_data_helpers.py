@@ -101,9 +101,11 @@ class PublicDataHelpers:
                         ax.axvspan(rec[0], rec[1], alpha=0.3, color='gray')
 
             ax.set_xlabel(None)
-            ax.set_ylabel(var[1])
+            ax.set_ylabel(var[1] if not to_index else 'Index: {}'.format(var[1]))
             ax.legend()
 
+        if filter:
+            plt.figtext(0.01, 0.01, 'Note: Dotted lines indicate actual values; solid lines are values that have been smoothed with an HP filter.', horizontalalignment='left', fontsize=8)
         if title:
             plt.title(title)
         if save_path:
