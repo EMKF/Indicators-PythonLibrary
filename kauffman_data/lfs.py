@@ -46,16 +46,31 @@ def get_data_api(series_lst='self_employed', obs_level='us', start_year=None, en
     return df
 
 
-def get_data(series_lst='self_employed', obs_level='us', start_year=None, end_year=None, seasonally_adj=True):
+def _annualizer(df, annualize):
+    if annualize:
+        return df.\
+            query('period == "M13"').\
+            drop('period', 1)
+    return df.\
+        query('period != "M13"')
+
+
+def get_data(series_lst='self_employed', obs_level='us', start_year=None, end_year=None, seasonally_adj=True, annualize=False):
     """
     The self-employment data for sub-US levels must come from IRS SOI data: https://www.irs.gov/statistics/soi-tax-stats-individual-income-tax-statistics-2017-zip-code-data-soi.
     Still holding out for https://download.bls.gov/pub/time.series/la/    local area unemployment statistics.
+        * looks like no. ACS has some, but not current
+
+    M13 indicates an annual average.
 
     series_lst: int
         LNU02048984 --- Employment level of incorporated, self-employed workers; not seasonally adjusted; number
             reported in thousands of dollars.
         LNU02027714 --- Employment level of unincorporated, self-employed workers; not seasonally adjusted; number
             reported in thousands of dollars.
+
+    annualize: bool
+        If True, then returns the annual average.
     """
     if not start_year:
         start_year = 0
@@ -64,16 +79,29 @@ def get_data(series_lst='self_employed', obs_level='us', start_year=None, end_ye
 
     df = pd.read_csv('https://download.bls.gov/pub/time.series/ln/ln.data.1.AllData', sep='\t')
     df.columns = map(lambda x: x.strip(), df.columns.tolist())
-    return df.assign(series_id=lambda x: x['series_id'].str.strip()).\
-        query('series_id in ["LNU02048984", "LNU02027714"]'). \
+    return df.assign(series_id=lambda x: x['series_id'].str.strip()). \
+        query('series_id == "LNU02048984"'). \
+        drop(['footnote_codes', 'series_id'], 1). \
+        rename(columns={'value': 'inc_self_employment'}).\
+        merge(
+            df.\
+                assign(series_id=lambda x: x['series_id'].str.strip()).\
+                query('series_id == "LNU02027714"').\
+                drop(['footnote_codes', 'series_id'], 1).\
+                rename(columns={'value': 'uninc_self_employment'}),
+            how='outer',
+            on=['year', 'period']
+        ).\
         query('year >= {start_year}'.format(start_year=start_year)).\
         query('year <= {end_year}'.format(end_year=end_year)).\
-        drop('footnote_codes', 1).\
+        pipe(_annualizer, annualize).\
+        sort_values(['year', 'period']).\
         reset_index(drop=True)
 
 
 if __name__ == '__main__':
-    get_data().to_csv(c.filenamer('../scratch/se_all_time.csv'), index=False)
+    df = get_data()  #.to_csv(c.filenamer('../scratch/se_all_time.csv'), index=False)
+    print(df)
     #
     # df = pd.read_csv(c.filenamer('../scratch/se_all_time.csv'))
     # print(df.info())
