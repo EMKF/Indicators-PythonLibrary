@@ -53,9 +53,13 @@ Replacing the keyword 'us' with 'state' will give state level data.
 
 
 ### PublicDataHelpers Class pandas extension
+If ```df``` is a dataframe with certain attributes (using the bds and lfs modules create dataframes that qualify), 
+plotting the data is as simple as  
 ```python
-df.pub.print()
+df.pub.plot()
 ```
+Changing the parameters (see examples and documentation) makes the plots nicer.
+
 
 # TODO
 ## done
