@@ -41,26 +41,43 @@ class PublicDataHelpers:
         initial = df.iloc[0]
         return (((df - initial) / initial) + 1) * 100
 
-    def plot(self, var_lst, strata_dic=None, show=True, save_path=None, title=None, to_index=False, years='All',
-             recessions=False, filter=False):
+    def plot(self, var_lst=None, strata_dic=None, show=True, save_path=None, title=None, to_index=False, years='All',
+             recessions=False, filter=False, start_year=None, end_year=None):
         """
         var_lst: list or dict
             If dict, the keys are the column names from the dataframe and the values are corresponding descriptions. If
-            a list, then the column names are used as the descriptions.
+            a list, then the column names are used as the descriptions. These are the covariates from the dataframe you
+            want to plot. The time variable should be called 'time'.
         strata_dic: dict or None
             Dictionary with keys equal to stratifying columns in the dataframe. The values are a dictionary containing
             the stratifying values and their labels as keys.
+        years: str or list
+            If 'All' then use all available data. Otherwise, subset the data based on the years specified.
+        start_year: int
+            First year of data to use.
         """
+
         df_in = self._obj
-        if isinstance(var_lst, list):
+        if not var_lst:
+            var_lst = [var for var in df_in.columns if var != 'time']
+        if '-' not in df_in.loc[0, 'time']:  # if data is annual
+            annual = True
+            df_in = df_in.assign(time=lambda x: pd.to_datetime(x['time'].astype(str) + '-07'))
+        else:
+            annual = False
+            df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
+        if isinstance(var_lst, list):  # if var_lst is a list and not a string
             var_label_lst = zip(var_lst, var_lst)
         else:
             var_label_lst = zip(var_lst.keys(), var_lst.values())
-
-        if years == 'All':
-            years_lst = list(range(df_in['time'].min(), df_in['time'].max() + 1))
+        if not start_year:  # if start_year is specified
+            start_year = df_in.loc[0, 'time']
         else:
-            years_lst = years
+            start_year = pd.to_datetime(str(start_year))
+        if not end_year:  # if end_year is specified
+            end_year = df_in.iloc[-1, :]['time']
+        else:
+            end_year = pd.Timestamp.now()
 
         sns.set_style("whitegrid")  #, {'axes.grid': False})
         fig = plt.figure(figsize=(12, 8))
@@ -74,11 +91,18 @@ class PublicDataHelpers:
                             query('{key} in {value}'.format(key=strat_var, value=values)) \
                             [['time', var[0]]]. \
                             pipe(_grouper, len(values)).\
-                            query('time in {}'.format(list(years_lst))). \
+                            query('time >= "{}"'.format(start_year)). \
+                            query('time <= "{}"'.format(end_year)). \
+                            query('{var} == {var}'.format(var=var[0])). \
                             pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
                         sns.lineplot(data=df, ax=ax, label=label, sort=False)
+
                         if filter:
-                            cycle, trend = sm.tsa.filters.hpfilter(df, lamb=6.25)
+                            if annual:
+                                lamb = 6.25
+                            else:
+                                lamb = 129600
+                            cycle, trend = sm.tsa.filters.hpfilter(df, lamb=lamb)
                             ax.lines[-1].set_linestyle("--")
                             ax.lines[-1]._alpha = .5
                             sns.lineplot(data=trend, ax=ax, sort=False, color=ax.lines[-1].get_color())
@@ -86,22 +110,44 @@ class PublicDataHelpers:
             else:
                 df = df_in \
                     [['time', var[0]]]. \
-                    query('time in {}'.format(list(years_lst))). \
+                    assign(time=lambda x: pd.to_datetime(x['time'])).\
+                    query('time >= "{}"'.format(start_year)). \
+                    query('time <= "{}"'.format(end_year)). \
+                    query('{var} == {var}'.format(var=var[0])). \
                     pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
-                sns.lineplot(x='time', y=var[0], data=df, ax=ax, label=var[1], sort=False)
+                sns.lineplot(data=df, ax=ax, label=var[1], sort=False)
+
                 if filter:
-                    cycle, trend = sm.tsa.filters.hpfilter(df, lamb=6.25)
+                    if annual:
+                        lamb = 6.25
+                    else:
+                        lamb = 129600
+                    cycle, trend = sm.tsa.filters.hpfilter(df, lamb=lamb)
                     ax.lines[-1].set_linestyle("--")
                     ax.lines[-1]._alpha = .5
                     sns.lineplot(data=trend, ax=ax, sort=False, color=ax.lines[-1].get_color())
 
             if recessions:
-                for rec in [(1980, 1980 + (7/12)), (1981 + (7 / 12), 1982 + (11/12)), (1990 + (7 / 12), 1991 + (3/12)), (2001 + (3 / 12), 2001 + (11/12)), (2007 + (12 / 12), 2009 + (6/12))]:
-                    if rec[0] >= min(years_lst) and rec[1] <= max(years_lst):
+                recession_dates = [
+                    (pd.to_datetime('1948-11'), pd.to_datetime('1949-10')),
+                    (pd.to_datetime('1953-07'), pd.to_datetime('1954-05')),
+                    (pd.to_datetime('1957-08'), pd.to_datetime('1958-04')),
+                    (pd.to_datetime('1960-04'), pd.to_datetime('1961-02')),
+                    (pd.to_datetime('1969-12'), pd.to_datetime('1970-11')),
+                    (pd.to_datetime('1973-11'), pd.to_datetime('1975-03')),
+                    (pd.to_datetime('1980-01'), pd.to_datetime('1980-07')),
+                    (pd.to_datetime('1981-07'), pd.to_datetime('1982-11')),
+                    (pd.to_datetime('1990-07'), pd.to_datetime('1991-03')),
+                    (pd.to_datetime('2001-03'), pd.to_datetime('2001-11')),
+                    (pd.to_datetime('2007-12'), pd.to_datetime('2009-06'))
+                ]
+                for rec in recession_dates:
+                    if rec[0] >= start_year and rec[1] <= end_year:
                         ax.axvspan(rec[0], rec[1], alpha=0.3, color='gray')
 
             ax.set_xlabel(None)
             ax.set_ylabel(var[1] if not to_index else 'Index: {}'.format(var[1]))
+            ax.set_xlim([start_year - pd.DateOffset(years=1), end_year + pd.DateOffset(years=1)])
             ax.legend()
 
         if filter:

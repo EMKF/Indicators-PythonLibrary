@@ -8,13 +8,15 @@ We are still developing this library, obviously, so local updating will be neces
 pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kcr
 ```
 
-# Examples
-I added a docstring in the ```get_data``` function for both bfs and pep modules.
+# Documentation and Examples
+I added draft docstrings in the ```get_data``` functions for bds, bds, lfs, and pep modules.
 But it's still pretty weak. We'll have to add more documentation at some point. 
-The following are a few examples using the library.
+The following are a few examples using the library: 
+* BDS: https://github.com/EMKF/narrative/blob/master/bds/over_time.py
+* LFS (labor force statistics): https://github.com/EMKF/narrative/blob/master/labor_force_statistics/self_employment_over_time.py
 
 ```python
-from kauffman_data import bfs, pep
+from kauffman_data import bfs, pep, lfs, bds
 ```
 ## BFS
 ```python
@@ -50,6 +52,10 @@ This returns a pandas dataframe with the following characteristics:
 Replacing the keyword 'us' with 'state' will give state level data. 
 
 
+### PublicDataHelpers Class pandas extension
+```python
+df.pub.print()
+```
 
 # TODO
 ## done

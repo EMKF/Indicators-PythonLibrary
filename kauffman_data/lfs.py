@@ -5,6 +5,7 @@ import joblib
 import requests
 import pandas as pd
 import kauffman_data.constants as c
+import kauffman_data.public_data_helpers
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -110,3 +111,6 @@ if __name__ == '__main__':
     print(df.head())
 
     print(get_data(annualize=True).head(20))
+
+
+# todo: multiply value by 1000

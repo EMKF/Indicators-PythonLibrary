@@ -65,7 +65,9 @@ def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=Tr
     # todo: convert the outcome variables to int or float
     # todo: time should be a string? might need to sort
     # todo: 2015 and 2016 if doing state
-    return df.reset_index(drop=True)
+    return df.\
+        reset_index(drop=True).\
+        astype({'time': 'str'})
 
 
 
