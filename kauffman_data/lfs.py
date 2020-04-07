@@ -50,9 +50,12 @@ def _annualizer(df, annualize):
     if annualize:
         return df.\
             query('period == "M13"').\
-            drop('period', 1)
+            drop('period', 1).\
+            rename(columns={'year': 'time'})
     return df.\
-        query('period != "M13"')
+        query('period != "M13"'). \
+        assign(time=lambda x: x['year'].astype(str) + '-' + x['period'].str[1:]). \
+        drop(['year', 'period'], 1)
 
 
 def get_data(series_lst='self_employed', obs_level='us', start_year=None, end_year=None, seasonally_adj=True, annualize=False):
@@ -95,14 +98,15 @@ def get_data(series_lst='self_employed', obs_level='us', start_year=None, end_ye
         query('year >= {start_year}'.format(start_year=start_year)).\
         query('year <= {end_year}'.format(end_year=end_year)).\
         pipe(_annualizer, annualize).\
-        sort_values(['year', 'period']).\
-        reset_index(drop=True)
-
+        sort_values('time').\
+        reset_index(drop=True) \
+        [['time', 'inc_self_employment', 'uninc_self_employment']]
 
 if __name__ == '__main__':
-    df = get_data()  #.to_csv(c.filenamer('../scratch/se_all_time.csv'), index=False)
-    print(df)
+    get_data().to_csv(c.filenamer('../scratch/se_all_time.csv'), index=False)
     #
-    # df = pd.read_csv(c.filenamer('../scratch/se_all_time.csv'))
-    # print(df.info())
-    # print(df.head())
+    df = pd.read_csv(c.filenamer('../scratch/se_all_time.csv'))
+    print(df.info())
+    print(df.head())
+
+    print(get_data(annualize=True).head(20))

@@ -11,7 +11,7 @@ setup(
     # Needed for dependencies
     install_requires=['numpy', 'pandas', 'requests', 'statsmodels'],
     # *strongly* suggested for sharing
-    version='1.0.7',
+    version='1.0.8',
     # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
