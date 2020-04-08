@@ -42,7 +42,7 @@ class PublicDataHelpers:
         return (((df - initial) / initial) + 1) * 100
 
     def plot(self, var_lst=None, strata_dic=None, show=True, save_path=None, title=None, to_index=False,
-             recessions=False, filter=False, start_year=None, end_year=None):
+             recessions=False, filter=False, start_year=None, end_year=None, day_marker=None):
         """
         var_lst: list or dict
             If dict, the keys are the column names from the dataframe and the values are corresponding descriptions. If
@@ -62,18 +62,23 @@ class PublicDataHelpers:
             var_lst = [var for var in df_in.columns if var not in ['time', 'region']]
 
 
-        if '-' in df_in.loc[0, 'time']:  # if monthly
-            data_frequency = 'monthly'
+        if df_in.loc[0, 'time'].count('-') == 2:  # if weekly
+            lamb = 1600  # hmmm
+            # lamb = 45697600
+            df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
+            offset = {'weeks': 1}
+        elif df_in.loc[0, 'time'].count('-') == 1:  # if monthly
             lamb = 129600
             df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
+            offset = {'quarters': 1}
         elif 'Q' in df_in.loc[0, 'time']:  # if quarterly
-            data_frequency = 'quarterly'
             lamb = 1600
             df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
+            offset = {'months': 1}
         else: # if yearly
-            data_frequency = 'yearly'
             lamb = 6.25
             df_in = df_in.assign(time=lambda x: pd.to_datetime(x['time'].astype(str) + '-07'))
+            offset = {'years': 1}
 
 
         if isinstance(var_lst, list):  # if var_lst is a list and not a string
@@ -149,9 +154,22 @@ class PublicDataHelpers:
                     if rec[0] >= start_year and rec[1] <= end_year:
                         ax.axvspan(rec[0], rec[1], alpha=0.3, color='gray')
 
+            if day_marker:
+                first = True
+                for df_date in df.index:
+                    marker = '{year}-{month_day}'.format(year=df_date.year, month_day=day_marker)
+                    if df_date < pd.to_datetime(marker) and df_date + pd.DateOffset(**offset) >= pd.to_datetime(marker):
+                        print(df_date, day_marker)
+                        if first:
+                            ax.axvspan(df_date, df_date + pd.DateOffset(**offset), alpha=0.3, color='firebrick', label='Week of {}'.format(day_marker))
+                            first=False
+                        else:
+                            ax.axvspan(df_date, df_date + pd.DateOffset(**offset), alpha=0.3, color='firebrick')
+
+
             ax.set_xlabel(None)
             ax.set_ylabel(var[1] if not to_index else 'Index: {}'.format(var[1]))
-            ax.set_xlim([start_year - pd.DateOffset(years=1), end_year + pd.DateOffset(years=1)])
+            ax.set_xlim([start_year - pd.DateOffset(**offset), end_year + pd.DateOffset(**offset)])
             ax.legend()
 
         if filter:
@@ -162,4 +180,4 @@ class PublicDataHelpers:
             plt.savefig(save_path)
         if show:
             plt.show()
-
+# todo: how to wipe out figure if I don't want to show it.
