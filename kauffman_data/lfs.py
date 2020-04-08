@@ -14,6 +14,12 @@ pd.set_option('display.max_rows', 30000)
 pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
+series_dict = {
+    'inc_self_employment': 'LNU02048984',
+    'uninc_self_employment': 'LNU02027714',
+    'civilian_labor_force': 'LNS11000000'
+}
+
 
 def get_data_api(series_lst='self_employed', obs_level='us', start_year=None, end_year=None, seasonally_adj=True):
     """'Year range has been reduced to the system-allowed limit of 20 years.' Cuss.
@@ -68,48 +74,42 @@ def get_data(series_lst=None, obs_level='us', start_year=None, end_year=None, se
     M13 indicates an annual average.
 
     series_lst: int
-        LNU11000000 --- Civilian labor force; not seasonally adjusted.
+        LNU11000000 --- Civilian labor force; seasonally adjusted; number reported in thousands of dollars but changed
+            into dollars.
         LNU02048984 --- Employment level of incorporated, self-employed workers; not seasonally adjusted; number
-            reported in thousands of dollars.
+            reported in thousands of dollars but changed into dollars
         LNU02027714 --- Employment level of unincorporated, self-employed workers; not seasonally adjusted; number
-            reported in thousands of dollars.
+            reported in thousands of dollars but changed into dollars.
 
     annualize: bool
         If True, then returns the annual average.
     """
 
-    series_dict = {
-        'inc_self_employment': 'LNU02048984',
-        'uninc_self_employment': 'LNU02027714',
-        'civilian_labor_force': 'LNS11000000'
-    }
-    # 'civilian_labor_force': 'LNS11000000'
     if not series_lst:
         series_lst = list(series_dict.keys())
 
-    if not start_year:
-        start_year = 0
-    if not end_year:
-        end_year = pd.datetime.now().year
-
-    # pd.read_csv('https://download.bls.gov/pub/time.series/ln/ln.data.1.AllData', sep='\t').to_csv(c.filenamer('../scratch/raw.csv'), index=False)
-    df = pd.read_csv(c.filenamer('../scratch/raw.csv')).\
-            rename(columns=lambda x: x.strip()).\
-            assign(series_id=lambda x: x['series_id'].str.strip(), value=lambda x: x['value'] * 1000).\
-            drop('footnote_codes', 1)  #.
-            # query('series_id in {series_lst}'.format(series_lst=list(series_dict.values())))
+    print('Creating dataframe (this may take a few minutes)...')
+    df = pd.read_csv('https://download.bls.gov/pub/time.series/ln/ln.data.1.AllData', sep='\t'). \
+        rename(columns=lambda x: x.strip()). \
+        assign(series_id=lambda x: x['series_id'].str.strip(), value=lambda x: x['value'] * 1000). \
+        drop('footnote_codes', 1)
 
     for ind, series in enumerate(series_lst):
         df_temp = df. \
             query('series_id == "{series_id}"'.format(series_id=series_dict[series])). \
             drop('series_id', 1). \
             rename(columns={'value': series})
-        print(df_temp.head())
 
         if ind == 0:
             df_out = df_temp
         else:
             df_out = df_out.merge(df_temp, how='outer', on=['year', 'period'])
+
+    if not start_year:
+        start_year = df_out['year'].min()
+    if not end_year:
+        end_year = df_out['year'].max()
+    print('Data download complete.\nUsing {startyear} and {endyear} as start and end years.\nReformatting data.'.format(startyear=start_year, endyear=end_year))
 
     return df_out.\
             query('year >= {start_year}'.format(start_year=start_year)).\
@@ -117,41 +117,17 @@ def get_data(series_lst=None, obs_level='us', start_year=None, end_year=None, se
             pipe(_annualizer, annualize).\
             sort_values('time').\
             reset_index(drop=True) \
-            [['time', 'inc_self_employment', 'uninc_self_employment']]
-    # return df.assign(series_id=lambda x: x['series_id'].str.strip()). \
-    #     query('series_id == "LNU02048984"'). \
-    #     drop(['footnote_codes', 'series_id'], 1). \
-    #     rename(columns={'value': 'inc_self_employment'}). \
-    #     assign(uninc_self_employment=lambda x: x['inc_self_employment'] * 1000).\
-    #     merge(
-    #         df.\
-    #             assign(series_id=lambda x: x['series_id'].str.strip()).\
-    #             query('series_id == "LNU02027714"').\
-    #             drop(['footnote_codes', 'series_id'], 1).\
-    #             rename(columns={'value': 'uninc_self_employment'}).\
-    #             assign(uninc_self_employment=lambda x: x['uninc_self_employment'] * 1000),
-    #         how='outer',
-    #         on=['year', 'period']
-    #     ).\
-    #     query('year >= {start_year}'.format(start_year=start_year)).\
-    #     query('year <= {end_year}'.format(end_year=end_year)).\
-    #     pipe(_annualizer, annualize).\
-    #     sort_values('time').\
-    #     reset_index(drop=True) \
-    #     [['time', 'inc_self_employment', 'uninc_self_employment']]
+            [['time', 'inc_self_employment', 'uninc_self_employment', 'civilian_labor_force']]
+
 
 if __name__ == '__main__':
-    df = get_data()  #.to_csv(c.filenamer('../scratch/se_all_time.csv'), index=False)
-    print(df.info())
-    sys.exit()
-    #
+    import time
+    start = time.time()
+    get_data().to_csv(c.filenamer('../scratch/se_all_time.csv'), index=False)
+    print(time.time() - start)
     df = pd.read_csv(c.filenamer('../scratch/se_all_time.csv'))
     print(df.info())
     print(df.head())
 
-    print(get_data(annualize=True).head(20))
 
-
-# todo: multiply value by 1000
-# todo: rate; get total firms or employees or something.
 # todo: farm/nonfarm?
