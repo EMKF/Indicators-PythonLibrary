@@ -41,7 +41,7 @@ class PublicDataHelpers:
         initial = df.iloc[0]
         return (((df - initial) / initial) + 1) * 100
 
-    def plot(self, var_lst=None, strata_dic=None, show=True, save_path=None, title=None, to_index=False, years='All',
+    def plot(self, var_lst=None, strata_dic=None, show=True, save_path=None, title=None, to_index=False,
              recessions=False, filter=False, start_year=None, end_year=None):
         """
         var_lst: list or dict
@@ -59,13 +59,23 @@ class PublicDataHelpers:
 
         df_in = self._obj
         if not var_lst:
-            var_lst = [var for var in df_in.columns if var != 'time']
-        if '-' not in df_in.loc[0, 'time']:  # if data is annual
-            annual = True
-            df_in = df_in.assign(time=lambda x: pd.to_datetime(x['time'].astype(str) + '-07'))
-        else:
-            annual = False
+            var_lst = [var for var in df_in.columns if var not in ['time', 'region']]
+
+
+        if '-' in df_in.loc[0, 'time']:  # if monthly
+            data_frequency = 'monthly'
+            lamb = 129600
             df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
+        elif 'Q' in df_in.loc[0, 'time']:  # if quarterly
+            data_frequency = 'quarterly'
+            lamb = 1600
+            df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
+        else: # if yearly
+            data_frequency = 'yearly'
+            lamb = 6.25
+            df_in = df_in.assign(time=lambda x: pd.to_datetime(x['time'].astype(str) + '-07'))
+
+
         if isinstance(var_lst, list):  # if var_lst is a list and not a string
             var_label_lst = zip(var_lst, var_lst)
         else:
@@ -82,6 +92,7 @@ class PublicDataHelpers:
         sns.set_style("whitegrid")  #, {'axes.grid': False})
         fig = plt.figure(figsize=(12, 8))
         for ind, var in enumerate(var_label_lst):
+            print(var)
             ax = fig.add_subplot(len(var_lst), 1, ind + 1)
 
             if strata_dic:
@@ -98,10 +109,6 @@ class PublicDataHelpers:
                         sns.lineplot(data=df, ax=ax, label=label, sort=False)
 
                         if filter:
-                            if annual:
-                                lamb = 6.25
-                            else:
-                                lamb = 129600
                             cycle, trend = sm.tsa.filters.hpfilter(df, lamb=lamb)
                             ax.lines[-1].set_linestyle("--")
                             ax.lines[-1]._alpha = .5
@@ -115,13 +122,10 @@ class PublicDataHelpers:
                     query('time <= "{}"'.format(end_year)). \
                     query('{var} == {var}'.format(var=var[0])). \
                     pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
+                print(df.head())
                 sns.lineplot(data=df, ax=ax, label=var[1], sort=False)
 
                 if filter:
-                    if annual:
-                        lamb = 6.25
-                    else:
-                        lamb = 129600
                     cycle, trend = sm.tsa.filters.hpfilter(df, lamb=lamb)
                     ax.lines[-1].set_linestyle("--")
                     ax.lines[-1]._alpha = .5

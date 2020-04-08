@@ -1,3 +1,4 @@
+import sys
 import datetime
 import pandas as pd
 from kauffman_data import constants as c
@@ -59,7 +60,9 @@ def date_formatter(df, annualize):
 
 
 def features_create(df, region):
-    return df.assign(region=region)
+    return df.\
+        assign(region=region).\
+        rename(columns={'Period': 'time'})
 
 
 def region_data_frame_create(region, series_lst, seasonally_adj, start_year, end_year, annualize):
@@ -102,21 +105,39 @@ def region_data_frame_create(region, series_lst, seasonally_adj, start_year, end
         pipe(features_create, region)
 
 
-def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=True, annualize=True):
+def get_data(series_lst, obs_level, weekly=False, start_year=None, end_year=None, seasonally_adj=True, annualize=True):
     """
     series_lst: lst
-        BA_BA: 'Business Applications'
-        BA_CBA: 'Business Applications from Corporations'
-        BA_HBA: 'High-Propensity Business Applications'
-        BA_WBA: 'Business Applications with Planned Wages'
-        BF_BF4Q: 'Business Formations within Four Quarters'
-        BF_BF8Q: 'Business Formations within Eight Quarters'
-        BF_PBF4Q: Projected Business Formations within Four Quarters
-        BF_PBF8Q: Projected Business Formations within Eight Quarters
-        BF_SBF4Q: Spliced Business Formations within Four Quarter
-        BF_SBF8Q: Spliced Business Formations within Eight Quarters
-        BF_DUR4Q: Average Duration (in Quarters) from Business Application to Formation within Four Quarters
-        BF_DUR8Q: Average Duration (in Quarters) from Business Application to Formation within Eight Quarters
+        Quarterly Variables:
+            BA_BA: 'Business Applications'
+            BA_CBA: 'Business Applications from Corporations'
+            BA_HBA: 'High-Propensity Business Applications'
+            BA_WBA: 'Business Applications with Planned Wages'
+            BF_BF4Q: 'Business Formations within Four Quarters'
+            BF_BF8Q: 'Business Formations within Eight Quarters'
+            BF_PBF4Q: Projected Business Formations within Four Quarters
+            BF_PBF8Q: Projected Business Formations within Eight Quarters
+            BF_SBF4Q: Spliced Business Formations within Four Quarter
+            BF_SBF8Q: Spliced Business Formations within Eight Quarters
+            BF_DUR4Q: Average Duration (in Quarters) from Business Application to Formation within Four Quarters
+            BF_DUR8Q: Average Duration (in Quarters) from Business Application to Formation within Eight Quarters
+
+        Weekly Variables:
+            BA_NSA: Not seasonally adjusted Business Application national series
+            HBA_BSA: Not seasonally adjusted High-Propensity Business Application national series
+            WBA_NSA: Not seasonall adjusted Businesses Applications with Planned Wages national series
+            CBA_NSA: Not seasonally adjusted Business Applications from Corporations national series
+            YY_BA_NSA: Calculated year‐to‐year percentage changes for same week a year ago for the Business Application
+                series. No values are available for first year of the series (2006) or for week 53s.
+            YY_HBA_NSA: Calculated year‐to‐year percentage changes for same week a year ago for the High‐Propensity
+                Business Application series. No values are available for first year of the series (2006) or for week
+                53s.
+            YY_WBA_NSA: Calculated year‐to‐year percentage changes for same week a year ago for the Businesses
+                Applications with Planned Wages series. No values are available for first year of the series (2006) or
+                for week 53s.
+            YY_CBA_NSA: Calculated year‐to‐year percentage changes for same week a year ago for the Businesses
+                Applications with Planned Wages series. No values are available for first year of the series (2006) or
+                for week 53s.
 
     obs_level: lst
         us:
@@ -124,8 +145,25 @@ def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=Tr
         any of c.states
 
     start_year:
-        earliest year is 2004
+        Earliest year is 2004
     """
+
+    # todo: get this better integrated into the code
+    if weekly:
+        return pd.read_csv('https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv')\
+            [['Year', 'Week'] + series_lst].\
+            assign(
+                week_count=lambda x: range(x.shape[0]),
+                time=lambda x: x['week_count'].apply(lambda t: pd.DateOffset(weeks=t) + pd.to_datetime('2006-01-07')),
+                region='us'
+            ).\
+            astype({'time': 'str'}).\
+            drop(['Year', 'Week'], 1)\
+            [['time'] + series_lst + ['region']]
+
+
+    if not start_year:
+        start_year = 2004
     if not end_year:
         end_year = datetime.datetime.now().year
 
@@ -149,7 +187,11 @@ if __name__ == '__main__':
     # df = get_data(['BA_BA'], 'state', 2004, annualize=True)
     # df = get_data(['BF_DUR4Q', 'BF_DUR8Q', 'BA_BA'], 'state', 2004, annualize=True)
 
-    df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)
-    # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'us', 2004, annualize=True)
+    # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)
+    # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'us', 2004, annualize=False)
+    df = get_data(['BA_NSA'], 'us', start_year=2004, weekly=True, annualize=False)
     print(df)
 
+# todo: https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
+# todo: from https://www.census.gov/econ/bfs/index.html?#
+# todo: dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
