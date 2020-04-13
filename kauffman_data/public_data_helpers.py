@@ -70,11 +70,11 @@ class PublicDataHelpers:
         elif df_in.loc[0, 'time'].count('-') == 1:  # if monthly
             lamb = 129600
             df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
-            offset = {'quarters': 1}
+            offset = {'months': 1}
         elif 'Q' in df_in.loc[0, 'time']:  # if quarterly
             lamb = 1600
             df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
-            offset = {'months': 1}
+            offset = {'quarters': 1}
         else: # if yearly
             lamb = 6.25
             df_in = df_in.assign(time=lambda x: pd.to_datetime(x['time'].astype(str) + '-07'))
