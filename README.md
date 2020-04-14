@@ -62,6 +62,13 @@ Changing the parameters (see examples and documentation) makes the plots nicer.
 
 
 # TODO
+
+## panel to alley
+
+## plotter
+* how to wipe out figure if I don't want to show it.
+* fit the trend and then filter to only the relevant years
+
 ## done
 * bfs
 * pep (national, state)

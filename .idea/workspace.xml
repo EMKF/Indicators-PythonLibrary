@@ -3,8 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="637abf27-333d-4348-83f3-9e2bdd28a388" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kauffman_data/public_data_helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/public_data_helpers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scratch/scratch.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch/scratch.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,23 +31,23 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/examples" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/scratch" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/scratch" />
+      <recent name="$PROJECT_DIR$/examples" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/kauffman_data" />
       <recent name="$PROJECT_DIR$/admin_data" />
       <recent name="$PROJECT_DIR$/scratch" />
       <recent name="$PROJECT_DIR$/data_in" />
     </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/examples" />
-      <recent name="$PROJECT_DIR$/scratch" />
-      <recent name="$PROJECT_DIR$" />
-    </key>
   </component>
-  <component name="RunManager" selected="Python.nes">
+  <component name="RunManager" selected="Python.scratch">
     <configuration name="bds" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="downwardata" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -131,7 +132,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="pep (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="scratch" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="downwardata" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -139,11 +140,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kauffman_data" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/scratch" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kauffman_data/pep.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch/scratch.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -154,11 +155,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.scratch" />
         <item itemvalue="Python.nes" />
         <item itemvalue="Python.bfs (1)" />
         <item itemvalue="Python.lfs" />
         <item itemvalue="Python.bds" />
-        <item itemvalue="Python.pep (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -196,34 +197,34 @@
       <screen x="-1920" y="23" width="1920" height="1057" />
     </state>
     <state x="-1346" y="239" key="FileChooserDialogImpl/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1579027886397" />
-    <state width="1419" height="299" key="GridCell.Tab.0.bottom" timestamp="1586812722368">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="374" key="GridCell.Tab.0.bottom" timestamp="1586883913540">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="299" key="GridCell.Tab.0.bottom/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586467881108" />
+    <state width="1899" height="374" key="GridCell.Tab.0.bottom/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586883913540" />
     <state width="1899" height="190" key="GridCell.Tab.0.bottom/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069777" />
     <state width="1899" height="335" key="GridCell.Tab.0.bottom/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921617" />
     <state width="1419" height="299" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1586812722368" />
     <state width="1419" height="330" key="GridCell.Tab.0.bottom/0.23.1920.1057@0.23.1920.1057" timestamp="1584753072748" />
-    <state width="1419" height="299" key="GridCell.Tab.0.center" timestamp="1586812722367">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="374" key="GridCell.Tab.0.center" timestamp="1586883913538">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="299" key="GridCell.Tab.0.center/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586467881107" />
+    <state width="1899" height="374" key="GridCell.Tab.0.center/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586883913538" />
     <state width="1899" height="190" key="GridCell.Tab.0.center/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069776" />
     <state width="1899" height="335" key="GridCell.Tab.0.center/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921616" />
     <state width="1419" height="299" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1586812722367" />
     <state width="1419" height="330" key="GridCell.Tab.0.center/0.23.1920.1057@0.23.1920.1057" timestamp="1584753072747" />
-    <state width="1419" height="299" key="GridCell.Tab.0.left" timestamp="1586812722366">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="374" key="GridCell.Tab.0.left" timestamp="1586883913538">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="299" key="GridCell.Tab.0.left/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586467881107" />
+    <state width="1899" height="374" key="GridCell.Tab.0.left/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586883913538" />
     <state width="1899" height="190" key="GridCell.Tab.0.left/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069775" />
     <state width="1899" height="335" key="GridCell.Tab.0.left/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921615" />
     <state width="1419" height="299" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1586812722366" />
     <state width="1419" height="330" key="GridCell.Tab.0.left/0.23.1920.1057@0.23.1920.1057" timestamp="1584753072746" />
-    <state width="1419" height="299" key="GridCell.Tab.0.right" timestamp="1586812722367">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="374" key="GridCell.Tab.0.right" timestamp="1586883913539">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="299" key="GridCell.Tab.0.right/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586467881107" />
+    <state width="1899" height="374" key="GridCell.Tab.0.right/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586883913539" />
     <state width="1899" height="190" key="GridCell.Tab.0.right/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069776" />
     <state width="1899" height="335" key="GridCell.Tab.0.right/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921617" />
     <state width="1419" height="299" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1586812722367" />
@@ -244,10 +245,10 @@
       <screen x="-1920" y="23" width="1920" height="1057" />
     </state>
     <state x="-1155" y="475" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1579030493867" />
-    <state x="513" y="252" width="670" height="676" key="search.everywhere.popup" timestamp="1585861517905">
+    <state x="513" y="252" width="670" height="676" key="search.everywhere.popup" timestamp="1586879400220">
       <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state x="513" y="252" width="670" height="676" key="search.everywhere.popup/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1585861517905" />
+    <state x="513" y="252" width="670" height="676" key="search.everywhere.popup/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1586879400220" />
     <state x="513" y="252" width="670" height="676" key="search.everywhere.popup/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584366286876" />
     <state x="-1407" y="252" width="670" height="676" key="search.everywhere.popup/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584012939325" />
   </component>

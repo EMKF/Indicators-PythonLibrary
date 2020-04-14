@@ -17,16 +17,27 @@ def _grouper(df, lvalues):  # todo: should I put this inside the class?
 @pd.api.extensions.register_dataframe_accessor("pub")
 class PublicDataHelpers:
     def __init__(self, pandas_obj):
-        self._validate(pandas_obj)
+        # self._validate(pandas_obj)
         self._obj = pandas_obj
+        self.covars = pandas_obj.columns.tolist()
 
     @staticmethod
     def _validate(obj):
         # verify there is a column latitude and a column longitude
         if 'time' not in obj.columns:  # todo: probably want to change this to year
             raise AttributeError("Must have 'time'.")
+
         # if obj['time'].dtype in ['object', 'str']:
         #     raise AttributeError("'time' is wrong type.")
+
+    @staticmethod
+    def _validate_panel(obj, covar_lst):
+        if ('year' not in obj.columns):  # todo: probably want to change this to year
+            raise KeyError("Must have a column named 'year' in your dataframe.")
+        if ('fips' not in obj.columns):
+            raise KeyError("Must have a column named 'fips' in your dataframe.")
+        if not isinstance(covar_lst, list):
+            raise AttributeError("covar_lst must be a list.")
 
     # @property
     # def center(self):
@@ -34,6 +45,34 @@ class PublicDataHelpers:
     #     lat = self._obj.latitude
     #     lon = self._obj.longitude
     #     return (float(lon.mean()), float(lat.mean()))
+
+    # todo: does this work with multiple covariates? It works with Age of Business from jobs.
+    def panel_to_alley(self, covar_lst, outcome):
+        """
+        covar_lst: lst
+            List of covariates that are used to stratify the data.
+        outcome: str
+            The column name of the outcome whose values become the cells of the dataframe.
+        """
+        data_in = self._obj
+        self._validate_panel(data_in, covar_lst)
+        year_lst = data_in['year'].unique().tolist()
+
+        df = data_in[['fips', 'year'] + covar_lst + [outcome]].\
+            pipe(pd.pivot_table, index=['fips'] + covar_lst, columns='year', values=outcome).\
+            reset_index().\
+            replace('overall', '').\
+            assign(demographic=lambda x: x[covar_lst].agg(''.join, axis=1))
+
+        covar_dict = {}
+        for covar in covar_lst:
+            for val in df[covar].unique():
+                covar_dict[val] = covar
+        df.loc[:, 'demographic-type'] = df['demographic'].map(covar_dict)
+        df.loc[df['demographic'] == '', 'demographic-type'] = ''
+
+        return df[['fips', 'demographic-type', 'demographic'] + year_lst]
+
 
     def econ_indexer(self, var):
         # todo: check if var is None and then is a series and doesn't subset
@@ -177,4 +216,3 @@ class PublicDataHelpers:
             plt.savefig(save_path)
         if show:
             plt.show()
-# todo: how to wipe out figure if I don't want to show it.
