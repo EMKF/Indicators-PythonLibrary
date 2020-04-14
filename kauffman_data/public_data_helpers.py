@@ -97,7 +97,6 @@ class PublicDataHelpers:
         sns.set_style("whitegrid")  #, {'axes.grid': False})
         fig = plt.figure(figsize=(12, 8))
         for ind, var in enumerate(var_label_lst):
-            print(var)
             ax = fig.add_subplot(len(var_lst), 1, ind + 1)
 
             if strata_dic:
@@ -127,7 +126,6 @@ class PublicDataHelpers:
                     query('time <= "{}"'.format(end_year)). \
                     query('{var} == {var}'.format(var=var[0])). \
                     pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
-                print(df.head())
                 sns.lineplot(data=df, ax=ax, label=var[1], sort=False)
 
                 if filter:
@@ -159,7 +157,6 @@ class PublicDataHelpers:
                 for df_date in df.index:
                     marker = '{year}-{month_day}'.format(year=df_date.year, month_day=day_marker)
                     if df_date < pd.to_datetime(marker) and df_date + pd.DateOffset(**offset) >= pd.to_datetime(marker):
-                        print(df_date, day_marker)
                         if first:
                             ax.axvspan(df_date, df_date + pd.DateOffset(**offset), alpha=0.3, color='firebrick', label='Week of {}'.format(day_marker))
                             first=False
