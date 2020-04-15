@@ -27,8 +27,9 @@ def _region_transform(df, v, df_out):
         ) \
         [['name', 'fips', 'type', 'category'] + new_covar_lst].\
         query('category != "Ages 25-64"'). \
-        pipe(pd.wide_to_long, v, i=['name', 'fips', 'type', 'category'], j='year').\
-        reset_index()
+        pipe(pd.wide_to_long, v, i=['name', 'fips', 'type', 'category'], j='year'). \
+        reset_index(). \
+        assign(category=lambda x: pd.Categorical(x['category'], ['Total', 'Ages 20-34', 'Ages 35-44', 'Ages 45-54', 'Ages 55-64', 'Less than High School', 'High School Graduate', 'Some College', 'College Graduate', 'Native-Born', 'Immigrant', 'White', 'Black', 'Latino', 'Asian', 'Male', 'Female', 'Veterans', 'Non-Veterans']))
 
     if df_out.shape[1] == 0:
         return df_v
@@ -55,6 +56,7 @@ def raw_kese_formatter(state_file_path, us_file_path):
 
     return df_state.\
         append(df_us).\
+        sort_values(['fips', 'category']).\
         reset_index(drop=True)
 
 
