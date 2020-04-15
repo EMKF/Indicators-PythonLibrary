@@ -9,9 +9,9 @@ setup(
     # Needed to actually package something
     packages=['kauffman_data'],
     # Needed for dependencies
-    install_requires=['numpy', 'pandas', 'requests', 'statsmodels'],
+    install_requires=['numpy', 'pandas', 'requests', 'statsmodels', 'xlrd'],
     # *strongly* suggested for sharing
-    version='1.1.3',
+    version='1.1.4',
     # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',

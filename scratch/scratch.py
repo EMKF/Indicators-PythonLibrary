@@ -4,7 +4,7 @@ import requests
 import numpy as np
 import pandas as pd
 import kauffman_data.constants as c
-import kauffman_data.public_data_helpers
+import kauffman_data.public_data_helpers as p
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -14,7 +14,7 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def main():
+def scratch_panel_to_alley():
     df = pd.read_csv(c.filenamer('../scratch/jobs_indicators_sample_all.csv')).\
         rename(columns={'Age': 'Age of Business'})
     df.loc[df['Age of Business'] == '0-1', 'Age of Business'] = 'Ages 0 to 1'
@@ -33,6 +33,13 @@ def main():
     df_out = df_in.pub.panel_to_alley(['Age of Business'], 'Age Share of Employment')
     print(df_out.head(65))
 
+
+def scratch_kese_to_panel():
+    p.fairlie_to_panel(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
+
+def main():
+    # scratch_panel_to_alley()
+    scratch_kese_to_panel()
 
 if __name__ == '__main__':
     main()
