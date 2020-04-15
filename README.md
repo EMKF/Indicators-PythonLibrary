@@ -58,6 +58,15 @@ plotting the data is as simple as
 ```python
 df.pub.plot()
 ```
+
+```python
+import kauffman_data.constants as c
+import kauffman_data.public_data_helpers as p
+
+df = p.raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
+df_out = df.pub.download_to_alley_formatter(['type', 'category'], 'rne')
+
+```
 Changing the parameters (see examples and documentation) makes the plots nicer.
 
 

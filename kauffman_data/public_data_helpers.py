@@ -23,17 +23,19 @@ def _region_transform(df, v, df_out):
         assign(
             type=lambda x: 'Total' if 'type' not in x.columns else x['type'],
             category=lambda x: 'Total' if 'category' not in x.columns else x['category'],
+            fips=lambda x: x['name'].map(c.us_state_abbrev).map(c.state_dic_temp)
         ) \
-        [['name', 'type', 'category'] + new_covar_lst].\
-        pipe(pd.wide_to_long, v, i=['name', 'type', 'category'], j='year').\
+        [['name', 'fips', 'type', 'category'] + new_covar_lst].\
+        query('category != "Ages 25-64"'). \
+        pipe(pd.wide_to_long, v, i=['name', 'fips', 'type', 'category'], j='year').\
         reset_index()
 
     if df_out.shape[1] == 0:
         return df_v
-    return df_out.merge(df_v, how='left', on=['name', 'type', 'category', 'year'])
+    return df_out.merge(df_v, how='left', on=['name', 'fips', 'type', 'category', 'year'])
 
 
-def fairlie_to_panel(state_file_path, us_file_path):
+def raw_kese_formatter(state_file_path, us_file_path):
     """
     file_path_lst: lst
         List containing file paths of Excel file with the state-level and national-level KESE data.
@@ -89,8 +91,7 @@ class PublicDataHelpers:
     #     return (float(lon.mean()), float(lat.mean()))
 
 
-    # todo: does this work with multiple covariates? It works with Age of Business from jobs.
-    def panel_to_alley(self, covar_lst, outcome):
+    def download_to_alley_formatter(self, covar_lst, outcome):
         """
         covar_lst: lst
             List of covariates that are used to stratify the data.
@@ -99,22 +100,12 @@ class PublicDataHelpers:
         """
         data_in = self._obj
         self._validate_panel(data_in, covar_lst)
-        year_lst = data_in['year'].unique().tolist()
 
-        df = data_in[['fips', 'year'] + covar_lst + [outcome]].\
+        return data_in[['fips', 'year'] + covar_lst + [outcome]].\
             pipe(pd.pivot_table, index=['fips'] + covar_lst, columns='year', values=outcome).\
             reset_index().\
-            replace('overall', '').\
-            assign(demographic=lambda x: x[covar_lst].agg(''.join, axis=1))
-
-        covar_dict = {}
-        for covar in covar_lst:
-            for val in df[covar].unique():
-                covar_dict[val] = covar
-        df.loc[:, 'demographic-type'] = df['demographic'].map(covar_dict)
-        df.loc[df['demographic'] == '', 'demographic-type'] = ''
-
-        return df[['fips', 'demographic-type', 'demographic'] + year_lst]
+            replace('Total', '').\
+            rename(columns={'type': 'demographic-type', 'category': 'demographic'})
 
 
     def econ_indexer(self, var):

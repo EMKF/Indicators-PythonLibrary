@@ -35,7 +35,12 @@ def scratch_panel_to_alley():
 
 
 def scratch_kese_to_panel():
-    p.fairlie_to_panel(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
+    df = p.raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
+    df.to_csv('/Users/thowe/Downloads/kese_2019_download.csv', index=False)
+    print(df.head())
+    df_out = df.pub.download_to_alley_formatter(['type', 'category'], 'rne')
+    print(df_out)
+
 
 def main():
     # scratch_panel_to_alley()
