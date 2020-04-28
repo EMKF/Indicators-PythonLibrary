@@ -14,52 +14,6 @@ def _grouper(df, lvalues):  # todo: should I put this inside the class?
     return df.reset_index(drop=True)
 
 
-def _region_transform(df, v, df_out):
-    covar_lst = [col for col in df.columns.tolist() if v + '_' in col and col.count('_') == 1]
-    new_covar_lst = [col.replace('_', '') for col in covar_lst]
-    df_v = df.\
-        rename(columns={**dict(zip(covar_lst, new_covar_lst)), **{'sname': 'name', 'demtype': 'type', 'demographic': 'category'}}). \
-        replace('Annual', 'Total').\
-        assign(
-            type=lambda x: 'Total' if 'type' not in x.columns else x['type'],
-            category=lambda x: 'Total' if 'category' not in x.columns else x['category'],
-            fips=lambda x: x['name'].map(c.us_state_abbrev).map(c.state_dic_temp)
-        ) \
-        [['name', 'fips', 'type', 'category'] + new_covar_lst].\
-        query('category != "Ages 25-64"'). \
-        pipe(pd.wide_to_long, v, i=['name', 'fips', 'type', 'category'], j='year'). \
-        reset_index(). \
-        assign(category=lambda x: pd.Categorical(x['category'], ['Total', 'Ages 20-34', 'Ages 35-44', 'Ages 45-54', 'Ages 55-64', 'Less than High School', 'High School Graduate', 'Some College', 'College Graduate', 'Native-Born', 'Immigrant', 'White', 'Black', 'Latino', 'Asian', 'Male', 'Female', 'Veterans', 'Non-Veterans']))
-
-    if df_out.shape[1] == 0:
-        return df_v
-    return df_out.merge(df_v, how='left', on=['name', 'fips', 'type', 'category', 'year'])
-
-
-def raw_kese_formatter(state_file_path, us_file_path):
-    """
-    file_path_lst: lst
-        List containing file paths of Excel file with the state-level and national-level KESE data.
-    """
-    indicator_dict = dict(
-        zip(
-            ['Rate of New Entrepreneurs', 'Opportunity Share of NE', 'Startup Job Creation', 'Startup Survival Rate',
-             'KESE Index'],
-            ['rne', 'ose', 'sjc', 'ssr', 'zindex']
-        )
-    )
-
-    df_us, df_state = pd.DataFrame(), pd.DataFrame()
-    for k, v in indicator_dict.items():
-        df_state = _region_transform(pd.read_excel(state_file_path, sheet_name=k), v, df_state)
-        df_us = _region_transform(pd.read_excel(us_file_path, sheet_name=k), v, df_us)
-
-    return df_state.\
-        append(df_us).\
-        sort_values(['fips', 'category']).\
-        reset_index(drop=True)
-
-
 @pd.api.extensions.register_dataframe_accessor("pub")
 class PublicDataHelpers:
     def __init__(self, pandas_obj):
@@ -109,12 +63,23 @@ class PublicDataHelpers:
             replace('Total', '').\
             rename(columns={'type': 'demographic-type', 'category': 'demographic'})
 
-
     def econ_indexer(self, var):
+        """
+        var: str or lst
+            if lst, then returns a dataframe with all columns in the list transformed into an index
+        """
         # todo: check if var is None and then is a series and doesn't subset
-        df = self._obj.set_index('time')[var]
-        initial = df.iloc[0]
-        return (((df - initial) / initial) + 1) * 100
+
+        if isinstance(var, list):
+            df = self._obj
+            for col in var:
+                initial = df.iloc[0][col]
+                df.loc[:, col] = 100 * (((df[col] - initial) / initial) + 1)
+            return df
+        else:
+            df = self._obj.set_index('time')[var]
+            initial = df.iloc[0]
+            return (((df - initial) / initial) + 1) * 100
 
     def plot(self, var_lst=None, strata_dic=None, show=True, save_path=None, title=None, to_index=False,
              recessions=False, filter=False, start_year=None, end_year=None, day_marker=None):
@@ -149,8 +114,8 @@ class PublicDataHelpers:
         elif 'Q' in df_in.loc[0, 'time']:  # if quarterly
             lamb = 1600
             df_in = self._obj.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
-            offset = {'quarters': 1}
-        else: # if yearly
+            offset = {'months': 3}
+        else:  # if yearly
             lamb = 6.25
             df_in = df_in.assign(time=lambda x: pd.to_datetime(x['time'].astype(str) + '-07'))
             offset = {'years': 1}
