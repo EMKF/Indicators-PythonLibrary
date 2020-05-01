@@ -72,6 +72,9 @@ Changing the parameters (see examples and documentation) makes the plots nicer.
 
 # TODO
 
+It would be nice to be able to combine time series onto the same plot
+
+
 ## panel to alley
 
 ## plotter

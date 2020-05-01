@@ -28,6 +28,7 @@ class ProgressPercentage(object):
             sys.stdout.flush()
 
 
+# todo: I don't need this garbage because pandas is amazing
 def aws_upload(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
 

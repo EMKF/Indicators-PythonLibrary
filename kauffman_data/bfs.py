@@ -105,7 +105,25 @@ def region_data_frame_create(region, series_lst, seasonally_adj, start_year, end
         pipe(features_create, region)
 
 
-def get_data(series_lst, obs_level, weekly=False, start_year=None, end_year=None, seasonally_adj=True, annualize=True):
+# import datetime
+# datetime.date(2020, 12, 28).isocalendar()
+#
+# datetime.date.fromisocalendar(2020, 53, 0)
+#
+# pd.DateOffset(weeks=t) + pd.to_datetime('2006-01-07'))
+
+def _iso_year_start(iso_year):
+    "The gregorian calendar date of the first day of the given ISO year"
+    fourth_jan = datetime.date(iso_year, 1, 4)
+    delta = datetime.timedelta(fourth_jan.isoweekday() - 1)
+    return fourth_jan - delta
+
+def _iso_to_gregorian(iso_year, iso_week, iso_day):
+    "Gregorian calendar date for the given ISO year, week and day"
+    year_start = _iso_year_start(iso_year)
+    return year_start + datetime.timedelta(days=iso_day - 1, weeks=iso_week - 1)
+
+def get_data(series_lst, obs_level='us', weekly=False, start_year=None, end_year=None, seasonally_adj=True, annualize=True):
     """
     series_lst: lst
         Quarterly Variables:
@@ -150,17 +168,17 @@ def get_data(series_lst, obs_level, weekly=False, start_year=None, end_year=None
 
     # todo: get this better integrated into the code
     if weekly:
-        return pd.read_csv('https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv')\
-            [['Year', 'Week'] + series_lst].\
+        return pd.read_csv('https://www.census.gov/econ/bfs/csv/bfs_{obs_level}_apps_weekly_nsa.csv'.format(obs_level=obs_level)).\
+            assign(region=lambda x: x['State'] if obs_level == 'state' else obs_level) \
+            [['Year', 'Week', 'region'] + series_lst].\
             assign(
                 week_count=lambda x: range(x.shape[0]),
-                time=lambda x: x['week_count'].apply(lambda t: pd.DateOffset(weeks=t) + pd.to_datetime('2006-01-07')),
-                region='us'
+                time=lambda x: x.apply(lambda t: _iso_to_gregorian(int(t['Year']), int(t['Week']), 6), axis=1)
             ).\
             astype({'time': 'str'}).\
             drop(['Year', 'Week'], 1)\
             [['time'] + series_lst + ['region']]
-
+    # todo: fix region
 
     if not start_year:
         start_year = 2004
@@ -189,8 +207,14 @@ if __name__ == '__main__':
 
     # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)
     # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'us', 2004, annualize=False)
+
     df = get_data(['BA_NSA'], 'us', start_year=2004, weekly=True, annualize=False)
-    print(df)
+    print(df.head())
+    df = get_data(['BA_NSA'], 'state', start_year=2004, weekly=True, annualize=False)
+    print(df.info())
+    print(df.head())
+    print(df.tail())
+
 
 # todo: https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
 # todo: from https://www.census.gov/econ/bfs/index.html?#
