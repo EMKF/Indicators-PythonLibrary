@@ -178,7 +178,7 @@ def get_data(series_lst, obs_level='us', start_year=None, end_year=None, seasona
                 time=lambda x: x.apply(lambda t: _iso_to_gregorian(int(t['Year']), int(t['Week']), 6), axis=1)
             ).\
             astype({'time': 'str'}).\
-            drop(['Year', 'Week'] + ['State'] if obs_level == 'state' else [], 1)
+            drop(['Year', 'Week', 'State'] if obs_level == 'state' else ['Year', 'Week'], 1)
 
     if not start_year:
         start_year = 2004
