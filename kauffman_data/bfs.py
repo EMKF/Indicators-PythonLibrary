@@ -123,9 +123,11 @@ def _iso_to_gregorian(iso_year, iso_week, iso_day):
     year_start = _iso_year_start(iso_year)
     return year_start + datetime.timedelta(days=iso_day - 1, weeks=iso_week - 1)
 
-def get_data(series_lst, obs_level='us', weekly=False, start_year=None, end_year=None, seasonally_adj=True, annualize=True):
+def get_data(series_lst, obs_level='us', start_year=None, end_year=None, seasonally_adj=True, annualize=True):
     """
-    series_lst: lst
+    series_lst: lst or 'weekly'
+        If quarterly data, then the list must consist of one of the following variable names.
+
         Quarterly Variables:
             BA_BA: 'Business Applications'
             BA_CBA: 'Business Applications from Corporations'
@@ -139,6 +141,8 @@ def get_data(series_lst, obs_level='us', weekly=False, start_year=None, end_year
             BF_SBF8Q: Spliced Business Formations within Eight Quarters
             BF_DUR4Q: Average Duration (in Quarters) from Business Application to Formation within Four Quarters
             BF_DUR8Q: Average Duration (in Quarters) from Business Application to Formation within Eight Quarters
+
+        Alternatively, if 'weekly' then the entire weekly dataset is returned for the corresponding observation level.
 
         Weekly Variables:
             BA_NSA: Not seasonally adjusted Business Application national series
@@ -167,18 +171,14 @@ def get_data(series_lst, obs_level='us', weekly=False, start_year=None, end_year
     """
 
     # todo: get this better integrated into the code
-    if weekly:
-        return pd.read_csv('https://www.census.gov/econ/bfs/csv/bfs_{obs_level}_apps_weekly_nsa.csv'.format(obs_level=obs_level)).\
-            assign(region=lambda x: x['State'] if obs_level == 'state' else obs_level) \
-            [['Year', 'Week', 'region'] + series_lst].\
+    if isinstance(series_lst, str):
+        return pd.read_csv('https://www.census.gov/econ/bfs/csv/bfs_{obs_level}_apps_weekly_nsa.csv'.format(obs_level=obs_level)). \
+            assign(region=lambda x: x['State'] if obs_level == 'state' else obs_level). \
             assign(
-                week_count=lambda x: range(x.shape[0]),
                 time=lambda x: x.apply(lambda t: _iso_to_gregorian(int(t['Year']), int(t['Week']), 6), axis=1)
             ).\
             astype({'time': 'str'}).\
-            drop(['Year', 'Week'], 1)\
-            [['time'] + series_lst + ['region']]
-    # todo: fix region
+            drop(['Year', 'Week'] + ['State'] if obs_level == 'state' else [], 1)
 
     if not start_year:
         start_year = 2004
@@ -208,9 +208,9 @@ if __name__ == '__main__':
     # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)
     # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'us', 2004, annualize=False)
 
-    df = get_data(['BA_NSA'], 'us', start_year=2004, weekly=True, annualize=False)
+    df = get_data('weekly', 'us', start_year=2004, annualize=False)
     print(df.head())
-    df = get_data(['BA_NSA'], 'state', start_year=2004, weekly=True, annualize=False)
+    df = get_data('weekly', 'state', start_year=2004, annualize=False)
     print(df.info())
     print(df.head())
     print(df.tail())
