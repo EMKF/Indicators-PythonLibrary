@@ -2,8 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="637abf27-333d-4348-83f3-9e2bdd28a388" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/kauffman_data/ase.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kauffman_data/bfs.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/bfs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kauffman_data/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kauffman_data/data_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/data_manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -46,7 +50,28 @@
       <recent name="$PROJECT_DIR$/data_in" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.bfs (1)">
+  <component name="RunManager" selected="Python.ase">
+    <configuration name="ase" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="downwardata" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kauffman_data" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kauffman_data/ase.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="bfs (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="downwardata" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -81,27 +106,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kauffman_data/data_manager.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="lfs" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="downwardata" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kauffman_data" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kauffman_data/lfs.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -154,11 +158,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.bfs (1)" />
+        <item itemvalue="Python.ase" />
         <item itemvalue="Python.data_manager" />
+        <item itemvalue="Python.bfs (1)" />
         <item itemvalue="Python.scratch" />
         <item itemvalue="Python.nes" />
-        <item itemvalue="Python.lfs" />
       </list>
     </recent_temporary>
   </component>
@@ -192,37 +196,37 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="184" y="123" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1440.877@0.23.1440.877" timestamp="1584132063521" />
-    <state width="1419" height="240" key="GridCell.Tab.0.bottom" timestamp="1588338329119">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="301" key="GridCell.Tab.0.bottom" timestamp="1588624327953">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="193" key="GridCell.Tab.0.bottom/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588168721524" />
+    <state width="1899" height="301" key="GridCell.Tab.0.bottom/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588624327953" />
     <state width="1899" height="190" key="GridCell.Tab.0.bottom/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069777" />
     <state width="1899" height="335" key="GridCell.Tab.0.bottom/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921617" />
-    <state width="1419" height="240" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1588338329119" />
+    <state width="1419" height="240" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1588422986290" />
     <state width="1419" height="330" key="GridCell.Tab.0.bottom/0.23.1920.1057@0.23.1920.1057" timestamp="1584753072748" />
-    <state width="1419" height="240" key="GridCell.Tab.0.center" timestamp="1588338329119">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="301" key="GridCell.Tab.0.center" timestamp="1588624327952">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="193" key="GridCell.Tab.0.center/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588168721522" />
+    <state width="1899" height="301" key="GridCell.Tab.0.center/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588624327952" />
     <state width="1899" height="190" key="GridCell.Tab.0.center/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069776" />
     <state width="1899" height="335" key="GridCell.Tab.0.center/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921616" />
-    <state width="1419" height="240" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1588338329119" />
+    <state width="1419" height="240" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1588422986290" />
     <state width="1419" height="330" key="GridCell.Tab.0.center/0.23.1920.1057@0.23.1920.1057" timestamp="1584753072747" />
-    <state width="1419" height="240" key="GridCell.Tab.0.left" timestamp="1588338329118">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="301" key="GridCell.Tab.0.left" timestamp="1588624327951">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="193" key="GridCell.Tab.0.left/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588168721522" />
+    <state width="1899" height="301" key="GridCell.Tab.0.left/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588624327951" />
     <state width="1899" height="190" key="GridCell.Tab.0.left/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069775" />
     <state width="1899" height="335" key="GridCell.Tab.0.left/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921615" />
-    <state width="1419" height="240" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1588338329118" />
+    <state width="1419" height="240" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1588422986290" />
     <state width="1419" height="330" key="GridCell.Tab.0.left/0.23.1920.1057@0.23.1920.1057" timestamp="1584753072746" />
-    <state width="1419" height="240" key="GridCell.Tab.0.right" timestamp="1588338329119">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state width="1899" height="301" key="GridCell.Tab.0.right" timestamp="1588624327952">
+      <screen x="0" y="23" width="1920" height="1057" />
     </state>
-    <state width="1899" height="193" key="GridCell.Tab.0.right/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588168721523" />
+    <state width="1899" height="301" key="GridCell.Tab.0.right/-1440.778.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1588624327952" />
     <state width="1899" height="190" key="GridCell.Tab.0.right/-1440.998.1440.877/0.23.1920.1057@0.23.1920.1057" timestamp="1584468069776" />
     <state width="1899" height="335" key="GridCell.Tab.0.right/-753.1103.1440.877/0.23.1920.1057/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1584026921617" />
-    <state width="1419" height="240" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1588338329119" />
+    <state width="1419" height="240" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1588422986290" />
     <state width="1419" height="330" key="GridCell.Tab.0.right/0.23.1920.1057@0.23.1920.1057" timestamp="1584753072747" />
     <state x="221" y="100" key="SettingsEditor" timestamp="1588333780291">
       <screen x="0" y="23" width="1440" height="877" />

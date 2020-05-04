@@ -71,15 +71,12 @@ Changing the parameters (see examples and documentation) makes the plots nicer.
 
 
 # TODO
-
-It would be nice to be able to combine time series onto the same plot
-
-
 ## panel to alley
 
 ## plotter
 * how to wipe out figure if I don't want to show it.
 * fit the trend and then filter to only the relevant years
+* It would be nice to be able to combine time series onto the same plot
 
 ## done
 * bfs
@@ -91,7 +88,11 @@ It would be nice to be able to combine time series onto the same plot
     * county
 * bfs
     * individual states or subset of all states
-    
+* ase
+    * finish constructing the dictionary named ase_url_dict from constants.py (at the bottom of the script); update the docstring in ase.py accordingly.
+    * functions that clean the data and return cleaned (but still as raw as possible) data
+* data_manager
+    * generalize the zip_to_dataframe function as specified in the doc string
    
 # Development documentation
 * https://uoftcoders.github.io/studyGroup/lessons/python/packages/lesson/

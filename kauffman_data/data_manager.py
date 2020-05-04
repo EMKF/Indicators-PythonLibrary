@@ -1,70 +1,30 @@
-import boto3
+import io
 import logging
 import pandas as pd
 from botocore.exceptions import ClientError
+import zipfile
+import requests
+
+pd.set_option('max_columns', 1000)
+pd.set_option('max_info_columns', 1000)
+pd.set_option('expand_frame_repr', False)
+pd.set_option('display.max_rows', 30000)
+pd.set_option('max_colwidth', 4000)
+pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-import os
-import sys
-import threading
 
-class ProgressPercentage(object):
-
-    def __init__(self, filename):
-        self._filename = filename
-        self._size = float(os.path.getsize(filename))
-        self._seen_so_far = 0
-        self._lock = threading.Lock()
-
-    def __call__(self, bytes_amount):
-        # To simplify, assume this is hooked up to a single filename
-        with self._lock:
-            self._seen_so_far += bytes_amount
-            percentage = (self._seen_so_far / self._size) * 100
-            sys.stdout.write(
-                "\r%s  %s / %s  (%.2f%%)" % (
-                    self._filename, self._seen_so_far, self._size,
-                    percentage))
-            sys.stdout.flush()
-
-
-# todo: I don't need this garbage because pandas is amazing
-def aws_upload(file_name, bucket, object_name=None):
-    """Upload a file to an S3 bucket
-
-    :param file_name: File to upload
-        - e.g.: '/Users/thowe/Downloads/qwi_412506b63372496a91fad6c8029f9542.csv'
-    :param bucket: Bucket to upload to
-        - e.g.: 'emkf.data.research'
-    :param object_name: S3 object name. If not specified then file_name is used. Subdirectories should precede the
-        filename, separated by a slash.
-        - e.g.: 'new_employer_businesses/qwi.csv
-    :return: True if file was uploaded, else False
+def zip_to_dataframe(url):
     """
+    Takes a url and reads in the .dat file. Assumes only one file inside the zip and that it is .dat formatted.
 
-    # If S3 object_name was not specified, use file_name
-    if object_name is None:
-        object_name = file_name
-
-    # Upload the file
-    s3_client = boto3.client('s3')
-    try:
-        response = s3_client.upload_file(
-            file_name, bucket, object_name,
-            Callback=ProgressPercentage(file_name)
-        )
-    except ClientError as e:
-        logging.error(e)
-        return False
-    return True
-
-
-def aws_download(file_name, bucket, object_name):
-    s3 = boto3.client('s3')
-    s3.download_file(
-        bucket, object_name, file_name,
-        Callback=ProgressPercentage(file_name)
-    )
+    TODO: generalize this.
+    """
+    r = requests.get(url)
+    filebytes = io.BytesIO(r.content)
+    myzipfile = zipfile.ZipFile(filebytes)
+    for name in myzipfile.namelist():
+        return pd.read_csv(myzipfile.open(name), sep='|', low_memory=False)
 
 
 def _region_transform(df, v, df_out):
@@ -133,4 +93,6 @@ def download_to_alley_formatter(df, covar_lst, outcome):
 
 if __name__ == '__main__':
     # aws_upload('/Users/thowe/Downloads/qwi_412506b63372496a91fad6c8029f9542.csv', 'emkf.data.research', 'new_employer_businesses/qwi.csv')
-    aws_download('/Users/thowe/Downloads/qwi.csv', 'emkf.data.research', 'new_employer_businesses/qwi.csv')
+    # aws_download('/Users/thowe/Downloads/qwi.csv', 'emkf.data.research', 'new_employer_businesses/qwi.csv')
+
+    zip_to_dataframe('https://www2.census.gov/econ2016/SE/sector00/SE1600CSA01.zip?#')
