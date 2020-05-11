@@ -12,7 +12,8 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 # Hayden test 123 Hayden test 123
-
+def geofilterer(df):
+    return df.query('GEO_TTL=="United States"')
 
 def get_data(series_name, year):
     """
