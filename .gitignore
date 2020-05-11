@@ -6,6 +6,7 @@
 *.xls
 *.doc
 *.png
+*.xml
 __pycache__
 
 .idea/
