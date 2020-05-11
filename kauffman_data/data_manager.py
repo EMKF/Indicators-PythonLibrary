@@ -1,9 +1,8 @@
 import io
-import logging
-import pandas as pd
-from botocore.exceptions import ClientError
 import zipfile
 import requests
+import pandas as pd
+import kauffman_data.constants as c
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -51,6 +50,8 @@ def _region_transform(df, v, df_out):
 
 def raw_kese_formatter(state_file_path, us_file_path):
     """
+    Formats the raw Kese data (i.e., what Rob gives us) for download.
+
     file_path_lst: lst
         List containing file paths of Excel file with the state-level and national-level KESE data.
     """
@@ -75,6 +76,8 @@ def raw_kese_formatter(state_file_path, us_file_path):
 
 def download_to_alley_formatter(df, covar_lst, outcome):
     """
+    Formats downloadable data for Alley.
+
     covar_lst: lst
         List of covariates that are used to stratify the data.
     outcome: str

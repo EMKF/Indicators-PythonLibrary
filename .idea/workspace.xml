@@ -2,13 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="637abf27-333d-4348-83f3-9e2bdd28a388" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/kauffman_data/ase.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kauffman_data/bfs.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/bfs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kauffman_data/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/constants.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kauffman_data/data_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/data_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kauffman_data/lfs.py" beforeDir="false" afterPath="$PROJECT_DIR$/kauffman_data/lfs.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
