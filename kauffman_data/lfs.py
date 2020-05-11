@@ -17,7 +17,8 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 series_dict = {
     'inc_self_employment': 'LNU02048984',
     'uninc_self_employment': 'LNU02027714',
-    'civilian_labor_force': 'LNS11000000'
+    'civilian_labor_force': 'LNS11000000',
+    'unemployment_rate': 'LNS14000000'
 }
 
 
@@ -71,11 +72,14 @@ def get_data(series_lst=None, obs_level='us', start_year=None, end_year=None, se
     Still holding out for https://download.bls.gov/pub/time.series/la/    local area unemployment statistics.
         * looks like no. ACS has some, but not current
 
+    https://www.bls.gov/opub/hom/lau/home.htm
+
     M13 indicates an annual average.
 
     series_lst: int
         LNU11000000 --- Civilian labor force; seasonally adjusted; number reported in thousands of dollars but changed
             into dollars.
+        LNS14000000 --- Unemployment rate, 16 years and over. TODO: look in https://download.bls.gov/pub/time.series/la/, https://download.bls.gov/pub/time.series/la/la.txt explains the series
         LNU02048984 --- Employment level of incorporated, self-employed workers; not seasonally adjusted; number
             reported in thousands of dollars but changed into dollars
         LNU02027714 --- Employment level of unincorporated, self-employed workers; not seasonally adjusted; number
