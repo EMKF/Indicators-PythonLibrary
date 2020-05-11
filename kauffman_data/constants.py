@@ -104,3 +104,10 @@ ase_url_dict = {
     'Number of Owners in Business': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSCB01.zip?#',
     'Majority of Business Family-Owned': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSCB02.zip?#'
 }
+
+lfs_series_dict = {
+    'inc_self_employment': 'LNU02048984',
+    'uninc_self_employment': 'LNU02027714',
+    'civilian_labor_force': 'LNS11000000',
+    'unemployment_rate': 'LNS14000000'
+}
