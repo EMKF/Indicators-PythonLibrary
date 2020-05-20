@@ -1,6 +1,7 @@
 import io
 import zipfile
 import requests
+import numpy as np
 import pandas as pd
 import kauffman_data.constants as c
 
@@ -74,6 +75,58 @@ def raw_kese_formatter(state_file_path, us_file_path):
         reset_index(drop=True)
 
 
+def _grouper(df_in):
+    array = np.expand_dims(['Ages 0 to 1', 'Ages 2 to 3', 'Ages 4 to 5', 'Ages 6 to 10', 'Ages 11+'], 1)
+    for col in ['age{age}_emp_per_total_emp', 'age{age}_pay_per_total_pay', 'stable_emp_per_total_emp_age{age}', 'net_change_jobs_per_cap_age{age}']:
+        colx = map(lambda x: col.format(age=x), range(1, 6))
+
+        vals = np.expand_dims(df_in[colx].transpose().iloc[:, 0].values, 1)
+        array = np.c_[array, vals]
+    array = np.c_[array, np.expand_dims(np.repeat(df_in['index_geo'].values, 5), 1)]
+    return pd.DataFrame(array, columns=['category', 'contribution', 'compensation', 'constancy', 'creation', 'q2_index'])
+
+
+def _fips_formatter(df, region):
+    if region == 'us':
+        return df.assign(fips='00')
+    elif region == 'state':
+        return df.assign(fips=lambda x: x['fips'].apply(lambda row: row if len(row) == 2 else '0' + row))
+    else:
+        return df.assign(fips=lambda x: x['fips'].apply(lambda row: '00' + row if len(row) == 3 else '0' + row if len(row) == 4 else row))
+
+
+def raw_jobs_formatter(file_path):
+    """
+    Formats the raw Jobs data (i.e., the output from /Users/thowe/Projects/jobs_indicators/indicators_create.py) for download.
+
+    file_path: str
+        String containing the directory of the files with the region specific raw Jobs indicators data.
+    """
+
+    if file_path[-1] != '/':
+        file_path += '/'
+
+    df = pd.concat(
+        [
+            pd.read_csv(file_path + 'indicators_{}.csv'.format(region)). \
+                groupby(['name', 'fips', 'year']).apply(_grouper). \
+                reset_index(drop=False). \
+                astype({'fips': 'str'}).\
+                pipe(_fips_formatter, region). \
+                drop('level_3', 1)
+            for region in ['county', 'msa', 'state', 'us']
+        ]
+    ).\
+        reset_index(drop=True).\
+        assign(type='Age of Business') \
+        [['name', 'fips', 'type', 'category', 'year', 'contribution', 'compensation', 'constancy', 'creation', 'q2_index']]\
+
+    return df.\
+        append(df.query('category == "Ages 0 to 1"').assign(type='Total', category='Total')). \
+        assign(category=lambda x: pd.Categorical(x['category'], ['Total', 'Ages 0 to 1', 'Ages 2 to 3', 'Ages 4 to 5', 'Ages 6 to 10', 'Ages 11+'])).\
+        sort_values(['fips', 'year', 'category'])
+
+
 def download_to_alley_formatter(df, covar_lst, outcome):
     """
     Formats downloadable data for Alley.
@@ -98,4 +151,10 @@ if __name__ == '__main__':
     # aws_upload('/Users/thowe/Downloads/qwi_412506b63372496a91fad6c8029f9542.csv', 'emkf.data.research', 'new_employer_businesses/qwi.csv')
     # aws_download('/Users/thowe/Downloads/qwi.csv', 'emkf.data.research', 'new_employer_businesses/qwi.csv')
 
-    zip_to_dataframe('https://www2.census.gov/econ2016/SE/sector00/SE1600CSA01.zip?#')
+    # zip_to_dataframe('https://www2.census.gov/econ2016/SE/sector00/SE1600CSA01.zip?#')
+    import sys
+    df = raw_jobs_formatter('/Users/thowe/Projects/jobs_indicators/data/indicators').\
+        astype({'contribution': 'float'}).\
+        pipe(download_to_alley_formatter, ['type', 'category'], 'contribution')
+    print(df)
+    print(df.info())
