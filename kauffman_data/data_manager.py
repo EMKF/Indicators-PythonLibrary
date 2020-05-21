@@ -114,7 +114,7 @@ def raw_jobs_formatter(file_path):
                 astype({'fips': 'str'}).\
                 pipe(_fips_formatter, region). \
                 drop('level_3', 1)
-            for region in ['county', 'msa', 'state', 'us']
+            for region in ['state', 'us']  #'county', 'msa',
         ]
     ).\
         reset_index(drop=True).\
@@ -143,6 +143,7 @@ def download_to_alley_formatter(df, covar_lst, outcome):
     return df[['fips', 'year'] + covar_lst + [outcome]].\
         pipe(pd.pivot_table, index=['fips'] + covar_lst, columns='year', values=outcome).\
         reset_index().\
+        rename(columns={'fips': 'region'}).\
         replace('Total', '').\
         rename(columns={'type': 'demographic-type', 'category': 'demographic'})
 
@@ -153,8 +154,10 @@ if __name__ == '__main__':
 
     # zip_to_dataframe('https://www2.census.gov/econ2016/SE/sector00/SE1600CSA01.zip?#')
     import sys
-    df = raw_jobs_formatter('/Users/thowe/Projects/jobs_indicators/data/indicators').\
-        astype({'contribution': 'float'}).\
-        pipe(download_to_alley_formatter, ['type', 'category'], 'contribution')
-    print(df)
-    print(df.info())
+    df = raw_jobs_formatter('/Users/thowe/Projects/jobs_indicators/data/indicators')
+    for indicator in ['contribution', 'compensation', 'constancy', 'creation', 'q2_index']:
+        df.\
+            astype({'contribution': 'float'}).\
+            pipe(download_to_alley_formatter, ['type', 'category'], 'contribution').\
+            pipe(lambda x: print(x))
+            # to_csv('/Users/thowe/Downloads/jobs_{}.csv')
