@@ -114,7 +114,7 @@ def raw_jobs_formatter(file_path):
                 astype({'fips': 'str'}).\
                 pipe(_fips_formatter, region). \
                 drop('level_3', 1)
-            for region in ['state', 'us']  #'county', 'msa',
+            for region in ['county', 'msa', 'state', 'us']
         ]
     ).\
         reset_index(drop=True).\
