@@ -4,7 +4,7 @@ import joblib
 import requests
 import pandas as pd
 from kauffman_data import constants as c
-import kauffman_data.public_data_helpers
+import kauffman_data.cross_walk as cw
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -108,15 +108,16 @@ def _county_fetch_data_2000_2009(year):
     return pd.DataFrame(r.json())
 
 
-def _county_fetch_2010_2019(region):
+def _county_msa_fetch_2010_2019(region):
     if region == 'msa':
-        url = 'https://api.census.gov/data/2019/pep/population?get=GEONAME,POP,DATE_CODE&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*'
+        url = 'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*'
     elif region == 'county':
         url = 'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=county:*'
     r = requests.get(url)
     return pd.DataFrame(r.json())
 
-def _county_clean_2010_2019(df, obs_level):
+
+def _county_msa_clean_2010_2019(df, obs_level):
     return df.\
         pipe(_make_header). \
         rename(columns={'POP': 'population', 'GEONAME': 'name', 'NAME': 'name'}). \
@@ -149,6 +150,21 @@ def _state_us_fetch_data_all(region):
         series_id=series_id, key='b6602eab475fc27e3ea2feaedd7ff81b')
     r = requests.get(url)
     return r.json()['observations']
+
+
+def _msa_fetch_2004_2009():
+    """Crosswalks county population data to msa and calculates population for the latter"""
+    return cw.get_data(). \
+        merge(
+            get_data('county'),
+            how='left',
+            on=['year', 'fips']
+        ). \
+        astype({'population': 'int'}) \
+        [['population', 'year', 'CBSA Code']].\
+        groupby(['year', 'CBSA Code']).sum().\
+        reset_index(drop=False). \
+        rename(columns={'CBSA Code': 'fips'})
 
 
 def get_data(obs_level, start_year=None, end_year=None):
@@ -188,21 +204,21 @@ def get_data(obs_level, start_year=None, end_year=None):
                 ]
             ).\
             append(
-                _county_fetch_2010_2019(obs_level).pipe(_county_clean_2010_2019, obs_level)
+                _county_msa_fetch_2010_2019(obs_level).pipe(_county_msa_clean_2010_2019, obs_level)
             ).\
             sort_values(['fips', 'year']).\
             reset_index(drop=True)
 
-    # todo: start here
     elif obs_level == 'msa':
-        df_temp = _county_fetch_2010_2019(obs_level).pipe(_county_clean_2010_2019, obs_level)
-        return _msa_early_years().\
-            append(df_temp).\
+        df = _msa_fetch_2004_2009().\
+            append(
+                _county_msa_fetch_2010_2019(obs_level).pipe(_county_msa_clean_2010_2019, obs_level)
+            ).\
             sort_values(['fips', 'year']).\
             reset_index(drop=True)
 
-
     return df.pipe(_observations_filter, start_year, end_year)
+
 
 
 if __name__ == '__main__':
@@ -214,6 +230,9 @@ if __name__ == '__main__':
 
     # df = get_data('county')
     # df = get_data('us')
-    df = get_data('state')
+    # df = get_data('state')
+    df = get_data('msa')  # todo: there are problems with this one. look at output...some are obvious
     print(df.head(30))
     print(df.tail(30))
+
+# todo: which of the functions above can be killed?

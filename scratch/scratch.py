@@ -43,9 +43,18 @@ def scratch_kese_to_panel():
     # print(df_out)
 
 
+def plot_maps():
+    df = pd.read_csv('/Users/thowe/Downloads/ba_state_perc_change.csv'). \
+        assign(fips=lambda x: x['Region'].map(c.state_dic_temp))
+    # assign(fips=lambda x: x['Region'].map(c.state_dic_temp) + '000')
+    print(df.head())
+    # sys.exit()
+    df.pub.choro_map('Percentage Change')
+
 def main():
     # scratch_panel_to_alley()
-    scratch_kese_to_panel()
+    # scratch_kese_to_panel()
+    plot_maps()
 
 if __name__ == '__main__':
     main()

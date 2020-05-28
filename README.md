@@ -8,6 +8,9 @@ We are still developing this library, obviously, so local updating will be neces
 pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kcr
 ```
 
+Plotly was a bit of a beast to install. To write to file needed to install orca at https://github.com/plotly/orca
+
+
 # Documentation and Examples
 I added draft docstrings in the ```get_data``` functions for bds, bds, lfs, and pep modules.
 But it's still pretty weak. We'll have to add more documentation at some point. 

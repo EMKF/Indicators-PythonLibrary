@@ -4,7 +4,10 @@ import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.figure_factory as ff
 import kauffman_data.constants as c
+
 
 def _grouper(df, lvalues):  # todo: should I put this inside the class?
     if lvalues > 1:
@@ -38,6 +41,13 @@ class PublicDataHelpers:
             raise KeyError("Must have a column named 'fips' in your dataframe.")
         if not isinstance(covar_lst, list):
             raise AttributeError("covar_lst must be a list.")
+
+    @staticmethod
+    def _validate_fips(df):
+        if ('fips' not in df.columns):  # todo: probably want to change this to year
+            raise KeyError("Must have a column named 'fips' in your dataframe.")
+        if not isinstance(df['fips'].dtype, object):
+            raise AttributeError("'fips' must be formatted as an object.")
 
     # @property
     # def center(self):
@@ -217,3 +227,47 @@ class PublicDataHelpers:
             plt.savefig(save_path)
         if show:
             plt.show()
+
+    def choro_map(self, indicator, write=True):
+        """
+        Produces a county or state Choropleth. A column named fips with fips codes needs to be in the dataset.
+        """
+        df = self._obj
+
+        self._validate_fips(df)
+
+        # todo: wish I could use the fips codes here instead of converting back to abbreviations
+        if len(df.loc[0]['fips']) == 2:  # state
+            fig = go.Figure(data=go.Choropleth(
+                locations=df['fips'].map(c.state_codes),  # Spatial coordinates
+                z=df[indicator].astype(float),  # Data to be color-coded
+                locationmode='USA-states',  # set of locations match entries in `locations`
+                colorscale='Reds',
+                colorbar_title="Percentage Change",
+            ))
+
+            fig.update_layout(
+                title_text='Percentage Change, Actual Vs. Predicted',
+                geo_scope='usa',  # limite map scope to USA
+            )
+            if write:
+                fig.write_image("/Users/thowe/Downloads/perc_change_ba_state.png")
+            fig.show()
+
+        # todo: I don't know that this works
+        # todo: Also, I kind of haven't liked the output when I've done county in the past.
+        # todo: MSA
+        else:  #county
+            fig = ff.create_choropleth(
+                fips=df['fips'],
+                values=df[indicator],
+                # binning_endpoints=list(np.linspace(np.min(values), np.max(values), len(colorscale) - 1)),
+                # colorscale=colorscale
+            )
+            fig.layout.template = None
+            fig.update_layout(
+                title_text='QWI Indicators: {0}'.format(indicator),
+            )
+            fig.show()
+
+
