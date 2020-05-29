@@ -9,7 +9,7 @@ setup(
     # Needed to actually package something
     packages=['kauffman_data'],
     # Needed for dependencies
-    install_requires=['numpy', 'pandas', 'requests', 'statsmodels', 'xlrd', 'boto3', 'plotly==4.8.0'],
+    install_requires=['numpy', 'pandas', 'requests', 'statsmodels', 'xlrd', 'boto3', 'plotly', 'plotly-geo', 'geopandas', 'pyshp', 'shapely', 'psutil'],
     # *strongly* suggested for sharing
     version='1.2.7',
     # The license can be anything you like
