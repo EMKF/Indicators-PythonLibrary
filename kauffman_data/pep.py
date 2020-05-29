@@ -217,7 +217,7 @@ def get_data(obs_level, start_year=None, end_year=None):
             sort_values(['fips', 'year']).\
             reset_index(drop=True)
 
-    return df.pipe(_observations_filter, start_year, end_year)
+    return df.pipe(_observations_filter, start_year, end_year).rename(columns={'year': 'time'})
 
 
 

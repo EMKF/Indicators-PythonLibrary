@@ -9,9 +9,9 @@ setup(
     # Needed to actually package something
     packages=['kauffman_data'],
     # Needed for dependencies
-    install_requires=['numpy', 'pandas', 'requests', 'statsmodels', 'xlrd', 'boto3'],
+    install_requires=['numpy', 'pandas', 'requests', 'statsmodels', 'xlrd', 'boto3', 'plotly==4.8.0'],
     # *strongly* suggested for sharing
-    version='1.2.6',
+    version='1.2.7',
     # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',

@@ -1,11 +1,12 @@
 import sys
+import requests
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import plotly.express as px
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-import plotly.figure_factory as ff
 import kauffman_data.constants as c
 
 
@@ -228,11 +229,16 @@ class PublicDataHelpers:
         if show:
             plt.show()
 
-    def choro_map(self, indicator, write=True):
+    def choro_map(self, indicator, title, legend_title, show=True, write=True, range_factor=1):
         """
         Produces a county or state Choropleth. A column named fips with fips codes needs to be in the dataset.
+
+        range: For county-level choropleth legend and coloring scheme.
         """
-        df = self._obj
+        df = self._obj.reset_index(drop=True)
+        # print(df.head())
+        # print(df.info())
+        # sys.exit()
 
         self._validate_fips(df)
 
@@ -243,31 +249,33 @@ class PublicDataHelpers:
                 z=df[indicator].astype(float),  # Data to be color-coded
                 locationmode='USA-states',  # set of locations match entries in `locations`
                 colorscale='Reds',
-                colorbar_title="Percentage Change",
+                colorbar_title=legend_title,
             ))
 
             fig.update_layout(
-                title_text='Percentage Change, Actual Vs. Predicted',
+                title_text=title,
                 geo_scope='usa',  # limite map scope to USA
             )
-            if write:
-                fig.write_image("/Users/thowe/Downloads/perc_change_ba_state.png")
+
+        # todo: MSA
+        # todo: the legend isn't perfect
+        else:
+            min = df['population'].min()
+            max = df['population'].max()
+            counties = requests.get('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json').json()
+
+            fig = px.choropleth(df, geojson=counties, locations='fips', color='population',
+                                color_continuous_scale="Viridis",
+                                range_color=(min, max * range_factor),
+                                scope="usa",
+                                labels={'population': 'Population'}
+                                )
+            fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+
+        if write:
+            fig.write_image(write)
+        if show:
             fig.show()
 
-        # todo: I don't know that this works
-        # todo: Also, I kind of haven't liked the output when I've done county in the past.
-        # todo: MSA
-        else:  #county
-            fig = ff.create_choropleth(
-                fips=df['fips'],
-                values=df[indicator],
-                # binning_endpoints=list(np.linspace(np.min(values), np.max(values), len(colorscale) - 1)),
-                # colorscale=colorscale
-            )
-            fig.layout.template = None
-            fig.update_layout(
-                title_text='QWI Indicators: {0}'.format(indicator),
-            )
-            fig.show()
 
 

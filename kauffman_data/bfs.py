@@ -171,6 +171,7 @@ def get_data(series_lst, obs_level='us', start_year=None, end_year=None, seasona
     """
 
     # todo: get this better integrated into the code
+    # todo: the next line is a dumb way of doing things: list versus a string? please.
     if isinstance(series_lst, str):
         return pd.read_csv('https://www.census.gov/econ/bfs/csv/bfs_{obs_level}_apps_weekly_nsa.csv'.format(obs_level=obs_level)). \
             assign(region=lambda x: x['State'] if obs_level == 'state' else 'US'). \

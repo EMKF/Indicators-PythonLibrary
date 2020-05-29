@@ -44,12 +44,26 @@ def scratch_kese_to_panel():
 
 
 def plot_maps():
-    df = pd.read_csv('/Users/thowe/Downloads/ba_state_perc_change.csv'). \
-        assign(fips=lambda x: x['Region'].map(c.state_dic_temp))
-    # assign(fips=lambda x: x['Region'].map(c.state_dic_temp) + '000')
-    print(df.head())
-    # sys.exit()
-    df.pub.choro_map('Percentage Change')
+    # pd.read_csv('/Users/thowe/Downloads/ba_state_perc_change.csv'). \
+    #     assign(fips=lambda x: x['Region'].map(c.state_dic_temp)). \
+    #     pub.choro_map('Percentage Change')
+
+    # import kauffman_data.bfs as bfs
+    # bfs.get_data(['BA_BA'], obs_level='state'). \
+    #     query('time == 2019'). \
+    #     assign(fips=lambda x: x['region'].map(c.state_dic_temp)). \
+    #     pub.choro_map('BA_BA', 'Business Applications 2019', 'Business Applications')
+
+    # import kauffman_data.pep as pep
+    # pep.get_data('county'). \
+    #     pipe(joblib.dump, '/Users/thowe/Downloads/scratch.pkl')
+    # print(df.head())
+    # joblib.dump(df, '/Users/thowe/Downloads/scratch.pkl')
+    joblib.load('/Users/thowe/Downloads/scratch.pkl').\
+        query('time == "2019"'). \
+        astype({'population': 'int'}). \
+        pub.choro_map('population', 'County Population 2019', 'Population', write='/Users/thowe/Downloads/scratch.png', range_factor=.02)
+
 
 def main():
     # scratch_panel_to_alley()
