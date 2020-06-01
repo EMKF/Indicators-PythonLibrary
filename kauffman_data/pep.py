@@ -133,7 +133,7 @@ def _json_to_pandas_construct(state_dict):
                 [['date', 'value']]. \
                 pipe(_format_year). \
                 pipe(_format_population). \
-                assign(region=region)
+                assign(fips=c.state_dic_temp[region.upper()])
             for region, values in state_dict.items()
         ]
     )
@@ -158,11 +158,12 @@ def _msa_fetch_2004_2009():
         merge(
             get_data('county'),
             how='left',
-            on=['year', 'fips']
+            on=['time', 'fips']
         ). \
+        sort_values(['CBSA Code', 'fips', 'time']).\
         astype({'population': 'int'}) \
-        [['population', 'year', 'CBSA Code']].\
-        groupby(['year', 'CBSA Code']).sum().\
+        [['population', 'time', 'CBSA Code']].\
+        groupby(['time', 'CBSA Code']).sum().\
         reset_index(drop=False). \
         rename(columns={'CBSA Code': 'fips'})
 
@@ -184,6 +185,8 @@ def get_data(obs_level, start_year=None, end_year=None):
 
     end_year: latest end year is 2019
     """
+    print('Extracting PEP data for {}...'.format(obs_level))
+
     if obs_level == 'state':
         region_dict = {state: _state_us_fetch_data_all(state) for state in c.states}
         df = _json_to_pandas_construct(region_dict)
@@ -206,19 +209,21 @@ def get_data(obs_level, start_year=None, end_year=None):
             append(
                 _county_msa_fetch_2010_2019(obs_level).pipe(_county_msa_clean_2010_2019, obs_level)
             ).\
-            sort_values(['fips', 'year']).\
-            reset_index(drop=True)
+            sort_values(['fips', 'year'])
 
     elif obs_level == 'msa':
         df = _msa_fetch_2004_2009().\
             append(
-                _county_msa_fetch_2010_2019(obs_level).pipe(_county_msa_clean_2010_2019, obs_level)
+                _county_msa_fetch_2010_2019(obs_level).pipe(_county_msa_clean_2010_2019, obs_level).rename(columns={'year': 'time'})
             ).\
-            sort_values(['fips', 'year']).\
-            reset_index(drop=True)
+            sort_values(['fips', 'time'])
 
-    return df.pipe(_observations_filter, start_year, end_year).rename(columns={'year': 'time'})
-
+    return df.\
+        pipe(_observations_filter, start_year, end_year).\
+        rename(columns={'year': 'time'}). \
+        drop_duplicates(['fips', 'time'], keep='first'). \
+        reset_index(drop=True) \
+        [['fips', 'time', 'population']]
 
 
 if __name__ == '__main__':
@@ -228,11 +233,9 @@ if __name__ == '__main__':
     # print(df.info())
     # print(df.shape)
 
-    # df = get_data('county')
-    # df = get_data('us')
-    # df = get_data('state')
-    df = get_data('msa')  # todo: there are problems with this one. look at output...some are obvious
-    print(df.head(30))
-    print(df.tail(30))
+    get_data('county').to_csv('/Users/thowe/Downloads/pep_county.csv', index=False)
+    get_data('us').to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
+    get_data('state').to_csv('/Users/thowe/Downloads/pep_state.csv', index=False)
+    get_data('msa').to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)
 
 # todo: which of the functions above can be killed?

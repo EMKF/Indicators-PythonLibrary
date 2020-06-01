@@ -23,8 +23,8 @@ def _crosswalk_format(df):
     df = df.iloc[col_row + 1:] \
         [['year', 'CBSA Code', 'FIPS']]. \
         query('FIPS == FIPS'). \
-        rename(columns={'FIPS': 'fips'}). \
-        astype({'year': 'str', 'fips': 'str', 'CBSA Code': 'str'})
+        rename(columns={'FIPS': 'fips', 'year': 'time'}). \
+        astype({'time': 'str', 'fips': 'str', 'CBSA Code': 'str'})
     df['CBSA Code'] = df['CBSA Code'].replace({'31100': '31080'})
     return df
 

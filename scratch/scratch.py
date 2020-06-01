@@ -54,11 +54,12 @@ def plot_maps():
     #     assign(fips=lambda x: x['region'].map(c.state_dic_temp)). \
     #     pub.choro_map('BA_BA', 'Business Applications 2019', 'Business Applications')
 
-    # import kauffman_data.pep as pep
-    # pep.get_data('county'). \
+    import kauffman_data.pep as pep
+    pep.get_data('county'). \
+        query('time == "2019"'). \
+        astype({'population': 'int'}). \
+        pub.choro_map('population', 'County Population 2019', 'Population', write='/Users/thowe/Downloads/scratch.png', range_factor=.02)
     #     pipe(joblib.dump, '/Users/thowe/Downloads/scratch.pkl')
-    # print(df.head())
-    # joblib.dump(df, '/Users/thowe/Downloads/scratch.pkl')
     joblib.load('/Users/thowe/Downloads/scratch.pkl').\
         query('time == "2019"'). \
         astype({'population': 'int'}). \
