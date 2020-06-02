@@ -28,7 +28,6 @@ def _format_population(df):
         assign(population=lambda x: x['population'] * 1000)
 
 
-
 def _observations_filter(df, start_year, end_year):
     if start_year:
         df.query('year >= {start_year}'.format(start_year=start_year), inplace=True)
@@ -37,31 +36,9 @@ def _observations_filter(df, start_year, end_year):
     return df.reset_index(drop=True)
 
 
-
 def _make_header(df):
     df.columns = df.iloc[0]
     return df.iloc[1:, :]
-
-
-def _fetch_crosswalk(year):
-    """These are crosswalk tables"""
-    url = 'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/{0}/historical-delineation-files/list3.xls'.format(year)
-    df = pd.read_excel(url)
-    df['year'] = year
-    return df
-
-
-def _crosswalk_format(df):
-    """Format the crosswalk tables pulled in the _fetch_crosswalk function"""
-    col_row = df.loc[df.iloc[:, 0] == 'CBSA Code'].index.tolist()[0]
-    df.columns = df.iloc[col_row, :].tolist()[:-1] + ['year']
-    df = df.iloc[col_row + 1:] \
-        [['year', 'CBSA Code', 'FIPS']]. \
-        query('FIPS == FIPS'). \
-        rename(columns={'FIPS': 'fips'}). \
-        astype({'year': 'str', 'fips': 'str', 'CBSA Code': 'str'})
-    df['CBSA Code'] = df['CBSA Code'].replace({'31100': '31080'})
-    return df
 
 
 def _feature_create(df, region, year_ind=False):
@@ -87,21 +64,6 @@ def _feature_keep(df):
     return df[var_lst]
 
 
-
-# todo: what is this?
-def _observation_filter(df):
-    df['year'] = df['year'].astype(int)
-    df.query('year >= 2010', inplace=True)
-    # df.query('2018 >= year >= 2010', inplace=True)
-    df['year'] = df['year'].astype(str)
-    return df  #.query('state != "PR"')
-
-
-
-
-
-
-
 def _county_fetch_data_2000_2009(year):
     url = 'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_DESC&for=county:*&DATE_={0}'.format(year)
     r = requests.get(url)
@@ -122,8 +84,7 @@ def _county_msa_clean_2010_2019(df, obs_level):
         pipe(_make_header). \
         rename(columns={'POP': 'population', 'GEONAME': 'name', 'NAME': 'name'}). \
         pipe(_feature_create, obs_level). \
-        pipe(_feature_keep)  # . \
-    # pipe(_observation_filter)
+        pipe(_feature_keep)
 
 
 def _json_to_pandas_construct(state_dict):
@@ -138,8 +99,8 @@ def _json_to_pandas_construct(state_dict):
         ]
     )
 
+
 def _state_us_fetch_data_all(region):
-    # print(region, end='...')
     if region == 'us':
         series_id = 'B230RC0A052NBEA'  # yearly data
         # series_id = 'POPTHM'  # monthly data
@@ -237,5 +198,3 @@ if __name__ == '__main__':
     get_data('us').to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
     get_data('state').to_csv('/Users/thowe/Downloads/pep_state.csv', index=False)
     get_data('msa').to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)
-
-# todo: which of the functions above can be killed?
