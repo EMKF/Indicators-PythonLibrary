@@ -14,6 +14,15 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 
+# do we want to include this? maybe
+def weighted_crosstab(df, var1, var2, weight):
+    # print(df.head())
+    print(pd.crosstab(df['Q10'], df['Q4']))
+    # print(pd.crosstab(df['Q10'], df['Q4'], values=1, aggfunc='sum'))
+    print(pd.crosstab(df['Q10'], df['Q4'], values=df['WEIGHT'], aggfunc='sum'))
+
+
+
 def zip_to_dataframe(url):
     """
     Takes a url and reads in the .dat file. Assumes only one file inside the zip and that it is .dat formatted.
@@ -153,11 +162,15 @@ if __name__ == '__main__':
     # aws_download('/Users/thowe/Downloads/qwi.csv', 'emkf.data.research', 'new_employer_businesses/qwi.csv')
 
     # zip_to_dataframe('https://www2.census.gov/econ2016/SE/sector00/SE1600CSA01.zip?#')
-    import sys
-    df = raw_jobs_formatter('/Users/thowe/Projects/jobs_indicators/data/indicators')
-    for indicator in ['contribution', 'compensation', 'constancy', 'creation', 'q2_index']:
-        df.\
-            astype({'contribution': 'float'}).\
-            pipe(download_to_alley_formatter, ['type', 'category'], 'contribution').\
-            pipe(lambda x: print(x))
-            # to_csv('/Users/thowe/Downloads/jobs_{}.csv')
+
+    # import sys
+    # df = raw_jobs_formatter('/Users/thowe/Projects/jobs_indicators/data/indicators')
+    # for indicator in ['contribution', 'compensation', 'constancy', 'creation', 'q2_index']:
+    #     df.\
+    #         astype({'contribution': 'float'}).\
+    #         pipe(download_to_alley_formatter, ['type', 'category'], 'contribution').\
+    #         pipe(lambda x: print(x))
+    #         # to_csv('/Users/thowe/Downloads/jobs_{}.csv')
+
+    df = pd.read_csv('/Users/thowe/Downloads/raw_gsg_5.26.csv')
+    weighted_crosstab(df, 'Q4', 'Q10', 'WEIGHT')
