@@ -69,7 +69,7 @@ def _county_msa_state_fetch_data_all(obs_level, start_year, end_year):
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY')),
                 syq
             )
-            for syq in _region_year_lst(obs_level, start_year, end_year)[:5]
+            for syq in _region_year_lst(obs_level, start_year, end_year)  #[:5]
         ]
     )
 
@@ -178,13 +178,12 @@ def get_data(obs_level, indicator_lst=None, start_year=2000, end_year=2019, annu
               'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll', 'time', 'ownercode', 'firmage', 'fips']]
 
     covars = ['time', 'firmage', 'fips']
-    indicator_lst = [col for col in df.columns.tolist() if col not in covars] if not indicator_lst else indicator_lst
+    indicator_lst = [col for col in df.columns.tolist() if col not in covars + ['ownercode']] if not indicator_lst else indicator_lst
     return df.\
         reset_index(drop=True) \
         [indicator_lst + covars].\
         astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))).\
         pipe(_annualizer if annualize else lambda x: x)
-# I threw out 'ownercode'
 
 
 def _annualizer(df):
@@ -199,125 +198,17 @@ def _annualizer(df):
         reset_index(drop=False)
 
 
-def observation_filter(df):
-    """
-    This function (1) drops rows if any of the values of cols is missing, (2) creates a variable called "row_count"
-    with a count of available quarters by (fips, year, firmage), and (3) drop years such that row_count != 4.
-    """
-    # if region == 'msa':  # some msa straddle state boundaries, so need to combine
-    #     df = df[['Emp', 'EmpS', 'FrmJbC', 'Payroll']].groupby([df['fips'], df['year'], df['quarter'], df[_firm_strat(strat)]]).sum().reset_index()
-
-    return df.\
-        assign(
-            year=lambda x: x['time'].str[:4],
-            row_count=lambda x: x['fips'].groupby([x['fips'], x['year'], x['firmage']]).transform('count')
-        ). \
-        query('row_count == 4').\
-        drop(columns=['row_count'])
-        # drop(['time'], 1)
-
-    # df['row_count'] = df['fips'].groupby([df['fips'], df['year'], df[_firm_strat(strat)]]).transform('count')
-    print(df.head(20))
-    sys.exit()
-
-    df = df.\
-        astype({'year': 'int'}).\
-        astype({'year': 'str'}).\
-        drop('quarter', 1).\
-        dropna(how='all', subset=c.raw_cols_needed_for_indicators)
-    #         query('2017 >= year >= 2004').\
-    df['row_count'] = df['fips'].groupby([df['fips'], df['year'], df[_firm_strat(strat)]]).transform('count')
-    return df.query('row_count == 4').drop(columns=['row_count'])
-
-
-def annualize(df, strat):
-    return df[c.raw_cols_needed_for_indicators].\
-        groupby([df['fips'], df['year'], df[_firm_strat(strat)]]).sum().\
-        reset_index(drop=False)
-
-def clean_column_names(df):
-    return df.loc[:, ~df.columns.duplicated()]
-
-
-def vars_create(df, region):
-    if region == 'county':
-        df['fips'] = df['state'] + df['county']
-        df['year'], df['quarter'] = df['time'].str.split('-').str
-    elif region == 'msa':
-        df['fips'] = df['metropolitan statistical area/micropolitan statistical area']
-        df['year'], df['quarter'] = df['time'].str.split('-').str
-    elif region == 'state':
-        df['fips'] = df['state']
-        df['year'], df['quarter'] = df['time'].str.split('-').str
-    else:
-        df['fips'] = '1'
-    return df
-
-
-def _firm_strat(strat):
-    if strat == 'age':
-        return 'firmage'
-    return 'firmsize'
-
-
-def columns_to_keep(df, strat):
-    cols = ['fips', 'year', 'quarter', _firm_strat(strat)] + c.raw_cols_needed_for_indicators
-    return df[cols]
-
-
-def indicator_type(df):
-    df[c.raw_cols_needed_for_indicators] = df[c.raw_cols_needed_for_indicators].astype(float)
-    return df
-
-
-
-
-def _transform_and_annualize(df, region, strat):
-    return df.\
-        pipe(columns_to_keep, strat).\
-        pipe(indicator_type).\
-        pipe(observation_filter, region, strat).\
-        pipe(annualize, strat)
-#         pipe(clean_column_names).\
-#         pipe(vars_create, region).\
-
-# todo: I think I just need to (1) subset in the get_data function, (2) have an annualize option.
-# todo: probably want to throw this into a module that is explicitly for indicator creation.
-def data_transformer(df):
-    region = 'state'
-    strat = None
-
-    df.pipe(_transform_and_annualize, region, strat)
-
-    sys.exit()
-    if region == 'msa':
-        df_all = joblib.load(c.filenamer('data/raw/qwi/raw_qwi_api_{0}_{1}.pkl'.format(region, strat)))
-        df = df_all. \
-            append(
-                pd.read_csv(c.filenamer('data/raw/qwi/raw_qwi_selenium_msa_LA_{0}.csv'.format(strat))).pipe(_transform_selenium, 'LA', df_all.columns.tolist())
-            ). \
-            reset_index(drop=True).\
-            pipe(_transform_and_annualize, region, strat)
-    elif region == 'state':
-        df = joblib.load(c.filenamer('data/raw/qwi/raw_qwi_api_{0}_{1}.pkl'.format(region, strat))).\
-            pipe(_transform_and_annualize, region, strat)
-    elif region == 'us':
-        df = pd.read_csv(c.filenamer('data/raw/qwi/raw_qwi_manual_{0}_{1}.csv'.format(region, strat))). \
-            pipe(_transform_and_annualize, region, strat)
-    else:
-        df = joblib.load(c.filenamer('data/raw/qwi/raw_qwi_api_{0}_{1}.pkl'.format(region, strat))). \
-            pipe(_transform_and_annualize, region, strat)
-
-    df.pipe(save_files, region, strat)
-
-
 if __name__ == '__main__':
     # get_data('county', 2014, 2016)  #.to_csv('/Users/thowe/Downloads/pep_county.csv', index=False)
     # get_data('msa', 2015, 2016)  #.to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)
     # get_data('us', 2015, 2016)  #.to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
+    # df = get_data('state', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2020, annualize=True)  #.pipe(data_transformer)
 
-    df = get_data('state', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2020, annualize=True)  #.pipe(data_transformer)
+    df = get_data('msa', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2015, annualize=True)  #.pipe(data_transformer)
     print(df)
-# todo: is LA in the data?
-# todo: does this work for all indicators not just emp and emps?
-# todo: does this work for all region areas
+
+# todo: plot the MSA data
+    # 31080 is LA
+
+# todo: specify public or private
+# todo: does annualize work for all indicators? Some might not because of how they are defined.

@@ -29,7 +29,7 @@ def _crosswalk_format(df):
     return df
 
 
-def get_data():  # county to msa and visa versa
+def get_data(year=2009):  # county to msa and visa versa
     """
     Creates a dataframe that allows msa to county (and visa versa) cross-walking for years between 2004 through 2009.
     Files for other years might be available. Consult
@@ -43,7 +43,9 @@ def get_data():  # county to msa and visa versa
                 for year in range(2004, 2010)
             ]
         ).\
-        reset_index(drop=True)
+        reset_index(drop=True).\
+        rename(columns={'CBSA Code': 'msa_fips', 'fips': 'county_fips'}).\
+        query('time == "2009"')
 
 
 if __name__ == '__main__':

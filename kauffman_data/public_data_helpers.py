@@ -10,6 +10,21 @@ import plotly.graph_objects as go
 import kauffman_data.constants as c
 
 
+def _msa_to_county_fips(df):
+    import kauffman_data.cross_walk as cw
+
+    return df.merge(cw.get_data().drop(['time'], 1), how='left', left_on='fips', right_on='msa_fips'). \
+        assign(fips=lambda x: x['county_fips']). \
+        drop(['msa_fips', 'county_fips'], 1)
+
+
+def _write_show(fig, write, show):
+    if write:
+        fig.write_image(write)
+    if show:
+        fig.show()
+
+
 def _grouper(df, lvalues):  # todo: should I put this inside the class?
     if lvalues > 1:
         return df. \
@@ -229,21 +244,18 @@ class PublicDataHelpers:
         if show:
             plt.show()
 
-    def choro_map(self, indicator, title, legend_title, show=True, write=True, range_factor=1):
+    def choro_map(self, obs_level, indicator, title, legend_title, show=True, write=True, range_factor=1):
         """
-        Produces a county or state Choropleth. A column named fips with fips codes needs to be in the dataset.
+        Produces a county, MSA, or state Choropleth. A column named fips with fips codes needs to be in the dataset.
 
-        range: For county-level choropleth legend and coloring scheme.
+        range_factor: For county-level choropleth legend and coloring scheme. HUGE HACK!
         """
         df = self._obj.reset_index(drop=True)
-        # print(df.head())
-        # print(df.info())
-        # sys.exit()
 
         self._validate_fips(df)
 
         # todo: wish I could use the fips codes here instead of converting back to abbreviations
-        if len(df.loc[0]['fips']) == 2:  # state
+        if obs_level == 'state':
             fig = go.Figure(data=go.Choropleth(
                 locations=df['fips'].map(c.state_codes),  # Spatial coordinates
                 z=df[indicator].astype(float),  # Data to be color-coded
@@ -257,25 +269,24 @@ class PublicDataHelpers:
                 geo_scope='usa',  # limite map scope to USA
             )
 
-        # todo: MSA
+            _write_show(fig, write, show)
+
         # todo: the legend isn't perfect
-        else:
-            min = df['population'].min()
-            max = df['population'].max()
+        elif obs_level == 'county':
+            min = df[indicator].min()
+            max = df[indicator].max()
             counties = requests.get('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json').json()
 
-            fig = px.choropleth(df, geojson=counties, locations='fips', color='population',
+            fig = px.choropleth(df, geojson=counties, locations='fips', color=indicator,
                                 color_continuous_scale="Viridis",
                                 range_color=(min, max * range_factor),
                                 scope="usa",
-                                labels={'population': 'Population'}
+                                labels={indicator: legend_title}
                                 )
             fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
-        if write:
-            fig.write_image(write)
-        if show:
-            fig.show()
+            _write_show(fig, write, show)
 
-
-
+        elif obs_level == 'msa':
+            self._obj = df.pipe(_msa_to_county_fips)
+            self.choro_map('county', indicator, title, legend_title, show, write, range_factor)

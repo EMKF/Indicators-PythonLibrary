@@ -66,10 +66,25 @@ def plot_maps():
         pub.choro_map('population', 'County Population 2019', 'Population', write='/Users/thowe/Downloads/scratch.png', range_factor=.02)
 
 
+def msa_plot():
+    import kauffman_data.qwi as qwi
+    # qwi.get_data('msa', ['Emp'], start_year=2016, end_year=2016, annualize=True).to_csv('/Users/thowe/Downloads/scratch.csv', index=False)
+    df = pd.read_csv('/Users/thowe/Downloads/scratch.csv').\
+        query('firmage == 1').\
+        astype({'fips': 'str'}).\
+        pub.choro_map('msa', 'Emp', 'MSA Startup Employment 2016', 'Emp', write=False, range_factor=.5)
+    # df = pd.read_csv('/Users/thowe/Downloads/scratch.csv').\
+    #     query('firmage == 1').\
+    #     astype({'fips': 'str'}).\
+    #     pub.msa_to_county_fips().\
+    #     pub.choro_map('Emp', 'MSA Startup Employment 2016', 'Emp', write=False, range_factor=.5)
+    # print(df.head())
+
 def main():
     # scratch_panel_to_alley()
     # scratch_kese_to_panel()
-    plot_maps()
+    # plot_maps()
+    msa_plot()
 
 if __name__ == '__main__':
     main()
