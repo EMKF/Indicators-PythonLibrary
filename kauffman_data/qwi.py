@@ -5,9 +5,8 @@ import joblib
 import requests
 import pandas as pd
 from itertools import product
-from chromedriver_py import binary_path
 from kauffman_data import constants as c
-import kauffman_data.cross_walk as cw
+from webdriver_manager.chrome import ChromeDriverManager
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -82,10 +81,16 @@ def _us_fetch_data_all():
 
     chrome_options = Options()
     chrome_options.add_argument('--headless')
-    driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
+
+
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+
+    # driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
+
     # driver = webdriver.Chrome(
     #     executable_path=c.filenamer('chromedriver'), options=chrome_options
     # )
+
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
@@ -201,9 +206,9 @@ def _annualizer(df):
 
 
 if __name__ == '__main__':
+    get_data('us', annualize=True).to_csv('/Users/thowe/Downloads/qwi_us.csv', index=False)
     get_data('county', annualize=True).to_csv('/Users/thowe/Downloads/qwi_county.csv', index=False)
     get_data('msa', annualize=True).to_csv('/Users/thowe/Downloads/qwi_msa.csv', index=False)
-    get_data('us', annualize=True).to_csv('/Users/thowe/Downloads/qwi_us.csv', index=False)
     get_data('state', annualize=True).to_csv('/Users/thowe/Downloads/qwi_state.csv', index=False)
     #
     # df = get_data('msa', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2015, annualize=True)  #.pipe(data_transformer)
