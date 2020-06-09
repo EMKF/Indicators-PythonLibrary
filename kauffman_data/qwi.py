@@ -5,6 +5,7 @@ import joblib
 import requests
 import pandas as pd
 from itertools import product
+from chromedriver_py import binary_path
 from kauffman_data import constants as c
 import kauffman_data.cross_walk as cw
 
@@ -81,9 +82,10 @@ def _us_fetch_data_all():
 
     chrome_options = Options()
     chrome_options.add_argument('--headless')
-    driver = webdriver.Chrome(
-        executable_path=c.filenamer('chromedriver'), options=chrome_options
-    )
+    driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
+    # driver = webdriver.Chrome(
+    #     executable_path=c.filenamer('chromedriver'), options=chrome_options
+    # )
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
