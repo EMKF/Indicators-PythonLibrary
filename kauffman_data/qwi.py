@@ -49,14 +49,14 @@ def _build_df_header(df):
 
 
 def _fetch_from_url(url, syq):
-    # print('\t{}'.format(syq), end='...')
+    print('\t{}'.format(syq), end='...')
     r = requests.get(url)
     try:
         df = pd.DataFrame(r.json()).pipe(_build_df_header)
-        # print('Success')
+        print('Success')
         # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  # essentially the same as above; the rename function does not, apparently, give access to df
     except:
-        # print('Fail\n')
+        print('Fail\n')
         df = pd.DataFrame()
     return df
 
@@ -199,16 +199,14 @@ def _annualizer(df):
 
 
 if __name__ == '__main__':
-    # get_data('county', 2014, 2016)  #.to_csv('/Users/thowe/Downloads/pep_county.csv', index=False)
-    # get_data('msa', 2015, 2016)  #.to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)
-    # get_data('us', 2015, 2016)  #.to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
-    # df = get_data('state', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2020, annualize=True)  #.pipe(data_transformer)
+    get_data('county', annualize=True).to_csv('/Users/thowe/Downloads/qwi_county.csv', index=False)
+    get_data('msa', annualize=True).to_csv('/Users/thowe/Downloads/qwi_msa.csv', index=False)
+    get_data('us', annualize=True).to_csv('/Users/thowe/Downloads/qwi_us.csv', index=False)
+    get_data('state', annualize=True).to_csv('/Users/thowe/Downloads/qwi_state.csv', index=False)
+    #
+    # df = get_data('msa', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2015, annualize=True)  #.pipe(data_transformer)
+    # print(df)
 
-    df = get_data('msa', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2015, annualize=True)  #.pipe(data_transformer)
-    print(df)
-
-# todo: plot the MSA data
-    # 31080 is LA
 
 # todo: specify public or private
 # todo: does annualize work for all indicators? Some might not because of how they are defined.

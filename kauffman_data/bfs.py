@@ -203,10 +203,15 @@ def get_data(series_lst, obs_level='us', start_year=None, end_year=None, seasona
 
 
 if __name__ == '__main__':
+    df = get_data('weekly', 'us', start_year=2004, annualize=False)
+    print(df)
+    sys.exit()
+
+
+
     # df = get_data(['BA_BA'], 'us', 2004, annualize=True)
     df = get_data(['BA_BA'], 'state', 2004, annualize=False)
     print(df)
-    sys.exit()
     # df = get_data(['BF_DUR4Q', 'BF_DUR8Q', 'BA_BA'], 'state', 2004, annualize=True)
 
     # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)

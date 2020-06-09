@@ -11,7 +11,7 @@ setup(
     # Needed for dependencies
     install_requires=['numpy', 'pandas', 'requests', 'statsmodels', 'xlrd', 'boto3', 'plotly', 'plotly-geo', 'geopandas', 'pyshp', 'shapely', 'psutil'],
     # *strongly* suggested for sharing
-    version='1.2.7',
+    version='1.2.8',
     # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',

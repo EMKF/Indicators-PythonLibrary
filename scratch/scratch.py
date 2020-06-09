@@ -73,12 +73,6 @@ def msa_plot():
         query('firmage == 1').\
         astype({'fips': 'str'}).\
         pub.choro_map('msa', 'Emp', 'MSA Startup Employment 2016', 'Emp', write=False, range_factor=.5)
-    # df = pd.read_csv('/Users/thowe/Downloads/scratch.csv').\
-    #     query('firmage == 1').\
-    #     astype({'fips': 'str'}).\
-    #     pub.msa_to_county_fips().\
-    #     pub.choro_map('Emp', 'MSA Startup Employment 2016', 'Emp', write=False, range_factor=.5)
-    # print(df.head())
 
 def main():
     # scratch_panel_to_alley()
