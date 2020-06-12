@@ -28,7 +28,8 @@ def _region_year_lst(obs_level, start_year, end_year):
     if obs_level in ['state', 'county']:
         return list(product(c.state_abb_fips_dic.values(), years))
     if obs_level == 'msa':
-        return list(product(c.msa_fips_state_fips_dic.items(), years))
+        return list(product([(k, state) for k, states_lst in c.msa_fips_state_fips_dic.items() for state in states_lst], years))
+        # return list(product(c.msa_fips_state_fips_dic.items(), years))
 
 
 def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
@@ -69,7 +70,7 @@ def _county_msa_state_fetch_data_all(obs_level, start_year, end_year):
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY')),
                 syq
             )
-            for syq in _region_year_lst(obs_level, start_year, end_year)  #[:5]
+            for syq in _region_year_lst(obs_level, start_year, end_year)[-40:]
         ]
     )
 
@@ -139,6 +140,18 @@ def _us_fetch_data_all():
         return pd.read_csv(href)
 
 
+def _msa_year_filter(df):
+    return df. \
+        assign(
+            msa_states=lambda x: x[['state', 'fips']].groupby('fips').transform(lambda y: len(y.unique().tolist())),
+            time_count=lambda x: x[['fips', 'time', 'firmage', 'msa_states']].groupby(['fips', 'time', 'firmage']).transform('count')
+        ). \
+        query('time_count == msa_states'). \
+        drop(columns=['msa_states', 'time_count']).\
+        reset_index(drop=True)
+
+
+
 def get_data(obs_level, indicator_lst=None, start_year=2000, end_year=2019, annualize=False):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
@@ -170,10 +183,10 @@ def get_data(obs_level, indicator_lst=None, start_year=2000, end_year=2019, annu
     elif obs_level == 'msa':
         df = _county_msa_state_fetch_data_all(obs_level, start_year, end_year).\
             rename(columns={'metropolitan statistical area/micropolitan statistical area': 'fips'}).\
+            pipe(_msa_year_filter).\
             drop('state', 1)
     else:
         df = _us_fetch_data_all().\
-            query('{start_year}<=year<={end_year}'.format(start_year=max(start_year, 2000), end_year=min(end_year, 2019))).\
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
@@ -183,14 +196,20 @@ def get_data(obs_level, indicator_lst=None, start_year=2000, end_year=2019, annu
               'HirR', 'Sep', 'HirAEnd', 'HirAEndR', 'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx',
               'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC', 'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg',
               'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll', 'time', 'ownercode', 'firmage', 'fips']]
+    #             query('{start_year}<=year<={end_year}'.format(start_year=max(start_year, 2000), end_year=min(end_year, 2019))).\  # todo: why did I do this here?
 
     covars = ['time', 'firmage', 'fips']
     indicator_lst = [col for col in df.columns.tolist() if col not in covars + ['ownercode']] if not indicator_lst else indicator_lst
-    return df.\
+    return df. \
         reset_index(drop=True) \
-        [indicator_lst + covars].\
-        astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))).\
+        [indicator_lst + covars]. \
+        astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
+        pipe(_msa_combiner if obs_level == 'msa' else lambda x: x).\
         pipe(_annualizer if annualize else lambda x: x)
+
+
+def _msa_combiner(df):
+    return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
 
 
 def _annualizer(df):
@@ -206,13 +225,13 @@ def _annualizer(df):
 
 
 if __name__ == '__main__':
-    get_data('us', annualize=True).to_csv('/Users/thowe/Downloads/qwi_us.csv', index=False)
-    get_data('county', annualize=True).to_csv('/Users/thowe/Downloads/qwi_county.csv', index=False)
-    get_data('msa', annualize=True).to_csv('/Users/thowe/Downloads/qwi_msa.csv', index=False)
-    get_data('state', annualize=True).to_csv('/Users/thowe/Downloads/qwi_state.csv', index=False)
+    # get_data('us', annualize=True).to_csv('/Users/thowe/Downloads/qwi_us.csv', index=False)
+    # get_data('county', annualize=True).to_csv('/Users/thowe/Downloads/qwi_county.csv', index=False)
+    # get_data('msa', annualize=True).to_csv('/Users/thowe/Downloads/qwi_msa.csv', index=False)
+    # get_data('state', annualize=True).to_csv('/Users/thowe/Downloads/qwi_state.csv', index=False)
     #
-    # df = get_data('msa', indicator_lst=['Emp', 'EmpS'], start_year=2014, end_year=2015, annualize=True)  #.pipe(data_transformer)
-    # print(df)
+    df = get_data('msa', annualize=True)
+    print(df)
 
 
 # todo: specify public or private

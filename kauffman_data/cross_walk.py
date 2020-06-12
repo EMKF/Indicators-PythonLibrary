@@ -44,8 +44,8 @@ def get_data(year=2009):  # county to msa and visa versa
             ]
         ).\
         reset_index(drop=True).\
-        rename(columns={'CBSA Code': 'msa_fips', 'fips': 'county_fips'}).\
-        query('time == "2009"')
+        rename(columns={'CBSA Code': 'msa_fips', 'fips': 'county_fips'})  #.\
+        # query('time == "2009"')
 
 
 if __name__ == '__main__':

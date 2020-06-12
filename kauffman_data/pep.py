@@ -94,7 +94,7 @@ def _json_to_pandas_construct(state_dict):
                 [['date', 'value']]. \
                 pipe(_format_year). \
                 pipe(_format_population). \
-                assign(fips=c.state_dic_temp[region.upper()])
+                assign(fips=c.state_abb_fips_dic[region.upper()])
             for region, values in state_dict.items()
         ]
     )
@@ -119,14 +119,16 @@ def _msa_fetch_2004_2009():
         merge(
             get_data('county'),
             how='left',
-            on=['time', 'fips']
+            left_on=['time', 'county_fips'],
+            right_on=['time', 'fips']
         ). \
-        sort_values(['CBSA Code', 'fips', 'time']).\
+        pipe(lambda x: print(x)).\
+        sort_values(['msa_fips', 'fips', 'time']).\
         astype({'population': 'int'}) \
-        [['population', 'time', 'CBSA Code']].\
-        groupby(['time', 'CBSA Code']).sum().\
+        [['population', 'time', 'msa_fips']].\
+        groupby(['time', 'msa_fips']).sum().\
         reset_index(drop=False). \
-        rename(columns={'CBSA Code': 'fips'})
+        rename(columns={'msa_fips': 'fips'})
 
 
 def get_data(obs_level, start_year=None, end_year=None):
@@ -194,7 +196,7 @@ if __name__ == '__main__':
     # print(df.info())
     # print(df.shape)
 
-    get_data('county').to_csv('/Users/thowe/Downloads/pep_county.csv', index=False)
-    get_data('us').to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
-    get_data('state').to_csv('/Users/thowe/Downloads/pep_state.csv', index=False)
+    # get_data('county').to_csv('/Users/thowe/Downloads/pep_county.csv', index=False)
+    # get_data('us').to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
+    # get_data('state').to_csv('/Users/thowe/Downloads/pep_state.csv', index=False)
     get_data('msa').to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)

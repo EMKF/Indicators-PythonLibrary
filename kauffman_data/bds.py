@@ -61,6 +61,7 @@ def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=Tr
                 [series_lst + ['us', 'time']]
             df_year = df_year_age.append(df_year_all)
 
+
         df = df.append(df_year)
     # todo: convert the outcome variables to int or float
     # todo: time should be a string? might need to sort
