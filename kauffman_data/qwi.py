@@ -70,7 +70,7 @@ def _county_msa_state_fetch_data_all(obs_level, start_year, end_year):
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY')),
                 syq
             )
-            for syq in _region_year_lst(obs_level, start_year, end_year)[-40:]
+            for syq in _region_year_lst(obs_level, start_year, end_year)  #[-40:]
         ]
     )
 
@@ -83,15 +83,7 @@ def _us_fetch_data_all():
     chrome_options = Options()
     chrome_options.add_argument('--headless')
 
-
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
-
-    # driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
-
-    # driver = webdriver.Chrome(
-    #     executable_path=c.filenamer('chromedriver'), options=chrome_options
-    # )
-
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
