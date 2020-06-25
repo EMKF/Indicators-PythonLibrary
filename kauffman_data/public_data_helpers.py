@@ -244,10 +244,11 @@ class PublicDataHelpers:
         if show:
             plt.show()
 
-    def choro_map(self, obs_level, indicator, title, legend_title, show=True, write=True, range_factor=1):
+    def choro_map(self, obs_level, indicator, title, legend_title, show=True, write=False, range_factor=1):
         """
         Produces a county, MSA, or state Choropleth. A column named fips with fips codes needs to be in the dataset.
 
+        write: False or a string that represents a file path.
         range_factor: For county-level choropleth legend and coloring scheme. HUGE HACK!
         """
         df = self._obj.reset_index(drop=True)
@@ -257,7 +258,7 @@ class PublicDataHelpers:
         # todo: wish I could use the fips codes here instead of converting back to abbreviations
         if obs_level == 'state':
             fig = go.Figure(data=go.Choropleth(
-                locations=df['fips'].map(c.state_codes),  # Spatial coordinates
+                locations=df['fips'].map(c.state_abb_fips_dic),  # Spatial coordinates
                 z=df[indicator].astype(float),  # Data to be color-coded
                 locationmode='USA-states',  # set of locations match entries in `locations`
                 colorscale='Reds',

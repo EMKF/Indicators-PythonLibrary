@@ -75,7 +75,7 @@ def _county_msa_state_fetch_data_all(obs_level, start_year, end_year):
     )
 
 
-def _us_fetch_data_all():
+def _us_fetch_data_all(private, by_age):
     print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
@@ -93,11 +93,13 @@ def _us_fetch_data_all():
 
     # Firm Characteristics
     print('\tFirm Characteristics tab...')
-    driver.find_element_by_id('dijit_form_RadioButton_4').click()
-    for box in range(0, 6):
-        driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
+    if private:
+        driver.find_element_by_id('dijit_form_RadioButton_4').click()
+    if by_age:
+        for box in range(0, 6):
+            driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
+            time.sleep(pause1)
         time.sleep(pause1)
-    time.sleep(pause1)
     driver.find_element_by_id('continue_to_worker_char').click()
 
     # Worker Characteristics
@@ -144,7 +146,7 @@ def _msa_year_filter(df):
 
 
 
-def get_data(obs_level, indicator_lst=None, start_year=2000, end_year=2019, annualize=False):
+def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize=False):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -178,7 +180,7 @@ def get_data(obs_level, indicator_lst=None, start_year=2000, end_year=2019, annu
             pipe(_msa_year_filter).\
             drop('state', 1)
     else:
-        df = _us_fetch_data_all().\
+        df = _us_fetch_data_all(private, by_age).\
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
