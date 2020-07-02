@@ -27,13 +27,13 @@ def _format_covars1(df):
         astype(
             {
                 'year': 'int',
-                'net_change': 'int',
-                'total_gains': 'int',
-                'gross_job_gains_expanding_ests': 'int',
-                'gross_job_gains_opening_ests': 'int',
-                'total_losses': 'int',
-                'gross_job_losses_contracting_ests': 'int',
-                'gross_job_losses_closing_ests': 'int',
+                'net_change': 'float',
+                'total_gains': 'float',
+                'gross_job_gains_expanding_ests': 'float',
+                'gross_job_gains_opening_ests': 'float',
+                'total_losses': 'float',
+                'gross_job_losses_contracting_ests': 'float',
+                'gross_job_losses_closing_ests': 'float',
             }
         )
 
@@ -82,6 +82,27 @@ def table1(lines):
             columns=['year', 'age', 'net_change', 'total_gains', 'gross_job_gains_expanding_ests', 'gross_job_gains_opening_ests', 'total_losses', 'gross_job_losses_contracting_ests', 'gross_job_losses_closing_ests']
         ).\
         pipe(_format_covars1)
+
+
+def table5(lines):
+    cohort = 1994
+    age = 1
+    df_out = pd.DataFrame(columns=['age_class'])
+    for ind, line in enumerate(lines[6:-2]):
+        if 'Less than one year' in line:
+            data_lst = []
+            data_lst.append(['Less than one year'] + line.split()[4:])
+        if '{} year'.format(age) in line:
+            data_lst.append(['{age} {year}'.format(age=age, year='year' if age == 1 else 'years')] + line.split()[2:])
+            age += 1
+        if 'Born before March' in line:
+            data_lst.append(['Born before March 1993'] + line.split()[4:])
+        if 'Total' in line:
+            data_lst.append(line.split())
+            df_out = df_out.merge(pd.DataFrame(data_lst, columns=['age_class'] + list(range(cohort, cohort + len(data_lst[0]) - 1))), how='right', on='age_class')
+            age = 1
+            cohort += 6
+    return df_out
 
 
 def table7(lines):
@@ -142,14 +163,23 @@ def get_data(series_lst, table, industry='00', obs_level='us', start_year=None, 
     url = 'https://www.bls.gov/{series_lst}/{obs_level}_age_naics_{industry}_table{table}.txt'.format(series_lst=series_lst, obs_level=obs_level, industry=industry, table=table)
     lines = requests.get(url).text.split('\n')
 
-    if table == 1:
+    if table in range(1, 5):
         return table1(lines)
+    if table in [5, 6]:
+        return table5(lines)
     elif table == 7:
         return table7(lines)
 
 
 if __name__ == '__main__':
-    # df1 = get_data('bdm', 1, '00', 'us')
-    # print(df1.head(30))
-    df7 = get_data('bdm', 7, '00', 'us')
-    print(df7.head(30))
+    df1 = get_data('bdm', 1, '00', 'us')
+    print(df1)
+    # df5 = get_data('bdm', 5, '00', 'us')
+    # print(df5)
+    # df7 = get_data('bdm', 7, '00', 'us')
+    # print(df7.head(30))
+
+
+# Tables 1 through 4 are similar
+# Tables 5 and 6 are similar
+# Tables 7 is distinct
