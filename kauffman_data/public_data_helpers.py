@@ -265,6 +265,10 @@ class PublicDataHelpers:
                 colorbar_title=legend_title,
             ))
 
+            # todo: consider adding parameters for min and max
+            # zmin = -35,
+            # zmax = 80
+
             fig.update_layout(
                 title_text=title,
                 geo_scope='usa',  # limite map scope to USA

@@ -149,7 +149,7 @@ def get_data(series_lst, table, industry='00', obs_level='us', start_year=None, 
 
 
 if __name__ == '__main__':
-    df1 = get_data('bdm', 1, '00', 'us')
-    print(df1.head())
+    # df1 = get_data('bdm', 1, '00', 'us')
+    # print(df1.head(30))
     df7 = get_data('bdm', 7, '00', 'us')
-    print(df7.head())
+    print(df7.head(30))
