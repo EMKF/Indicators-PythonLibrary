@@ -146,7 +146,7 @@ def _msa_year_filter(df):
 
 
 
-def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize=False):
+def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize=None):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -163,6 +163,11 @@ def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_yea
     start_year: earliest start year is 2000
 
     end_year: latest end year is 2019
+
+    annualize: None, str
+        'None': leave as quarterly data
+        'January': annualize using Q1 as beginning of year
+        'March': annualize using Q2 as beginning of year
     """
     print('Extracting PEP data for {}...'.format(obs_level))
 
@@ -199,17 +204,32 @@ def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_yea
         [indicator_lst + covars]. \
         astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
         pipe(_msa_combiner if obs_level == 'msa' else lambda x: x).\
-        pipe(_annualizer if annualize else lambda x: x)
+        pipe(_annualizer, annualize)
+        # pipe(_annualizer if annualize else lambda x: x)
 
 
 def _msa_combiner(df):
     return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
 
 
-def _annualizer(df):
+def _annualizer(df, annualize):
+    if not annualize:
+        return df
+    elif annualize == 'March':
+        df = df.\
+            assign(
+                quarter=lambda x: x['time'].str[-1:],
+                time=lambda x: x.apply(lambda y: int(y['time'][:4]) - 1 if y['quarter'] == '1' else int(y['time'][:4]), axis=1)
+            ).\
+            astype({'time': 'str'}).\
+            drop('quarter', 1)
+    else:
+        df = df. \
+            assign(
+                time=lambda x: x['time'].str[:4],
+            )
     return df. \
         assign(
-            time=lambda x: x['time'].str[:4],
             row_count=lambda x: x['fips'].groupby([x['fips'], x['time'], x['firmage']]).transform('count')
         ). \
         query('row_count == 4'). \
@@ -224,7 +244,7 @@ if __name__ == '__main__':
     # get_data('msa', annualize=True).to_csv('/Users/thowe/Downloads/qwi_msa.csv', index=False)
     # get_data('state', annualize=True).to_csv('/Users/thowe/Downloads/qwi_state.csv', index=False)
     #
-    df = get_data('msa', annualize=True)
+    df = get_data('state', start_year=2016, end_year=2017, annualize='March')
     print(df)
 
 
