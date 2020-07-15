@@ -75,7 +75,7 @@ def _county_msa_state_fetch_data_all(obs_level, start_year, end_year):
     )
 
 
-def _us_fetch_data_all(private, by_age):
+def _us_fetch_data_all(private, by_age, strat):
     print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
@@ -104,6 +104,10 @@ def _us_fetch_data_all(private, by_age):
 
     # Worker Characteristics
     print('\tWorker Characteristics tab...')
+    if strat:
+        driver.find_element_by_id('dijit_form_CheckBox_12').click()
+        driver.find_element_by_id('dijit_form_CheckBox_13').click()
+        driver.find_element_by_id('dijit_form_CheckBox_14').click()
     driver.find_element_by_id('continue_to_indicators').click()
 
     # Indicators
@@ -146,7 +150,7 @@ def _msa_year_filter(df):
 
 
 
-def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize=None):
+def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize='January', strat=False):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -169,7 +173,7 @@ def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_yea
         'January': annualize using Q1 as beginning of year
         'March': annualize using Q2 as beginning of year
     """
-    print('Extracting PEP data for {}...'.format(obs_level))
+    print('Extracting QWI data for {}...'.format(obs_level))
 
     if obs_level == 'state':
         df = _county_msa_state_fetch_data_all(obs_level, start_year, end_year).\
@@ -185,26 +189,30 @@ def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_yea
             pipe(_msa_year_filter).\
             drop('state', 1)
     else:
-        df = _us_fetch_data_all(private, by_age).\
+        ui_covars = [
+            'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'HirA', 'HirN', 'HirR', 'Sep', 'HirAEnd', 'HirAEndR',
+            'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx', 'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC',
+            'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll',
+            'time', 'ownercode', 'firmage', 'fips'
+        ]
+        df = _us_fetch_data_all(private, by_age, strat=strat).\
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
             ).\
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'}) \
-            [['Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'HirA', 'HirN',
-              'HirR', 'Sep', 'HirAEnd', 'HirAEndR', 'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx',
-              'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC', 'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg',
-              'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll', 'time', 'ownercode', 'firmage', 'fips']]
-    #             query('{start_year}<=year<={end_year}'.format(start_year=max(start_year, 2000), end_year=min(end_year, 2019))).\  # todo: why did I do this here?
+            [ui_covars if not strat else ui_covars + ['sex']]
+    #             query('{start_year}<=year<={end_year}'.format(start_year=max(start_year, 2000), end_year=min(end_year, 2019))).\  # todo: why did I do this here? Oh, the other region queries have dates built in
 
-    covars = ['time', 'firmage', 'fips']
+    # todo: look for a better way to do this list garbage.
+    covars = ['time', 'firmage', 'fips'] if not strat else ['time', 'firmage', 'fips', 'sex']
     indicator_lst = [col for col in df.columns.tolist() if col not in covars + ['ownercode']] if not indicator_lst else indicator_lst
     return df. \
         reset_index(drop=True) \
         [indicator_lst + covars]. \
         astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
         pipe(_msa_combiner if obs_level == 'msa' else lambda x: x).\
-        pipe(_annualizer, annualize)
+        pipe(_annualizer, annualize, strat)
         # pipe(_annualizer if annualize else lambda x: x)
 
 
@@ -212,7 +220,7 @@ def _msa_combiner(df):
     return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
 
 
-def _annualizer(df, annualize):
+def _annualizer(df, annualize, strat):
     if not annualize:
         return df
     elif annualize == 'March':
@@ -228,13 +236,15 @@ def _annualizer(df, annualize):
             assign(
                 time=lambda x: x['time'].str[:4],
             )
+
+    groupby_vars = ['fips', 'time', 'firmage'] if not strat else ['fips', 'time', 'firmage', 'sex']
     return df. \
         assign(
-            row_count=lambda x: x['fips'].groupby([x['fips'], x['time'], x['firmage']]).transform('count')
+            row_count=lambda x: x['fips'].groupby([x[var] for var in groupby_vars]).transform('count')
         ). \
         query('row_count == 4'). \
         drop(columns=['row_count']).\
-        groupby(['fips', 'firmage', 'time']).sum().\
+        groupby(groupby_vars).sum().\
         reset_index(drop=False)
 
 
@@ -244,8 +254,13 @@ if __name__ == '__main__':
     # get_data('msa', annualize=True).to_csv('/Users/thowe/Downloads/qwi_msa.csv', index=False)
     # get_data('state', annualize=True).to_csv('/Users/thowe/Downloads/qwi_state.csv', index=False)
     #
-    df = get_data('state', start_year=2016, end_year=2017, annualize='March')
-    print(df)
+    # df = get_data('state', start_year=2016, end_year=2017, annualize='March')
+    # print(df)
+
+    # df = get_data('us', start_year=2016, end_year=2017, annualize='January', strat=True)
+    # print(df)
+    print(_annualizer(joblib.load('/Users/thowe/Downloads/scratch.pkl'), 'January', True).head(50))
+    sys.exit()
 
 
 # todo: specify public or private
