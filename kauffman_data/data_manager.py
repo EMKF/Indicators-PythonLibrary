@@ -1,4 +1,7 @@
 import io
+import os
+import boto3
+import joblib
 import zipfile
 import requests
 import numpy as np
@@ -12,6 +15,99 @@ pd.set_option('display.max_rows', 30000)
 pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
+
+
+def to_s3(file, s3_bucket, s3_file):
+    """
+    Upload a local file to S3.
+
+    file: str
+        location of the local file
+    s3_bucket: str
+        Name of the S3 bucket. E.g., 'emkf.data.research'
+    s3_file: str
+        Destination file location in S3. E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
+
+    Examples:
+        from kauffman_data import data_manager as dm
+        dm.from_s3('local_file_path.csv', 'emkf.data.research', 'indicators/nej/data_outputs/remote_file_path.csv')
+    """
+    # buf = io.BytesIO()
+    # joblib.dump(df, buf)
+    # s3 = boto3.client('s3')
+    # s3.upload_fileobj(buf, bucket, key)  # I could not get this to work...tear. It won't write to s3; it is something about this type of object not haveing a read function.
+
+    s3 = boto3.client('s3')
+    with open(file, "rb") as f:
+        s3.upload_fileobj(f, s3_bucket, s3_file)
+
+
+def from_s3(file, bucket, key):
+    """
+    Download a file locally from S3.
+
+    file: str
+        Local file destination
+    s3_bucket: str
+        Name of the S3 bucket where file is located. E.g., 'emkf.data.research'
+    s3_file: str
+        File location in S3. E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
+
+    Examples:
+        from kauffman_data import data_manager
+        dm.from_s3('local_file_path.csv', 'emkf.data.research', 'indicators/nej/data_outputs/remote_file_path.csv')
+    """
+    s3 = boto3.client('s3')
+    s3.download_fileobj(bucket, key, file)
+
+
+def to_s3_joblib(file_obj, s3_bucket, s3_file):
+    """
+    Send object to S3 as a joblib pickled (serialized) object.
+
+    file_obj: python object
+        Python object, such as a dataframe, to serialize and store in S3.
+
+    s3_bucket: str
+        Name of the S3 bucket where the file is to be located. E.g., 'emkf.data.research'
+
+    s3_file: str
+        Destination file location in S3. E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
+
+    Examples:
+        import numpy as np
+        import pandas as pd
+        from kauffman_data import data_manager as dm
+        df = pd.DataFrame(np.random.uniform(0, 1, size=(10, 3)))
+        dm.to_s3_joblib(df, 'emkf.data.research', 'indicators/nej/data_outputs/remote_file_path.pkl')
+
+    """
+    s3 = boto3.client('s3')
+    joblib.dump(file_obj, '_joblib_temp.pkl')
+    with open('_joblib_temp.pkl', "rb") as f:
+        s3.upload_fileobj(f, s3_bucket, s3_file)
+    os.remove('_joblib_temp.pkl')
+
+
+def from_s3_joblib(s3_bucket, s3_key):
+    """
+    Fetch serialized object from S3 and return unserialized.
+
+    s3_bucket: str
+        Name of the S3 bucket where the file is located. E.g., 'emkf.data.research'
+
+    s3_file: str
+        File location in S3. E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
+
+    Examples:
+        from kauffman_data import data_manager as dm
+        df = dm.from_s3_joblib('emkf.data.research', 'indicators/nej/data_outputs/remote_file_path.pkl')
+
+    """
+    buf = io.BytesIO()
+    s3 = boto3.client('s3')
+    s3.download_fileobj(s3_bucket, s3_key, buf)
+    return joblib.load(buf)
 
 
 # do we want to include this? maybe

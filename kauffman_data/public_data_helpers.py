@@ -1,4 +1,8 @@
+import io
+import os
 import sys
+import boto3
+import joblib
 import requests
 import numpy as np
 import pandas as pd
