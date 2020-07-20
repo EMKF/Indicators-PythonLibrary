@@ -14,7 +14,7 @@ setup(
         'shapely', 'psutil', 's3fs', 'webdriver-manager'
     ],
     # *strongly* suggested for sharing
-    version='1.3.7',
+    version='1.3.8',
     # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',

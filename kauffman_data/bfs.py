@@ -169,7 +169,7 @@ def get_data(series_lst, obs_level='us', start_year=None, end_year=None, seasona
     start_year:
         Earliest year is 2004
     """
-
+    # todo: so if I put "BA_BA" instead of a list, then it returns the weekly data...that's stupid
     # todo: get this better integrated into the code
     # todo: the next line is a dumb way of doing things: list versus a string? please.
     if isinstance(series_lst, str):

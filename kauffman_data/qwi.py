@@ -243,8 +243,8 @@ def _annualizer(df, annualize, strat):
             row_count=lambda x: x['fips'].groupby([x[var] for var in groupby_vars]).transform('count')
         ). \
         query('row_count == 4'). \
-        drop(columns=['row_count']).\
-        groupby(groupby_vars).sum().\
+        drop(columns=['row_count']). \
+        groupby(groupby_vars).apply(lambda x: pd.DataFrame.sum(x.set_index(groupby_vars), skipna=False)).\
         reset_index(drop=False)
 
 
@@ -257,10 +257,10 @@ if __name__ == '__main__':
     # df = get_data('state', start_year=2016, end_year=2017, annualize='March')
     # print(df)
 
-    # df = get_data('us', start_year=2016, end_year=2017, annualize='January', strat=True)
-    # print(df)
-    print(_annualizer(joblib.load('/Users/thowe/Downloads/scratch.pkl'), 'January', True).head(50))
-    sys.exit()
+    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=False)
+    print(df)
+    # print(_annualizer(joblib.load('/Users/thowe/Downloads/scratch.pkl'), 'January', True).head(50))
+    # sys.exit()
 
 
 # todo: specify public or private
