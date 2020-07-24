@@ -100,11 +100,14 @@ def _us_fetch_data_all(private, by_age, strat):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
             time.sleep(pause1)
         time.sleep(pause1)
+    if 'industry' in strat:
+        elems = driver.find_elements_by_xpath("//a[@href]")[13]
+        driver.execute_script("arguments[0].click();", elems)
     driver.find_element_by_id('continue_to_worker_char').click()
 
     # Worker Characteristics
     print('\tWorker Characteristics tab...')
-    if strat:
+    if 'sex' in strat:
         driver.find_element_by_id('dijit_form_CheckBox_12').click()
         driver.find_element_by_id('dijit_form_CheckBox_13').click()
         driver.find_element_by_id('dijit_form_CheckBox_14').click()
@@ -150,7 +153,7 @@ def _msa_year_filter(df):
 
 
 
-def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize='January', strat=False):
+def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize='January', strat=None):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -172,6 +175,11 @@ def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_yea
         'None': leave as quarterly data
         'January': annualize using Q1 as beginning of year
         'March': annualize using Q2 as beginning of year
+
+    strat: None, lst
+        'sex': stratify by gender
+        'industry': stratify by industry, NAICS 2-digit
+
     """
     print('Extracting QWI data for {}...'.format(obs_level))
 
@@ -201,11 +209,11 @@ def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_yea
                 fips='00'
             ).\
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'}) \
-            [ui_covars if not strat else ui_covars + ['sex']]
+            [ui_covars if not strat else ui_covars + strat]
     #             query('{start_year}<=year<={end_year}'.format(start_year=max(start_year, 2000), end_year=min(end_year, 2019))).\  # todo: why did I do this here? Oh, the other region queries have dates built in
 
     # todo: look for a better way to do this list garbage.
-    covars = ['time', 'firmage', 'fips'] if not strat else ['time', 'firmage', 'fips', 'sex']
+    covars = ['time', 'firmage', 'fips'] if not strat else ['time', 'firmage', 'fips'] + strat
     indicator_lst = [col for col in df.columns.tolist() if col not in covars + ['ownercode']] if not indicator_lst else indicator_lst
     return df. \
         reset_index(drop=True) \
@@ -237,7 +245,7 @@ def _annualizer(df, annualize, strat):
                 time=lambda x: x['time'].str[:4],
             )
 
-    groupby_vars = ['fips', 'time', 'firmage'] if not strat else ['fips', 'time', 'firmage', 'sex']
+    groupby_vars = ['fips', 'time', 'firmage'] if not strat else ['fips', 'time', 'firmage'] + strat
     return df. \
         assign(
             row_count=lambda x: x['fips'].groupby([x[var] for var in groupby_vars]).transform('count')
@@ -257,7 +265,7 @@ if __name__ == '__main__':
     # df = get_data('state', start_year=2016, end_year=2017, annualize='March')
     # print(df)
 
-    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=False)
+    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=['sex', 'industry'])
     print(df)
     # print(_annualizer(joblib.load('/Users/thowe/Downloads/scratch.pkl'), 'January', True).head(50))
     # sys.exit()
