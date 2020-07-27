@@ -108,7 +108,7 @@ def _us_fetch_data_all(private, by_age, strat):
     # Worker Characteristics
     print('\tWorker Characteristics tab...')
     if 'sex' in strat:
-        driver.find_element_by_id('dijit_form_CheckBox_12').click()
+        # driver.find_element_by_id('dijit_form_CheckBox_12').click()
         driver.find_element_by_id('dijit_form_CheckBox_13').click()
         driver.find_element_by_id('dijit_form_CheckBox_14').click()
     driver.find_element_by_id('continue_to_indicators').click()
@@ -153,7 +153,7 @@ def _msa_year_filter(df):
 
 
 
-def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize='January', strat=None):
+def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_year=2000, end_year=2019, annualize='January', strat=[]):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -176,7 +176,8 @@ def get_data(obs_level, indicator_lst=None, private=True, by_age=True, start_yea
         'January': annualize using Q1 as beginning of year
         'March': annualize using Q2 as beginning of year
 
-    strat: None, lst
+    strat: lst
+        empty
         'sex': stratify by gender
         'industry': stratify by industry, NAICS 2-digit
 
