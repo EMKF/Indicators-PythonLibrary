@@ -199,6 +199,7 @@ def _fips_formatter(df, region):
     else:
         return df.assign(fips=lambda x: x['fips'].apply(lambda row: '00' + row if len(row) == 3 else '0' + row if len(row) == 4 else row))
 
+
 # todo: should these be in the public_data_helpers.py file or here?
 def raw_jobs_formatter(file_path):
     """

@@ -10,3 +10,9 @@
 __pycache__
 
 .idea/
+/scratch
+
+kauffman_data/data_manager.py
+kauffman_data/public_data_helpers.py
+
+kauffman_data/ase.py

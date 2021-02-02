@@ -112,7 +112,7 @@ def table7(lines):
         if (not line.split()) or ('openings' in line) or ('ended' in line):
             continue
         data_lst.append([cohort] + line.split()[1:])
-        if 'March 2019' in line:
+        if 'March 2020' in line:  # this is something that needs to be incremented yearly
             cohort += 1
 
     return pd.DataFrame(
@@ -172,12 +172,12 @@ def get_data(series_lst, table, industry='00', obs_level='us', start_year=None, 
 
 
 if __name__ == '__main__':
-    df1 = get_data('bdm', 1, '00', 'us')
-    print(df1)
+    # df1 = get_data('bdm', 1, '00', 'us')
+    # print(df1)
     # df5 = get_data('bdm', 5, '00', 'us')
     # print(df5)
-    # df7 = get_data('bdm', 7, '00', 'us')
-    # print(df7.head(30))
+    df7 = get_data('bdm', 7, '00', 'us')
+    print(df7.head(30))
 
 
 # Tables 1 through 4 are similar

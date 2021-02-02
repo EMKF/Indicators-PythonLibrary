@@ -262,7 +262,7 @@ class PublicDataHelpers:
         # todo: wish I could use the fips codes here instead of converting back to abbreviations
         if obs_level == 'state':
             fig = go.Figure(data=go.Choropleth(
-                locations=df['fips'].map(c.state_abb_fips_dic),  # Spatial coordinates
+                locations=df['fips'].map(c.state_fips_abb_dic),  # Spatial coordinates
                 z=df[indicator].astype(float),  # Data to be color-coded
                 locationmode='USA-states',  # set of locations match entries in `locations`
                 colorscale='Reds',

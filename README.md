@@ -74,6 +74,13 @@ Changing the parameters (see examples and documentation) makes the plots nicer.
 
 
 # TODO
+* remove unneeded libraries
+* clean up code
+* remove main blocks
+* have test scripts
+* 
+
+
 ## panel to alley
 
 ## plotter

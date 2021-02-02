@@ -105,23 +105,18 @@ def region_data_frame_create(region, series_lst, seasonally_adj, start_year, end
         pipe(features_create, region)
 
 
-# import datetime
-# datetime.date(2020, 12, 28).isocalendar()
-#
-# datetime.date.fromisocalendar(2020, 53, 0)
-#
-# pd.DateOffset(weeks=t) + pd.to_datetime('2006-01-07'))
-
 def _iso_year_start(iso_year):
     "The gregorian calendar date of the first day of the given ISO year"
     fourth_jan = datetime.date(iso_year, 1, 4)
     delta = datetime.timedelta(fourth_jan.isoweekday() - 1)
     return fourth_jan - delta
 
+
 def _iso_to_gregorian(iso_year, iso_week, iso_day):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = _iso_year_start(iso_year)
     return year_start + datetime.timedelta(days=iso_day - 1, weeks=iso_week - 1)
+
 
 def get_data(series_lst, obs_level='us', start_year=None, end_year=None, seasonally_adj=True, annualize=True):
     """
@@ -202,7 +197,14 @@ def get_data(series_lst, obs_level='us', start_year=None, end_year=None, seasona
     return df.reset_index(drop=True)
 
 
+def update_check():
+    pass
+
 if __name__ == '__main__':
+    df = get_data(['BA_BA'], 'state', 2004, annualize=False)
+    print(df)
+
+    sys.exit()
     df = get_data('weekly', 'us', start_year=2004, annualize=False)
     print(df)
     sys.exit()
@@ -210,8 +212,6 @@ if __name__ == '__main__':
 
 
     # df = get_data(['BA_BA'], 'us', 2004, annualize=True)
-    df = get_data(['BA_BA'], 'state', 2004, annualize=False)
-    print(df)
     # df = get_data(['BF_DUR4Q', 'BF_DUR8Q', 'BA_BA'], 'state', 2004, annualize=True)
 
     # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)
