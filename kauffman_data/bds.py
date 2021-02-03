@@ -75,28 +75,7 @@ def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=Tr
 
 
 if __name__ == '__main__':
-    ['firms', 'net_job_creation', 'estabs', 'fage4']
-    # df = get_data(['firms', 'net_job_creation', 'estabs', 'fage4'], 'us', 1977, end_year=2016).\
-    #     astype({'firms': 'int', 'net_job_creation': 'int', 'estabs': 'int', 'time': 'int'})
-    # print('\n')
-    # print(df)
-
-    # df = get_data(['estabs', 'firms', 'net_job_creation', 'fage4', 'fsize'], 'us', 2014, end_year=2015).\
-    #     astype({'estabs': 'int', 'firms': 'int'})
-    # print('\n')
-
-    # df.pub.plot(['firms', 'estabs'], {'fage4': 'm', 'fsize': 'm'})
-    # df.pub.plot({'firms': 'Firms', 'net_job_creation': 'Net Job Creation'}, {'fage4': 'm'}, save_path='/Users/thowe/Downloads/bds_net_job_creation.png')
-
-    import kauffman_data.constants as c
-    df = pd.read_csv(c.filenamer('../scratch/all_time.csv'))
-
-    df.pub.plot(
-        {'firms': 'Firms', 'net_job_creation': 'Net Job Creation'},
-        strata_dic={'fage4': {'Startups': ['a'], 'Non-startups': ['g', 'h', 'i', 'j', 'k', 'l'], 'Young': ['a', 'b', 'c', 'd', 'e', 'f']}},
-        # strata_dic={'fage4': {'Startups': ['a'], 'Non-startups': ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'], 'Young': ['a', 'b', 'c', 'd', 'e', 'f']}},
-        to_index=False,
-        years=list(range(1982, 2017)),
-        recessions=True,
-        filter=True
-    )
+    df = get_data(['firms', 'net_job_creation', 'estabs', 'fage4'], 'us', 1977, end_year=2016).\
+        astype({'firms': 'int', 'net_job_creation': 'int', 'estabs': 'int', 'time': 'int'})
+    print('\n')
+    print(df.head())

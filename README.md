@@ -1,3 +1,7 @@
+what else need's to be in here to make it a library? Like an __init__.py file? How are these used, typically?
+
+
+
 # Installation
 In the terminal, type
 ```bash

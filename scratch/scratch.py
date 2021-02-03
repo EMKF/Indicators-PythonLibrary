@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import kauffman_data.constants as c
 import kauffman_data.public_data_helpers as p
+from kauffman_data.data_manager import raw_kese_formatter
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -34,13 +35,15 @@ def scratch_panel_to_alley():
     print(df_out.head(65))
 
 
+# todo: create a repo that does this or something...I need to remember what to do once a year when we get this request
 def scratch_kese_to_panel():
-    df = p.raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
-    df.to_csv('/Users/thowe/Downloads/kese_2019_download.csv', index=False)
-    print(df)
-    print(df['category'].unique().tolist())
-    df_out = df.pub.download_to_alley_formatter(['type', 'category'], 'rne')
-    # print(df_out)
+    df = raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2020.xlsx'))
+    df.to_csv('/Users/thowe/Downloads/kese_2020_download.csv', index=False)
+    print(df.head())
+
+    for indicator in ['rne', 'ose', 'sjc', 'ssr', 'zindex']:
+        df.pub.download_to_alley_formatter(['type', 'category'], indicator).\
+            to_csv(f'/Users/thowe/Downloads/kese_2020_{indicator}.csv', index=False)
 
 
 def plot_maps():
@@ -76,9 +79,9 @@ def msa_plot():
 
 def main():
     # scratch_panel_to_alley()
-    # scratch_kese_to_panel()
+    scratch_kese_to_panel()
     # plot_maps()
-    msa_plot()
+    # msa_plot()
 
 if __name__ == '__main__':
     main()

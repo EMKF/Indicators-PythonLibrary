@@ -141,7 +141,8 @@ def _region_transform(df, v, df_out):
         assign(
             type=lambda x: 'Total' if 'type' not in x.columns else x['type'],
             category=lambda x: 'Total' if 'category' not in x.columns else x['category'],
-            fips=lambda x: x['name'].map(c.us_state_abbrev).map(c.state_dic_temp)
+            fips=lambda x: x['name'].map(c.us_state_abbrev).map(c.state_abb_fips_dic)
+            # fips=lambda x: x['name'].map(c.us_state_abbrev).map(c.state_dic_temp)
         ) \
         [['name', 'fips', 'type', 'category'] + new_covar_lst].\
         query('category != "Ages 25-64"'). \
