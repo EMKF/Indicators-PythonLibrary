@@ -11,6 +11,7 @@ __pycache__
 
 .idea/
 /scratch
+venv
 
 kauffman_data/data_manager.py
 kauffman_data/public_data_helpers.py

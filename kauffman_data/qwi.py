@@ -1,3 +1,6 @@
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import os
 import sys
 import time
@@ -81,7 +84,7 @@ def _us_fetch_data_all(private, by_age, strat):
     pause2 = 3
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
@@ -266,7 +269,8 @@ if __name__ == '__main__':
     # df = get_data('state', start_year=2016, end_year=2017, annualize='March')
     # print(df)
 
-    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=['sex', 'industry'])
+    # df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=['sex', 'industry'])    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=['sex', 'industry'])
+    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January')
     print(df)
     # print(_annualizer(joblib.load('/Users/thowe/Downloads/scratch.pkl'), 'January', True).head(50))
     # sys.exit()
@@ -274,7 +278,3 @@ if __name__ == '__main__':
 
 # todo: specify public or private
 # todo: does annualize work for all indicators? Some might not because of how they are defined.
-# todo: Abe fix error:
-"""urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed:
-unable to get local issuer certificate (_ssl.c:1056)>
-"""

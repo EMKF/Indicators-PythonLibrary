@@ -1,3 +1,6 @@
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import sys
 import datetime
 import pandas as pd
@@ -13,6 +16,7 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def raw_data_create(url):
+    print(url)
     return pd.read_csv(url, skiprows=7).\
         dropna()
 
@@ -228,7 +232,3 @@ if __name__ == '__main__':
 # todo: https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
 # todo: from https://www.census.gov/econ/bfs/index.html?#
 # todo: dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
-
-#todo - when Abe runs main script this error pops up:
-"""urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: 
-unable to get local issuer certificate (_ssl.c:1056)>"""
