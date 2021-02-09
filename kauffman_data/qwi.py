@@ -274,3 +274,7 @@ if __name__ == '__main__':
 
 # todo: specify public or private
 # todo: does annualize work for all indicators? Some might not because of how they are defined.
+# todo: Abe fix error:
+"""urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed:
+unable to get local issuer certificate (_ssl.c:1056)>
+"""

@@ -2,7 +2,7 @@ import sys
 import datetime
 import pandas as pd
 from kauffman_data import constants as c
-import kauffman_data.public_data_helpers
+
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -228,3 +228,7 @@ if __name__ == '__main__':
 # todo: https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
 # todo: from https://www.census.gov/econ/bfs/index.html?#
 # todo: dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
+
+#todo - when Abe runs main script this error pops up:
+"""urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: 
+unable to get local issuer certificate (_ssl.c:1056)>"""
