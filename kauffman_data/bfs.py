@@ -1,8 +1,11 @@
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import sys
 import datetime
 import pandas as pd
 from kauffman_data import constants as c
-import kauffman_data.public_data_helpers
+
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -13,6 +16,7 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def raw_data_create(url):
+    print(url)
     return pd.read_csv(url, skiprows=7).\
         dropna()
 

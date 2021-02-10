@@ -1,6 +1,5 @@
 import pandas as pd
 from kauffman_data import constants as c
-import kauffman_data.public_data_helpers
 from kauffman_data import data_manager as dm
 
 pd.set_option('max_columns', 1000)

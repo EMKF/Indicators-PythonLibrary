@@ -190,13 +190,13 @@ def get_data(obs_level, start_year=None, end_year=None):
 
 
 if __name__ == '__main__':
-    # df = get_data('state', 2011, 2018)
+    df = get_data('state', 2011, 2018)
     # df = get_data('us', 2011, 2018)
-    # print(df.head())
+    print(df.head())
     # print(df.info())
     # print(df.shape)
 
     # get_data('county').to_csv('/Users/thowe/Downloads/pep_county.csv', index=False)
     # get_data('us').to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
     # get_data('state').to_csv('/Users/thowe/Downloads/pep_state.csv', index=False)
-    get_data('msa').to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)
+    #get_data('msa').to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)

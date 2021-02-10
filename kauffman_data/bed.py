@@ -3,7 +3,7 @@ import joblib
 import requests
 import numpy as np
 import pandas as pd
-import kauffman_data.public_data_helpers
+
 
 
 pd.set_option('max_columns', 1000)
