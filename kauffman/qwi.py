@@ -8,7 +8,7 @@ import joblib
 import requests
 import pandas as pd
 from itertools import product
-from kauffman_data import constants as c
+from kauffman import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
 
 from selenium import webdriver

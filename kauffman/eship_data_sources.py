@@ -1,26 +1,46 @@
-import sys
-import requests
 import pandas as pd
+import kauffman.constants as c
+from kauffman.bfs_helpers import _region_data_create
+
+def bfs(series_lst, obs_level='state', seasonally_adj=True, annualize=False):
+    """
+    series_lst: lst
+
+        Variables:
+            BA_BA: 'Business Applications'
+            BA_CBA: 'Business Applications from Corporations'
+            BA_HBA: 'High-Propensity Business Applications'
+            BA_WBA: 'Business Applications with Planned Wages'
+            BF_BF4Q: 'Business Formations within Four Quarters'
+            BF_BF8Q: 'Business Formations within Eight Quarters'
+            BF_PBF4Q: Projected Business Formations within Four Quarters
+            BF_PBF8Q: Projected Business Formations within Eight Quarters
+            BF_SBF4Q: Spliced Business Formations within Four Quarter
+            BF_SBF8Q: Spliced Business Formations within Eight Quarters
+            BF_DUR4Q: Average Duration (in Quarters) from Business Application to Formation within Four Quarters
+            BF_DUR8Q: Average Duration (in Quarters) from Business Application to Formation within Eight Quarters
 
 
-pd.set_option('max_columns', 1000)
-pd.set_option('max_info_columns', 1000)
-pd.set_option('expand_frame_repr', False)
-pd.set_option('display.max_rows', 30000)
-pd.set_option('max_colwidth', 4000)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
+    """
+
+    if type(obs_level) == list:
+        region_lst = obs_level
+    else:
+        if obs_level == 'us':
+            region_lst = ['US']
+        else:
+            region_lst = c.states
+    return pd.concat(
+            [
+                _region_data_create(region, series_lst, seasonally_adj, annualize)
+                for region in region_lst
+            ],
+            axis=0
+        ).\
+        reset_index(drop=True)
 
 
-def _make_header(df):
-    df.columns = df.iloc[0]
-    return df.iloc[1:]
-
-
-def _renamer(df):
-    return df.rename(columns=dict(zip(df.columns, map(lambda x: x.lower(), df.columns))))
-
-
-def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=True, annualize=True):
+def bds(series_lst, obs_level='state', seasonally_adj=True, annualize=False):
     """
     series_lst: lst; see https://www.census.gov/content/dam/Census/programs-surveys/business-dynamics-statistics/BDS_Codebook.pdf.
         net_job_creation
@@ -72,10 +92,3 @@ def get_data(series_lst, obs_level, start_year, end_year=None, seasonally_adj=Tr
     return df.\
         reset_index(drop=True).\
         astype({'time': 'str'})
-
-
-if __name__ == '__main__':
-    df = get_data(['firms', 'net_job_creation', 'estabs', 'fage4'], 'us', 1977, end_year=2016).\
-        astype({'firms': 'int', 'net_job_creation': 'int', 'estabs': 'int', 'time': 'int'})
-    print('\n')
-    print(df.head())

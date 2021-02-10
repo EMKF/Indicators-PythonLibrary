@@ -1,5 +1,6 @@
-what else need's to be in here to make it a library? Like an __init__.py file? How are these used, typically?
-
+# TODO
+1. what else need's to be in here to make it a library? Like an __init__.py file? How are these used, typically?
+2. create a kauffman_tools library for things like the time series plotting and choropleth functions
 
 
 # Installation
@@ -23,7 +24,7 @@ The following are a few examples using the library:
 * LFS (labor force statistics): https://github.com/EMKF/narrative/blob/master/labor_force_statistics/self_employment_over_time.py
 
 ```python
-from kauffman_data import bfs, pep, lfs, bds
+from kauffman import bfs_helpers, pep, lfs, bds_helpers
 ```
 ## BFS
 ```python
@@ -67,8 +68,8 @@ df.pub.plot()
 ```
 
 ```python
-import kauffman_data.constants as c
-import kauffman_data.public_data_helpers as p
+import kauffman.constants as c
+import kauffman_tools.public_data_helpers as p
 
 df = p.raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
 df_out = df.pub.download_to_alley_formatter(['type', 'category'], 'rne')

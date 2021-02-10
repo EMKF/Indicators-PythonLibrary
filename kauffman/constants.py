@@ -1,14 +1,22 @@
-import os
-
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-def filenamer(path):
-    return os.path.join(ROOT_DIR, path)
-
 states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
           "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
           "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+
+
+
+
+
+
+
+###################
+
+import os
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+def filenamer(path):
+    return os.path.join(ROOT_DIR, path)
 
 bfs_series = ['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q']
 bfs_series_brief = ['BF_SBF4Q', 'BF_DUR4Q']

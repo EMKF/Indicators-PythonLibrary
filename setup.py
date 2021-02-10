@@ -7,7 +7,7 @@ setup(
     author='Travis Howe',
     author_email='thowe@kauffman.org',
     # Needed to actually package something
-    packages=['kauffman_data'],
+    packages=['kauffman'],
     # Needed for dependencies
     install_requires=[
         'numpy', 'pandas', 'requests', 'statsmodels', 'xlrd', 'boto3', 'plotly', 'plotly-geo', 'geopandas', 'pyshp',

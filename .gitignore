@@ -13,7 +13,7 @@ __pycache__
 /scratch
 venv
 
-kauffman_data/data_manager.py
-kauffman_data/public_data_helpers.py
+kauffman/data_manager.py
+kauffman_tools/public_data_helpers.py
 
-kauffman_data/ase.py
+kauffman/ase.py

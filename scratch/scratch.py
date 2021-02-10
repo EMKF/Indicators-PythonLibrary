@@ -1,11 +1,7 @@
-import sys
 import joblib
-import requests
-import numpy as np
 import pandas as pd
-import kauffman_data.constants as c
-import kauffman_data.public_data_helpers as p
-from kauffman_data.data_manager import raw_kese_formatter
+import kauffman.constants as c
+from kauffman.data_manager import raw_kese_formatter
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -51,13 +47,13 @@ def plot_maps():
     #     assign(fips=lambda x: x['Region'].map(c.state_dic_temp)). \
     #     pub.choro_map('Percentage Change')
 
-    # import kauffman_data.bfs as bfs
+    # import kauffman.bfs as bfs
     # bfs.get_data(['BA_BA'], obs_level='state'). \
     #     query('time == 2019'). \
     #     assign(fips=lambda x: x['region'].map(c.state_dic_temp)). \
     #     pub.choro_map('BA_BA', 'Business Applications 2019', 'Business Applications')
 
-    import kauffman_data.pep as pep
+    import kauffman.pep as pep
     pep.get_data('county'). \
         query('time == "2019"'). \
         astype({'population': 'int'}). \
@@ -70,7 +66,6 @@ def plot_maps():
 
 
 def msa_plot():
-    import kauffman_data.qwi as qwi
     # qwi.get_data('msa', ['Emp'], start_year=2016, end_year=2016, annualize=True).to_csv('/Users/thowe/Downloads/scratch.csv', index=False)
     df = pd.read_csv('/Users/thowe/Downloads/scratch.csv').\
         query('firmage == 1').\
