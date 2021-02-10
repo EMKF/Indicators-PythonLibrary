@@ -1,6 +1,9 @@
 # TODO
 1. what else need's to be in here to make it a library? Like an __init__.py file? How are these used, typically?
 2. create a kauffman_tools library for things like the time series plotting and choropleth functions
+    1. probably best in a different repository
+3. docstrings
+4. requirements.txt file
 
 
 # Installation
@@ -69,7 +72,7 @@ df.pub.plot()
 
 ```python
 import kauffman.constants as c
-import kauffman_tools.public_data_helpers as p
+import scratch.kauffman_tools.public_data_helpers as p
 
 df = p.raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
 df_out = df.pub.download_to_alley_formatter(['type', 'category'], 'rne')

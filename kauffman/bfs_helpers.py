@@ -80,7 +80,7 @@ def _iso_to_gregorian(iso_year, iso_week, iso_day):
     return year_start + datetime.timedelta(days=iso_day - 1, weeks=iso_week - 1)
 
 
-def _region_data_create(region, series_lst, seasonally_adj, annualize):
+def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
     if annualize:
         dur_in_lst = list(map(lambda x: x[-2], [var for var in series_lst if 'DUR' in var]))
         bf_lst = ['BF_BF{}Q'.format(q) for q in dur_in_lst if 'BF_BF{}Q'.format(q) not in series_lst]

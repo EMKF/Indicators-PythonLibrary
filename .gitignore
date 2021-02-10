@@ -14,6 +14,6 @@ __pycache__
 venv
 
 kauffman/data_manager.py
-kauffman_tools/public_data_helpers.py
+scratch/kauffman_tools/public_data_helpers.py
 
 kauffman/ase.py

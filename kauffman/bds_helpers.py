@@ -1,6 +1,7 @@
 import sys
 import requests
 import pandas as pd
+import kauffman.constants as c
 
 
 pd.set_option('max_columns', 1000)
@@ -16,12 +17,18 @@ def _make_header(df):
     return df.iloc[1:]
 
 
-def _renamer(df):
-    return df.rename(columns=dict(zip(df.columns, map(lambda x: x.lower(), df.columns))))
+def _bds_data_create(variables, region):
+    url = f'https://api.census.gov/data/timeseries/bds?get={",".join(variables)}&for={region}:*&YEAR=*'
+    return pd.DataFrame(requests.get(url).json()).\
+        pipe(_make_header).\
+        rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time'}).\
+        assign(
+            fips=lambda x: '00' if region == 'us' else x['fips'],
+            region=lambda x: x['fips'].map(c.fips_abb_dic)
+        ).\
+        astype({var: 'int' for var in variables}).\
+        sort_values(['fips', 'time']).\
+        reset_index(drop=True)
 
-
-if __name__ == '__main__':
-    df = get_data(['firms', 'net_job_creation', 'estabs', 'fage4'], 'us', 1977, end_year=2016).\
-        astype({'firms': 'int', 'net_job_creation': 'int', 'estabs': 'int', 'time': 'int'})
-    print('\n')
-    print(df.head())
+# todo: line 32 needs some attention. It breaks because I need the county info in a dictionary.
+# todo: for this problem, instead of the abbreviation, put the region name.
