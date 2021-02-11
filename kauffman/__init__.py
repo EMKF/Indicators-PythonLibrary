@@ -33,3 +33,7 @@ __all__ = ['bfs', 'bds']
 #   5. cleanup the constants.py file
 #       1. won't be able to do this until at least the qwi function is integrated into eship_data_sources.py and tested
 #   6. can we move data_manager.py into the kauffman_tools subdirectory in the scratch directory?
+#   7. get it ready for publication on pypi
+#       1. https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
+#       2. as part of this, rename the repo to eship_data
+#   8. 

@@ -42,7 +42,8 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False):
             ],
             axis=0
         ).\
-        reset_index(drop=True)
+        reset_index(drop=True) \
+        [['fips', 'region', 'time'] + series_lst]
 
 
 def bds(series_lst, obs_level='all'):
@@ -77,4 +78,5 @@ def bds(series_lst, obs_level='all'):
             ],
             axis=0
         ). \
-        reset_index(drop=True)
+        reset_index(drop=True) \
+        [['fips', 'region', 'time'] + series_lst]
