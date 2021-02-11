@@ -1,3 +1,5 @@
+import geonamescache
+
 states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
           "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
           "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
@@ -18,25 +20,7 @@ abb_fips_dic = {
 
 fips_abb_dic = {v: k for k, v in abb_fips_dic.items()}
 
-
-
-
-
-
-
-###################
-
-import os
-
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-def filenamer(path):
-    return os.path.join(ROOT_DIR, path)
-
-bfs_series = ['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q']
-bfs_series_brief = ['BF_SBF4Q', 'BF_DUR4Q']
-
-
-us_state_abbrev = {
+name_abb_dic = {
     'Alabama': 'AL',
     'Alaska': 'AK',
     'Arizona': 'AZ',
@@ -95,7 +79,36 @@ us_state_abbrev = {
     'United States': 'US'
 }
 
-abbrev_us_state = dict(map(reversed, us_state_abbrev.items()))
+abb_name_dic = dict(map(reversed, name_abb_dic.items()))
+
+
+# todo: can I do this with the first of these lines? I don't know what genomaescache has. Given I import it, I might as well use it if I can.
+all_fips_name_dic = {
+    **{k: abb_name_dic[v] for k, v in fips_abb_dic.items() if v != 'PR'},
+    **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()}
+}
+
+
+
+
+
+
+
+
+
+
+###################
+
+import os
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+def filenamer(path):
+    return os.path.join(ROOT_DIR, path)
+
+bfs_series = ['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q']
+bfs_series_brief = ['BF_SBF4Q', 'BF_DUR4Q']
+
+
 
 msa_fips_state_fips_dic = {
     '12060': ['13'],

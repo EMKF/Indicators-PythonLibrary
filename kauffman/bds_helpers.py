@@ -17,18 +17,22 @@ def _make_header(df):
     return df.iloc[1:]
 
 
+def _county_fips(df):
+    return df.\
+        assign(county=lambda x: x['state'] + x['county']).\
+        drop('state', 1)
+
+
 def _bds_data_create(variables, region):
     url = f'https://api.census.gov/data/timeseries/bds?get={",".join(variables)}&for={region}:*&YEAR=*'
     return pd.DataFrame(requests.get(url).json()).\
         pipe(_make_header).\
+        pipe(lambda x: _county_fips(x) if region == 'county' else x).\
         rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time'}).\
         assign(
             fips=lambda x: '00' if region == 'us' else x['fips'],
-            region=lambda x: x['fips'].map(c.fips_abb_dic)
-        ).\
+            region=lambda x: x['fips'].map(c.all_fips_name_dic)
+        ). \
         astype({var: 'int' for var in variables}).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True)
-
-# todo: line 32 needs some attention. It breaks because I need the county info in a dictionary.
-# todo: for this problem, instead of the abbreviation, put the region name.

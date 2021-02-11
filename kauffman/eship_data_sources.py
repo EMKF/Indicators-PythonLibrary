@@ -37,7 +37,7 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False):
 
     return pd.concat(
             [
-                _data_create(region, series_lst, seasonally_adj, annualize)
+                _bfs_data_create(region, series_lst, seasonally_adj, annualize)
                 for region in region_lst
             ],
             axis=0
