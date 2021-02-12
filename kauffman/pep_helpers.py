@@ -131,41 +131,23 @@ def _msa_fetch_2004_2009():
         rename(columns={'msa_fips': 'fips'})
 
 
-def get_data(obs_level, start_year=None, end_year=None):
-    """
-    Collects nation- and state-level population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
-    register here: https://research.stlouisfed.org/useraccount/apikey. For now, I'm just including my key until we
-    figure out the best way to do this.
-
-    Collects county-level population data from the Census API:
-
-    (as of 2020.03.16)
-    obs_level:
-        'state': resident population of state from 1990 through 2019
-        'us': resident population in the united states from 1959 through 2019
-
-    start_year: earliest start year is 1900
-
-    end_year: latest end year is 2019
-    """
-    print('Extracting PEP data for {}...'.format(obs_level))
-
+def _pep_data_create(variables, region):
     if obs_level == 'state':
-        region_dict = {state: _state_us_fetch_data_all(state) for state in c.states}
-        df = _json_to_pandas_construct(region_dict)
+        region_dict = {state: h._state_us_fetch_data_all(state) for state in c.states}
+        df = h._json_to_pandas_construct(region_dict)
 
     elif obs_level == 'us':
-        region_dict = {'us': _state_us_fetch_data_all('us')}
-        df = _json_to_pandas_construct(region_dict)
+        region_dict = {'us': h._state_us_fetch_data_all('us')}
+        df = h._json_to_pandas_construct(region_dict)
 
     elif obs_level == 'county':
         df = pd.concat(
                 [
-                    _county_fetch_data_2000_2009(date). \
-                        pipe(_make_header). \
-                        pipe(_feature_create, obs_level, date). \
+                    h._county_fetch_data_2000_2009(date). \
+                        pipe(h._make_header). \
+                        pipe(h._feature_create, obs_level, date). \
                         rename(columns={'POP': 'population', 'GEONAME': 'name'}). \
-                        pipe(_feature_keep)
+                        pipe(h._feature_keep)
                     for date in range(2, 12)
                 ]
             ).\

@@ -36,4 +36,4 @@ __all__ = ['bfs', 'bds']
 #   7. get it ready for publication on pypi
 #       1. https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
 #       2. as part of this, rename the repo to eship_data
-#   8. 
+#       3. update readme.md file

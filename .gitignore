@@ -13,7 +13,4 @@ __pycache__
 /scratch
 venv
 
-kauffman/data_manager.py
 scratch/kauffman_tools/public_data_helpers.py
-
-kauffman/ase.py
