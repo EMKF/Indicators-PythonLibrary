@@ -62,8 +62,11 @@ def _date_formatter(df, annualize):
 
 
 def _features_create(df, region):
-    return df.\
-        assign(region=region).\
+    df = df.\
+        assign(
+            region=region,
+            fips=lambda x: x['region'].map(c.abb_fips_dic),
+        ).\
         rename(columns={'Period': 'time'})
 
 
@@ -81,6 +84,7 @@ def _iso_to_gregorian(iso_year, iso_week, iso_day):
 
 
 def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
+    print(region)
     if annualize:
         dur_in_lst = list(map(lambda x: x[-2], [var for var in series_lst if 'DUR' in var]))
         bf_lst = ['BF_BF{}Q'.format(q) for q in dur_in_lst if 'BF_BF{}Q'.format(q) not in series_lst]
@@ -90,11 +94,8 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
 
     df = pd.DataFrame(columns=['Period'])
     for series in series_lst + bf_lst:
-        data_type_code = 'T'
-
         if 'DUR' in series:
             adjusted = 'no'
-            data_type_code = 'Q'
         else:
             if seasonally_adj:
                 adjusted = 'yes'
@@ -112,9 +113,17 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
             merge(df, how='outer', on='Period')
 
     return df. \
-        pipe(_annualizer, annualize, dur_in_lst). \
-        pipe(_date_formatter, annualize).\
-        pipe(_features_create, region)
+        pipe(_date_formatter, annualize). \
+        assign(
+            region=region,
+            fips=lambda x: x['region'].map(c.abb_fips_dic),
+        ). \
+        rename(columns={'Period': 'time'})
+
+    # return df. \
+    #     pipe(_annualizer, annualize, dur_in_lst). \
+    #     pipe(_date_formatter, annualize).\
+    #     pipe(_features_create, region)
 #         pipe(remove_uneccesary_bfs, series_lst). \
 
 

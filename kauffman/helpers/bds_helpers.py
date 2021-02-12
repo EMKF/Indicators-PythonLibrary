@@ -13,7 +13,7 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def _make_header(df):
-    df.columns = df.iloc[0]
+    df.columns = df.iloc[0].tolist()
     return df.iloc[1:]
 
 
@@ -33,6 +33,6 @@ def _bds_data_create(variables, region):
             fips=lambda x: '00' if region == 'us' else x['fips'],
             region=lambda x: x['fips'].map(c.all_fips_name_dic)
         ). \
-        astype({var: 'int' for var in variables}).\
+        astype({**{var: 'int' for var in variables}, **{'time': 'int'}}).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True)

@@ -27,7 +27,8 @@ The following are a few examples using the library:
 * LFS (labor force statistics): https://github.com/EMKF/narrative/blob/master/labor_force_statistics/self_employment_over_time.py
 
 ```python
-from kauffman import bfs_helpers, pep_helpers, lfs, bds_helpers
+from kauffman import   lfs
+from kauffman.helpers import bds_helpers, bfs_helpers, pep_helpers
 ```
 ## BFS
 ```python

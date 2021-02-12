@@ -36,10 +36,6 @@ def _observations_filter(df, start_year, end_year):
     return df.reset_index(drop=True)
 
 
-def _make_header(df):
-    df.columns = df.iloc[0]
-    return df.iloc[1:, :]
-
 
 def _feature_create(df, region, year_ind=False):
     if year_ind:
@@ -131,54 +127,32 @@ def _msa_fetch_2004_2009():
         rename(columns={'msa_fips': 'fips'})
 
 
-def _pep_data_create(variables, region):
-    if obs_level == 'state':
-        region_dict = {state: h._state_us_fetch_data_all(state) for state in c.states}
-        df = h._json_to_pandas_construct(region_dict)
 
-    elif obs_level == 'us':
-        region_dict = {'us': h._state_us_fetch_data_all('us')}
-        df = h._json_to_pandas_construct(region_dict)
 
-    elif obs_level == 'county':
-        df = pd.concat(
-                [
-                    h._county_fetch_data_2000_2009(date). \
-                        pipe(h._make_header). \
-                        pipe(h._feature_create, obs_level, date). \
-                        rename(columns={'POP': 'population', 'GEONAME': 'name'}). \
-                        pipe(h._feature_keep)
-                    for date in range(2, 12)
-                ]
-            ).\
-            append(
-                _county_msa_fetch_2010_2019(obs_level).pipe(_county_msa_clean_2010_2019, obs_level)
-            ).\
-            sort_values(['fips', 'year'])
+def _make_header(df):
+    df.columns = df.iloc[0].tolist()
+    return df.iloc[1:]
 
-    elif obs_level == 'msa':
-        df = _msa_fetch_2004_2009().\
-            append(
-                _county_msa_fetch_2010_2019(obs_level).pipe(_county_msa_clean_2010_2019, obs_level).rename(columns={'year': 'time'})
-            ).\
-            sort_values(['fips', 'time'])
 
+def _obs_filter(df, ind):
     return df.\
-        pipe(_observations_filter, start_year, end_year).\
-        rename(columns={'year': 'time'}). \
-        drop_duplicates(['fips', 'time'], keep='first'). \
-        reset_index(drop=True) \
-        [['fips', 'time', 'population']]
+        astype({'date': 'int'}). \
+        query('2 <= date <= 11' if ind == 0 else '3 <= date <= 12')
 
 
-if __name__ == '__main__':
-    df = get_data('state', 2011, 2018)
-    # df = get_data('us', 2011, 2018)
-    print(df.head())
-    # print(df.info())
-    # print(df.shape)
+def _pep_data_create(region):
+    return pd.concat(
+            [
+                pd.DataFrame(requests.get(url).json()). \
+                    pipe(_make_header). \
+                    rename(columns={'NAME': 'region', 'GEONAME': 'region', 'state': 'fips', 'DATE_': 'date', 'DATE_CODE': 'date'}). \
+                    pipe(_obs_filter, ind). \
+                    assign(time=lambda x: '200' + (x['date'] - 2).astype(str) if ind == 0 else '20' + (x['date'] + 7).astype(str)) \
+                    [['fips', 'region', 'time', 'POP']]
+                for ind, url in enumerate([f'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for={region}:*', f'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for={region}:*'])
+            ],
+            axis=0
+        ). \
+        astype({'POP': 'int', 'time': 'int'}). \
+        sort_values(['fips', 'time'])
 
-    # get_data('county').to_csv('/Users/thowe/Downloads/pep_county.csv', index=False)
-    # get_data('us').to_csv('/Users/thowe/Downloads/pep_us.csv', index=False)
-    # get_data('state').to_csv('/Users/thowe/Downloads/pep_state.csv', index=False)
-    #get_data('msa').to_csv('/Users/thowe/Downloads/pep_msa.csv', index=False)

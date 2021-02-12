@@ -1,6 +1,6 @@
-from kauffman.eship_data_sources import bfs, bds
+from kauffman.eship_data_sources import bfs, bds, pep
 
-__all__ = ['bfs', 'bds']
+__all__ = ['bfs', 'bds', 'pep']
 
 # todo:
 #   1. consistent api across datasources in, essentially the get_data function from each of the datasource-specific files put into the eship_data_sources.py file
