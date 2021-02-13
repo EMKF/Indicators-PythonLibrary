@@ -1,6 +1,6 @@
 import pandas as pd
-from kauffman import constants as c
-from kauffman import data_manager as dm
+from scratch import constants as c
+from scratch import data_manager as dm
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)

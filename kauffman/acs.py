@@ -2,7 +2,7 @@ import sys
 import joblib
 import requests
 import pandas as pd
-from kauffman import constants as c
+from scratch import constants as c
 
 
 pd.set_option('max_columns', 1000)

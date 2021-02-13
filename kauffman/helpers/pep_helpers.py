@@ -1,10 +1,7 @@
-import os
-import sys
-import joblib
 import requests
 import pandas as pd
-from kauffman import constants as c
-import kauffman.cross_walk as cw
+from scratch import constants as c
+import scratch.cross_walk as cw
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)

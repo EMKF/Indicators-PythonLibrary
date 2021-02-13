@@ -1,8 +1,8 @@
 import pandas as pd
-import kauffman.constants as c
-from kauffman.helpers.bfs_helpers import _bfs_data_create
-from kauffman.helpers.bds_helpers import _bds_data_create
-from kauffman.helpers.pep_helpers import _pep_data_create
+import scratch.constants as c
+from scratch import _bfs_data_create
+from scratch import _bds_data_create
+from scratch import _pep_data_create
 # todo: start here with helpers...not working
 
 def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False):

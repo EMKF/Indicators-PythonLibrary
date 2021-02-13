@@ -2,13 +2,11 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 import os
-import sys
 import time
-import joblib
 import requests
 import pandas as pd
 from itertools import product
-from kauffman import constants as c
+from scratch import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
 
 from selenium import webdriver

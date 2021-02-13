@@ -1,7 +1,6 @@
-import sys
 import requests
 import pandas as pd
-import kauffman.constants as c
+import scratch.constants as c
 
 
 pd.set_option('max_columns', 1000)

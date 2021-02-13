@@ -27,8 +27,8 @@ The following are a few examples using the library:
 * LFS (labor force statistics): https://github.com/EMKF/narrative/blob/master/labor_force_statistics/self_employment_over_time.py
 
 ```python
-from kauffman import   lfs
-from kauffman.helpers import bds_helpers, bfs_helpers, pep_helpers
+from scratch import   lfs
+from scratch import bds_helpers, bfs_helpers, pep_helpers
 ```
 ## BFS
 ```python
@@ -72,7 +72,7 @@ df.pub.plot()
 ```
 
 ```python
-import kauffman.constants as c
+import scratch.constants as c
 import scratch.kauffman_tools.public_data_helpers as p
 
 df = p.raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2019_v3.xlsx'))
