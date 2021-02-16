@@ -87,7 +87,7 @@ all_fips_name_dic = {
     **{k: abb_name_dic[v] for k, v in fips_abb_dic.items() if v != 'PR'},
     **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()}
 }
-# all_name_fips_dic = dict(map(reversed, all_fips_name_dic.items()))
+all_name_fips_dic = dict(map(reversed, all_fips_name_dic.items()))
 
 
 
