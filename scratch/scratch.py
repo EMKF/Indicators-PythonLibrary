@@ -1,7 +1,7 @@
 import joblib
 import pandas as pd
-import scratch.constants as c
-from scratch import raw_kese_formatter
+import kauffman.constants as c
+from kauffman import raw_kese_formatter
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -53,7 +53,7 @@ def plot_maps():
     #     assign(fips=lambda x: x['region'].map(c.state_dic_temp)). \
     #     pub.choro_map('BA_BA', 'Business Applications 2019', 'Business Applications')
 
-    import scratch.helpers.pep_helpers as pep
+    import kauffman.helpers.pep_helpers as pep
     pep.get_data('county'). \
         query('time == "2019"'). \
         astype({'population': 'int'}). \

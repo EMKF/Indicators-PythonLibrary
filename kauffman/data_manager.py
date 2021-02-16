@@ -6,7 +6,7 @@ import zipfile
 import requests
 import numpy as np
 import pandas as pd
-import scratch.constants as c
+import kauffman.constants as c
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)

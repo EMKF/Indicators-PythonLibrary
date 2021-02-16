@@ -1,9 +1,7 @@
 import pandas as pd
-import scratch.constants as c
-from scratch import _bfs_data_create
-from scratch import _bds_data_create
-from scratch import _pep_data_create
-# todo: start here with helpers...not working
+import kauffman.constants as c
+from kauffman.helpers import _bfs_data_create, _bds_data_create, _pep_data_create
+
 
 def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False):
     """

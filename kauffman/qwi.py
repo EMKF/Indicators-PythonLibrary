@@ -6,7 +6,7 @@ import time
 import requests
 import pandas as pd
 from itertools import product
-from scratch import constants as c
+from kauffman import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
 
 from selenium import webdriver
