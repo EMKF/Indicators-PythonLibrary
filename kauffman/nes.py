@@ -79,10 +79,5 @@ if __name__ == '__main__':
 
     df.\
         astype({'NESTAB': 'int', 'NRCPTOT': 'int'}).\
-        assign(receipt_rate=lambda x: x['NRCPTOT'] / x['NESTAB']).\
-        pub.plot(
-        {'NESTAB': 'Non-employer Establishments', 'NRCPTOT': 'Non-employer Receipts', 'receipt_rate': 'Receipts per Establishment'},
-        to_index=False,
-        recessions=True,
-        filter=True
-    )
+        assign(receipt_rate=lambda x: x['NRCPTOT'] / x['NESTAB'])
+

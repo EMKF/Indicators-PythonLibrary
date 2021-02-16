@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 from scratch import constants as c
-import scratch.cross_walk as cw
+import kauffman.cross_walk as cw
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
