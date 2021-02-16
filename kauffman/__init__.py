@@ -1,5 +1,4 @@
 from kauffman.eship_data_sources import bfs, bds, pep
-import kauffman.helpers
 
 __all__ = ['bfs', 'bds', 'pep']
 
