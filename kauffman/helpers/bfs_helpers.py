@@ -83,7 +83,6 @@ def _iso_to_gregorian(iso_year, iso_week, iso_day):
 
 
 def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
-    print(region)
     if annualize:
         dur_in_lst = list(map(lambda x: x[-2], [var for var in series_lst if 'DUR' in var]))
         bf_lst = ['BF_BF{}Q'.format(q) for q in dur_in_lst if 'BF_BF{}Q'.format(q) not in series_lst]
@@ -118,37 +117,6 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
             fips=lambda x: c.abb_fips_dic[region],
         ). \
         rename(columns={'Period': 'time'})
-
-    # return df. \
-    #     pipe(_annualizer, annualize, dur_in_lst). \
-    #     pipe(_date_formatter, annualize).\
-    #     pipe(_features_create, region)
-#         pipe(remove_uneccesary_bfs, series_lst). \
-
-
-if __name__ == '__main__':
-    df = get_data(['BA_BA'], 'state', 2004, annualize=False)
-    print(df)
-
-    sys.exit()
-    df = get_data('weekly', 'us', start_year=2004, annualize=False)
-    print(df)
-    sys.exit()
-
-
-
-    # df = get_data(['BA_BA'], 'us', 2004, annualize=True)
-    # df = get_data(['BF_DUR4Q', 'BF_DUR8Q', 'BA_BA'], 'state', 2004, annualize=True)
-
-    # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)
-    # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'us', 2004, annualize=False)
-
-    df = get_data('weekly', 'us', start_year=2004, annualize=False)
-    print(df.head())
-    df = get_data('weekly', 'state', start_year=2004, annualize=False)
-    print(df.info())
-    print(df.head())
-    print(df.tail())
 
 
 # todo: https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
