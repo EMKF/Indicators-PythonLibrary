@@ -9,7 +9,7 @@ setup(
     install_requires=[
         'numpy', 'pandas', 'requests', 'statsmodels',
     ],
-    version='2.0.3',
+    version='2.0.4',
     # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',

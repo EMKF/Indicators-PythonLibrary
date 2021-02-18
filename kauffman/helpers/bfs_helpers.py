@@ -114,8 +114,8 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
     return df. \
         pipe(_date_formatter, annualize). \
         assign(
-            region=region,
-            fips=lambda x: x['region'].map(c.abb_fips_dic),
+            region=c.abb_name_dic[region],
+            fips=lambda x: c.abb_fips_dic[region],
         ). \
         rename(columns={'Period': 'time'})
 
