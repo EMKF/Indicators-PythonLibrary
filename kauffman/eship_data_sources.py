@@ -3,7 +3,7 @@ import kauffman.constants as c
 from kauffman.helpers import _bfs_data_create, _bds_data_create, _pep_data_create
 
 
-def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False):
+def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march_shift=False):
     """
     series_lst: lst
 
@@ -36,13 +36,13 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False):
 
     return pd.concat(
             [
-                _bfs_data_create(region, series_lst, seasonally_adj, annualize)
+                _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift)
                 for region in region_lst
             ],
             axis=0
         ).\
-        reset_index(drop=True) \
-        [['fips', 'region', 'time'] + series_lst]
+        reset_index(drop=True)  # \
+        # [['fips', 'region', 'time'] + series_lst]
 
 
 def bds(series_lst, obs_level='all'):
@@ -52,16 +52,21 @@ def bds(series_lst, obs_level='all'):
         FAGE: Firm age code
         NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
 
-    obs_level: str or lst
-        all:
-        us:
-        state:
-        county:
-        list of regions according to fips code
+    ????
+    https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
+    from https://www.census.gov/econ/bfs/index.html?#
+    dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
+
+
+        obs_level: str or lst
+            all:
+            us:
+            state:
+            county:
+            list of regions according to fips code
 
     first year available is 1978, last year is 2018
     """
-
     if type(obs_level) == list:
         region_lst = obs_level
     else:

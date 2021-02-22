@@ -153,6 +153,7 @@ def _obs_filter(df, ind):
 
 
 def _pep_data_create(region):
+    print(f'Fetching PEP for {region}')
     return pd.concat(
             [
                 pd.DataFrame(requests.get(url).json()). \
