@@ -3,6 +3,8 @@ import kauffman.constants as c
 from kauffman.helpers import _bfs_data_create, _bds_data_create, _pep_data_create
 
 
+# todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
+# todo: mostly the code in each of these is the same...so can consolidate that
 def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march_shift=False):
     """
     series_lst: lst
