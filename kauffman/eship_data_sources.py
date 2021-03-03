@@ -43,8 +43,7 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
             ],
             axis=0
         ).\
-        reset_index(drop=True)  # \
-        # [['fips', 'region', 'time'] + series_lst]
+        reset_index(drop=True)
 
 
 def bds(series_lst, obs_level='all'):
@@ -123,45 +122,3 @@ def pep(obs_level, start_year=None, end_year=None):
         ). \
         reset_index(drop=True) \
         [['fips', 'region', 'time', 'POP']]
-
-
-
-    # if obs_level == 'state':
-    #     region_dict = {state: h._state_us_fetch_data_all(state) for state in c.states}
-    #     df = h._json_to_pandas_construct(region_dict)
-    #
-    # elif obs_level == 'us':
-    #     region_dict = {'us': h._state_us_fetch_data_all('us')}
-    #     df = h._json_to_pandas_construct(region_dict)
-    #
-    # elif obs_level == 'county':
-    #     df = pd.concat(
-    #             [
-    #                 h._county_fetch_data_2000_2009(date). \
-    #                     pipe(h._make_header). \
-    #                     pipe(h._feature_create, obs_level, date). \
-    #                     rename(columns={'POP': 'population', 'GEONAME': 'name'}). \
-    #                     pipe(h._feature_keep)
-    #                 for date in range(2, 12)
-    #             ]
-    #         ).\
-    #         append(
-    #             h._county_msa_fetch_2010_2019(obs_level).pipe(h._county_msa_clean_2010_2019, obs_level)
-    #         ).\
-    #         sort_values(['fips', 'year'])
-    #
-    # elif obs_level == 'msa':
-    #     df = h._msa_fetch_2004_2009().\
-    #         append(
-    #             h._county_msa_fetch_2010_2019(obs_level).pipe(h._county_msa_clean_2010_2019, obs_level).rename(columns={'year': 'time'})
-    #         ).\
-    #         sort_values(['fips', 'time'])
-    #
-    # return df.\
-    #     pipe(h._observations_filter, start_year, end_year).\
-    #     rename(columns={'year': 'time'}). \
-    #     drop_duplicates(['fips', 'time'], keep='first'). \
-    #     reset_index(drop=True) \
-    #     [['fips', 'time', 'population']]
-
-
