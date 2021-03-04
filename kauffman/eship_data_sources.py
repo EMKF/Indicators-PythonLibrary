@@ -6,8 +6,11 @@ from kauffman.helpers import _bfs_data_create, _bds_data_create, _pep_data_creat
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
 # todo: mostly the code in each of these is the same...so can consolidate that
 def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march_shift=False):
-    """
-    series_lst: lst
+    """ Create a data frame with results from a BFS query.
+
+
+    Keyword arguments:
+    series_lst-- lst of variables to be pulled.
 
         Variables:
             BA_BA: 'Business Applications'
@@ -22,6 +25,16 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
             BF_SBF8Q: Spliced Business Formations within Eight Quarters
             BF_DUR4Q: Average Duration (in Quarters) from Business Application to Formation within Four Quarters
             BF_DUR8Q: Average Duration (in Quarters) from Business Application to Formation within Eight Quarters
+
+    obs_level-- The level to pull observations for. ('state', 'us', or 'all')
+
+
+    seasonally_adj-- (True or False)
+
+    annualize-- (True or False)
+
+    march_shift-- (True or False)
+
 
 
     """
@@ -47,8 +60,11 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
 
 
 def bds(series_lst, obs_level='all'):
-    """
-    series_lst: lst; see https://www.census.gov/content/dam/Census/programs-surveys/business-dynamics-statistics/BDS_Codebook.pdf or https://api.census.gov/data/timeseries/bds/variables.html
+    """ Create a data frame with results from a BDS query.
+
+    Keyword arguments:
+
+    series_lst-- lst of variables to pull; see https://www.census.gov/content/dam/Census/programs-surveys/business-dynamics-statistics/BDS_Codebook.pdf or https://api.census.gov/data/timeseries/bds/variables.html
         FIRM: Number of firms
         FAGE: Firm age code
         NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
@@ -59,7 +75,7 @@ def bds(series_lst, obs_level='all'):
     dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
 
 
-        obs_level: str or lst
+    obs_level-- str or lst of the level of observation(s) to pull at.
             all:
             us:
             state:
@@ -88,7 +104,8 @@ def bds(series_lst, obs_level='all'):
 
 
 def pep(obs_level, start_year=None, end_year=None):
-    """
+    """ Create a python data frame with results from a PEP query
+
     Collects nation- and state-level population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
     register here: https://research.stlouisfed.org/useraccount/apikey. For now, I'm just including my key until we
     figure out the best way to do this.
@@ -96,13 +113,16 @@ def pep(obs_level, start_year=None, end_year=None):
     Collects county-level population data from the Census API:
 
     (as of 2020.03.16)
-    obs_level:
+
+    Keyword arguments:
+
+    obs_level-- str of the level of observation to pull from.
         'state': resident population of state from 1990 through 2019
         'us': resident population in the united states from 1959 through 2019
 
-    start_year: earliest start year is 1900
+    start_year-- earliest start year is 1900
 
-    end_year: latest end year is 2019
+    end_year-- latest end year is 2019
     """
 
     if type(obs_level) == list:
@@ -122,3 +142,5 @@ def pep(obs_level, start_year=None, end_year=None):
         ). \
         reset_index(drop=True) \
         [['fips', 'region', 'time', 'POP']]
+
+#todo: are the series_lst lists of strings? Are specific state or county codes entered or is 'state' just saying the level of aggregation?
