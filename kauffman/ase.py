@@ -1,6 +1,10 @@
 import pandas as pd
 from kauffman import constants as c
+<<<<<<< HEAD
 from kauffman import data_manager as dm
+=======
+from scratch.kauffman_tools import data_manager as dm
+>>>>>>> 7dcb731a9d797b50e8e6b926474bbd9e60995170
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)

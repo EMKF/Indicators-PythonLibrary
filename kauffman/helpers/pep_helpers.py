@@ -1,6 +1,10 @@
 import requests
 import pandas as pd
+<<<<<<< HEAD
 from scratch import constants as c
+=======
+from kauffman import constants as c
+>>>>>>> 7dcb731a9d797b50e8e6b926474bbd9e60995170
 import kauffman.cross_walk as cw
 
 pd.set_option('max_columns', 1000)
@@ -125,31 +129,50 @@ def _msa_fetch_2004_2009():
 
 
 
+def _url(region):
+    if region == 'us':
+        return [
+            f'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for=us:1',
+            f'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=us:*'
+        ]
+    else:
+        return [
+            f'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for={region}:*',
+            f'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for={region}:*'
+        ]
 
 def _make_header(df):
     df.columns = df.iloc[0].tolist()
     return df.iloc[1:]
 
 
+# def _us_fips(df):
+#     return df.assign(us=)
+
 def _obs_filter(df, ind):
     return df.\
         astype({'date': 'int'}). \
-        query('2 <= date <= 11' if ind == 0 else '3 <= date <= 12')
+        query('2 <= date <= 11' if ind == 0 else '3 <= date <= 12').\
+        query('region not in ["Puerto Rico"]')
 
 
 def _pep_data_create(region):
+    print(f'Fetching PEP for {region}')
+
     return pd.concat(
             [
                 pd.DataFrame(requests.get(url).json()). \
                     pipe(_make_header). \
-                    rename(columns={'NAME': 'region', 'GEONAME': 'region', 'state': 'fips', 'DATE_': 'date', 'DATE_CODE': 'date'}). \
+                    rename(columns={'NAME': 'region', 'GEONAME': 'region', 'DATE_': 'date', 'DATE_CODE': 'date'}). \
                     pipe(_obs_filter, ind). \
-                    assign(time=lambda x: '200' + (x['date'] - 2).astype(str) if ind == 0 else '20' + (x['date'] + 7).astype(str)) \
+                    assign(
+                        time=lambda x: '200' + (x['date'] - 2).astype(str) if ind == 0 else '20' + (x['date'] + 7).astype(str),
+                        fips=lambda x: x['region'].map(c.all_name_fips_dic),
+                    ) \
                     [['fips', 'region', 'time', 'POP']]
-                for ind, url in enumerate([f'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for={region}:*', f'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for={region}:*'])
+                for ind, url in enumerate(_url(region))
             ],
             axis=0
         ). \
         astype({'POP': 'int', 'time': 'int'}). \
         sort_values(['fips', 'time'])
-

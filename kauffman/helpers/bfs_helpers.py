@@ -11,146 +11,86 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def raw_data_create(url):
-    return pd.read_csv(url, skiprows=7).\
-        dropna()
+def _url(region, series, seasonally_adj):
+    if 'DUR' in series:
+        adjusted = 'no'
+    else:
+        if seasonally_adj:
+            adjusted = 'yes'
+        else:
+            adjusted = 'no'
+    return 'https://www.census.gov/econ/currentdata/export/csv?programCode=BFS&timeSlotType=12&startYear=2004&endYear=2021&categoryCode=TOTAL&' + \
+          f'dataTypeCode={series}&' + \
+          f'geoLevelCode={region}&' + \
+          f'adjusted={adjusted}&' + \
+          'errorData=no&internal=false'
 
 
-def _numerator_create(df, dur_in_lst):
-    for q in dur_in_lst:
-        df['numerator_sum{}'.format(q)] = df['BF_DUR{}Q'.format(q)] * df['BF_BF{}Q'.format(q)]
+def _year_create_shift(x):
+    if x['time'].month <= 3:
+        return x['time'].year
+    return x['time'].year + 1
+
+
+def _time_annualize(df, march_shift):
+    if march_shift:
+        return df.assign(time=lambda x: x.apply(_year_create_shift, axis=1))
+    return df.assign(time=lambda x: x['time'].dt.year)
+
+
+def _DUR_numerator(df):
+    if 'BF_DUR4Q' in df.columns:
+        df = df.assign(DUR4_numerator=lambda x: x['BF_DUR4Q'] * x['BF_BF4Q'])
+    if 'BF_DUR8Q' in df.columns:
+        df = df.assign(DUR8_numerator=lambda x: x['BF_DUR8Q'] * x['BF_BF8Q'])
     return df
 
 
-def _annual_filter_and_summer(x):
-    if x.shape[0] == 4:  # filters based on number of observations in a given year...i.e., if we don't have four quarter's worth, throw it out.
-        return x.iloc[:, 1:].sum()
-
-
-def _annual_dur_create(df, dur_in_lst):
-    for q in dur_in_lst:
-        df.loc[:, 'BF_DUR{}Q'.format(q)] = df['numerator_sum{}'.format(q)] / df['BF_BF{}Q'.format(q)]
-        df.drop(['numerator_sum{}'.format(q)], 1, inplace=True)
+def _BF_DURQ(df):
+    if 'BF_DUR4Q' in df.columns:
+        df = df.\
+            assign(BF_DUR4Q=lambda x: x['DUR4_numerator'] / x['BF_BF4Q']).\
+            drop('DUR4_numerator', 1)
+    if 'BF_DUR8Q' in df.columns:
+        df = df.\
+            assign(BF_DUR8Q=lambda x: x['DUR8_numerator'] / x['BF_BF8Q']). \
+            drop('DUR8_numerator', 1)
     return df
 
 
-def _annualizer(df, annualize, dur_in_lst):
+def _annualize(df, annualize, bf_helper_lst, march_shift):
     if annualize:
         return df.\
-                pipe(_numerator_create, dur_in_lst).\
-                assign(Period=lambda x: x['Period'].str.split('-').str[1]).\
-                groupby('Period').apply(_annual_filter_and_summer).\
-                pipe(_annual_dur_create, dur_in_lst).\
-                reset_index().\
-                dropna().\
-                rename(columns={0: 'Value'})
+            pipe(_time_annualize, march_shift). \
+            pipe(_DUR_numerator). \
+            groupby(['fips', 'region', 'time']).sum(min_count=12).\
+            pipe(_BF_DURQ).\
+            reset_index(drop=False) \
+            [[col for col in df.columns if col not in bf_helper_lst]]
     return df
 
 
-# todo: do I need this?
-def remove_uneccesary_bfs(df, series_lst):
-    print(df.head())
-    sys.exit()
-    return df[[col for col in df.columns if col in series_lst + ['Period']]]
+def _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift):
+    print(f'Fetching BFS for {region}')
+    if march_shift: annualize = True
 
-
-def _date_formatter(df, annualize):
+    bf_helper_lst = []
     if annualize:
-        return df.assign(Period=lambda x: pd.to_datetime(x['Period']).dt.year)
-    return df.assign(Period=pd.to_datetime(df['Period'], format='%b-%Y'))
-
-
-def _features_create(df, region):
-    df = df.\
-        assign(
-            region=region,
-            fips=lambda x: x['region'].map(c.abb_fips_dic),
-        ).\
-        rename(columns={'Period': 'time'})
-
-
-def _iso_year_start(iso_year):
-    "The gregorian calendar date of the first day of the given ISO year"
-    fourth_jan = datetime.date(iso_year, 1, 4)
-    delta = datetime.timedelta(fourth_jan.isoweekday() - 1)
-    return fourth_jan - delta
-
-
-def _iso_to_gregorian(iso_year, iso_week, iso_day):
-    "Gregorian calendar date for the given ISO year, week and day"
-    year_start = _iso_year_start(iso_year)
-    return year_start + datetime.timedelta(days=iso_day - 1, weeks=iso_week - 1)
-
-
-def _bfs_data_create(region, series_lst, seasonally_adj, annualize):
-    print(region)
-    if annualize:
-        dur_in_lst = list(map(lambda x: x[-2], [var for var in series_lst if 'DUR' in var]))
-        bf_lst = ['BF_BF{}Q'.format(q) for q in dur_in_lst if 'BF_BF{}Q'.format(q) not in series_lst]
-    else:
-        dur_in_lst = []
-        bf_lst = []
+        if ('BF_DUR4Q' in series_lst) and ('BF_BF4Q' not in series_lst): bf_helper_lst.append('BF_BF4Q')
+        if ('BF_DUR8Q' in series_lst) and ('BF_BF8Q' not in series_lst): bf_helper_lst.append('BF_BF8Q')
 
     df = pd.DataFrame(columns=['Period'])
-    for series in series_lst + bf_lst:
-        if 'DUR' in series:
-            adjusted = 'no'
-        else:
-            if seasonally_adj:
-                adjusted = 'yes'
-            else:
-                adjusted = 'no'
-
-        url = 'https://www.census.gov/econ/currentdata/export/csv?programCode=BFS&timeSlotType=12&startYear=2004&endYear=2021&categoryCode=TOTAL&' + \
-              f'dataTypeCode={series}&' + \
-              f'geoLevelCode={region}&' + \
-              f'adjusted={adjusted}&' + \
-              'errorData=no&internal=false'
-
-        df = pd.read_csv(url, skiprows=7).\
+    for series in series_lst + bf_helper_lst:
+        df = pd.read_csv(_url(region, series, seasonally_adj), skiprows=7).\
             rename(columns={'Value': series}).\
             merge(df, how='outer', on='Period')
 
     return df. \
-        pipe(_date_formatter, annualize). \
         assign(
-            region=region,
-            fips=lambda x: x['region'].map(c.abb_fips_dic),
+            time=pd.to_datetime(df['Period'], format='%b-%Y'),
+            region=c.abb_name_dic[region],
+            fips=lambda x: c.abb_fips_dic[region],
         ). \
-        rename(columns={'Period': 'time'})
-
-    # return df. \
-    #     pipe(_annualizer, annualize, dur_in_lst). \
-    #     pipe(_date_formatter, annualize).\
-    #     pipe(_features_create, region)
-#         pipe(remove_uneccesary_bfs, series_lst). \
-
-
-if __name__ == '__main__':
-    df = get_data(['BA_BA'], 'state', 2004, annualize=False)
-    print(df)
-
-    sys.exit()
-    df = get_data('weekly', 'us', start_year=2004, annualize=False)
-    print(df)
-    sys.exit()
-
-
-
-    # df = get_data(['BA_BA'], 'us', 2004, annualize=True)
-    # df = get_data(['BF_DUR4Q', 'BF_DUR8Q', 'BA_BA'], 'state', 2004, annualize=True)
-
-    # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'state', 2004, annualize=False)
-    # df = get_data(['BF_DUR4Q', 'BA_BA', 'BF_BF8Q'], 'us', 2004, annualize=False)
-
-    df = get_data('weekly', 'us', start_year=2004, annualize=False)
-    print(df.head())
-    df = get_data('weekly', 'state', start_year=2004, annualize=False)
-    print(df.info())
-    print(df.head())
-    print(df.tail())
-
-
-# todo: https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
-# todo: from https://www.census.gov/econ/bfs/index.html?#
-# todo: dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
+        drop('Period', 1). \
+        pipe(_annualize, annualize, bf_helper_lst, march_shift) \
+        [['fips', 'region', 'time'] + series_lst]

@@ -1,21 +1,15 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    # Needed to silence warnings (and to be a worthwhile package)
     name='kcr',
     url='https://github.com/EMKF/downwardata',
     author='Travis Howe',
     author_email='thowe@kauffman.org',
-    # Needed to actually package something
-    packages=['kauffman'],
-    # Needed for dependencies
+    packages=find_packages(),
     install_requires=[
-        'numpy', 'pandas', 'requests', 'statsmodels',
+        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache'
     ],
-    # 'xlrd', 'boto3', 'plotly', 'plotly-geo', 'geopandas', 'pyshp',
-    #         'shapely', 'psutil', 's3fs', 'webdriver-manager'
-    # *strongly* suggested for sharing
-    version='1.8.0',
+    version='2.0.7',
     # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
