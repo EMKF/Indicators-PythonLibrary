@@ -6,7 +6,7 @@ from kauffman.helpers import _bfs_data_create, _bds_data_create, _pep_data_creat
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
 # todo: mostly the code in each of these is the same...so can consolidate that
 def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march_shift=False):
-    """ Create a data frame with results from a BFS query.
+    """ Create a pandas data frame with results from a BFS query. Column order: fips, region, time, series_lst.
 
 
     Keyword arguments:
@@ -29,11 +29,11 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
     obs_level-- The level to pull observations for. ('state', 'us', or 'all')
 
 
-    seasonally_adj-- (True or False)
+    seasonally_adj-- Option to use the census adjustment for seasonality and smooth the time series. (True or False)
 
-    annualize-- (True or False)
+    annualize-- Aggregates across months and annulizes data. (True or False)
 
-    march_shift-- (True or False)
+    march_shift-- When True the year end is March, False the year end is December. (True or False)
 
 
 
@@ -58,17 +58,61 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
         ).\
         reset_index(drop=True)
 
+#test = bfs(['BA_BA'], obs_level='all', seasonally_adj=True, annualize=False, march_shift=True)
+#print(test)
 
 def bds(series_lst, obs_level='all'):
-    """ Create a data frame with results from a BDS query.
+    """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
     Keyword arguments:
 
     series_lst-- lst of variables to pull; see https://www.census.gov/content/dam/Census/programs-surveys/business-dynamics-statistics/BDS_Codebook.pdf or https://api.census.gov/data/timeseries/bds/variables.html
-        FIRM: Number of firms
-        FAGE: Firm age code
-        NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
 
+        CBSA: Geography
+        COUNTY: Geography
+        DENOM: (DHS) denominator
+        EAGE: Establishment age code
+        EMP: Number of employees
+        EMPSZES: Employment size of establishments code
+        EMPSZESI: Initial employment size of establishments code
+        EMPSZFI: Employment size of firms code
+        EMPSZFII: Initial employment size of firms code
+        ESTAB: Number of establishments
+        ESTABS_ENTRY: Number of establishments born during the last 12 months
+        ESTABS_ENTRY_RATE: Rate of establishments born during the last 12 months
+        ESTABS_EXIT: Number of establishments exited during the last 12 months
+        ESTABS_EXIT_RATE: Rate of establishments exited during the last 12 months
+        FAGE: Firm age code
+        FIRM: Number of firms
+        FIRMDEATH_EMP: Number of employees associated with firm deaths during the last 12 months
+        FIRMDEATH_ESTABS: Number of establishments associated with firm deaths during the last 12 months
+        FIRMDEATH_FIRMS: Number of firms that exited during the last 12 months
+        GEO_ID: Geographic identifier code
+        GEOCOMP: GEO_ID Component
+        INDGROUP: Industry group
+        INDLEVEL: Industry level
+        JOB_CREATION: Number of jobs created from expanding and opening establishments during the last 12 months
+        JOB_CREATION_BIRTHS: Number of jobs created from opening establishments during the last 12 months
+        JOB_CREATION_CONTINUERS: Number of jobs created from expanding establishments during the last 12 months
+        JOB_CREATION_RATE: Rate of jobs created from expanding and opening establishments during the last 12 months
+        JOB_CREATION_RATE_BIRTHS: Rate of jobs created from opening establishments during the last 12 months
+        JOB_DESTRUCTION: Number of jobs lost from contracting and closing establishments during the last 12 months
+        JOB_DESTRUCTION_CONTINUERS: Number of jobs lost from contracting establishments during the last 12 months
+        JOB_DESTRUCTION_DEATHS: Number of jobs lost from closing establishments during the last 12 months
+        JOB_DESTRUCTION_RATE: Rate of jobs lost from contracting and closing establishments during the last 12 months
+        JOB_DESTRUCTION_RATE_DEATHS: Rate of jobs lost from closing establishments during the last 12 months
+        METRO: Establishments located in Metropolitan or Micropolitan Statistical Area indicator
+        NAICS: 2012 NAICS Code
+        NATION: Geography
+        NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
+        NET_JOB_CREATION_RATE: Rate of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
+        REALLOCATION_RATE: Rate of reallocation during the last 12 months
+        SECTOR: NAICS economic sector
+        STATE: Geography
+        SUBSECTOR: Subsector
+        SUMLEVEL: Summary Level code
+        ucgid: Uniform Census Geography Identifier clause
+        YEAR: Year
     ????
     https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
     from https://www.census.gov/econ/bfs/index.html?#
@@ -104,7 +148,7 @@ def bds(series_lst, obs_level='all'):
 
 
 def pep(obs_level, start_year=None, end_year=None):
-    """ Create a python data frame with results from a PEP query
+    """ Create a pandas data frame with results from a PEP query. Column order: fips, region, time, POP.
 
     Collects nation- and state-level population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
     register here: https://research.stlouisfed.org/useraccount/apikey. For now, I'm just including my key until we
@@ -142,5 +186,3 @@ def pep(obs_level, start_year=None, end_year=None):
         ). \
         reset_index(drop=True) \
         [['fips', 'region', 'time', 'POP']]
-
-#todo: are the series_lst lists of strings? Are specific state or county codes entered or is 'state' just saying the level of aggregation?
