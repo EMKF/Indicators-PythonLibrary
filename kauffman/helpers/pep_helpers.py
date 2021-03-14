@@ -5,6 +5,7 @@ from scratch import constants as c
 =======
 from kauffman import constants as c
 >>>>>>> 7dcb731a9d797b50e8e6b926474bbd9e60995170
+#todo figure out this unresolved reference ^. needed to run eship tests
 import kauffman.cross_walk as cw
 
 pd.set_option('max_columns', 1000)

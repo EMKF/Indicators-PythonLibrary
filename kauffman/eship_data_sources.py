@@ -58,9 +58,6 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
         ).\
         reset_index(drop=True)
 
-#test = bfs(['BA_BA'], obs_level='all', seasonally_adj=True, annualize=False, march_shift=True)
-#print(test)
-
 def bds(series_lst, obs_level='all'):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
@@ -117,7 +114,7 @@ def bds(series_lst, obs_level='all'):
     https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
     from https://www.census.gov/econ/bfs/index.html?#
     dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
-
+    #todo clean this part up. Travis added these so he would know what the question mark is for
 
     obs_level-- str or lst of the level of observation(s) to pull at.
             all:
@@ -153,6 +150,8 @@ def pep(obs_level, start_year=None, end_year=None):
     Collects nation- and state-level population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
     register here: https://research.stlouisfed.org/useraccount/apikey. For now, I'm just including my key until we
     figure out the best way to do this.
+
+    #todo travis edit ^
 
     Collects county-level population data from the Census API:
 

@@ -11,6 +11,8 @@ from kauffman import bfs, bds, pep
 # df = kauffman.pep(obs_level='us')
 df = kauffman.pep(obs_level='state')
 
+#test = kauffman.bfs(['BA_BA'], obs_level='all', seasonally_adj=True, annualize=False, march_shift=True)
+#print(test) should test whether march shift alone anualizes
 
 print(df.info())
 print(df.head())
