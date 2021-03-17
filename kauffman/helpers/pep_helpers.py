@@ -171,4 +171,6 @@ def _pep_data_create(region):
             axis=0
         ). \
         astype({'POP': 'int', 'time': 'int'}). \
-        sort_values(['fips', 'time'])
+        sort_values(['fips', 'time']). \
+        reset_index(drop=True) \
+        [['fips', 'region', 'time', 'POP']]

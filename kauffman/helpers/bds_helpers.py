@@ -36,4 +36,5 @@ def _bds_data_create(variables, region):
         ). \
         astype({**{var: 'int' for var in variables}, **{'time': 'int'}}).\
         sort_values(['fips', 'time']).\
-        reset_index(drop=True)
+        reset_index(drop=True) \
+        [['fips', 'region', 'time'] + variables]

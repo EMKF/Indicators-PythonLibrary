@@ -93,4 +93,5 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift)
         ). \
         drop('Period', 1). \
         pipe(_annualize, annualize, bf_helper_lst, march_shift) \
-        [['fips', 'region', 'time'] + series_lst]
+        [['fips', 'region', 'time'] + series_lst]. \
+        reset_index(drop=True)

@@ -1,6 +1,6 @@
-from kauffman.eship_data_sources import bfs, bds, pep
+from kauffman.eship_data_sources import bed, bds, bfs, pep
 
-__all__ = ['bfs', 'bds', 'pep']
+__all__ = ['bed', 'bds', 'bfs', 'pep']
 
 # todo:
 # bfs, I don't know if region is the name or the abbreviation
