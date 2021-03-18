@@ -8,6 +8,7 @@ from kauffman.helpers import _bed_data_create, _bds_data_create, _bfs_data_creat
 
 def bed(table, obs_level='all'):
     """
+       todo: go through this doc string
        BED series is bdm (Establishment Age and Survival Data). Industry is 00, All.
 
         table: int,
@@ -54,10 +55,8 @@ def bed(table, obs_level='all'):
             region_lst = [obs_level]
         elif obs_level == 'state':
             region_lst = c.states
-            # region_lst = list(map(lambda x: x.lower(), c.states))
         else:
             region_lst = ['us'] + c.states
-            # region_lst = ['us'] + list(map(lambda x: x.lower(), c.states))
 
     return pd.concat(
             [

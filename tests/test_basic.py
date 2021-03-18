@@ -15,6 +15,7 @@ df = kauffman.bed(1, obs_level=['us', 'AL'])
 # df = kauffman.pep(obs_level='state')
 
 
+# print(df)
 print(df.info())
 print(df.head())
 print(df.tail())

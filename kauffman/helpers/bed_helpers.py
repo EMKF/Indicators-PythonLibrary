@@ -125,14 +125,13 @@ def table7(lines):
 
 
 def _bed_data_create(table, region):
-    print(f'Fetching BDS for {region}')
+    print(f'Fetching BED for {region.upper()}')
 
     if region == 'us':
         url = f'https://www.bls.gov/bdm/us_age_naics_00_table{table}.txt'
     else:
         url = f'https://www.bls.gov/bdm/{region}_age_total_table{table}.txt'
     lines = requests.get(url).text.split('\n')
-    print(url)
 
     if table in range(1, 5):
         df = table1(lines)
@@ -146,19 +145,7 @@ def _bed_data_create(table, region):
         assign(
             region=c.abb_name_dic[region.upper()],
             fips=c.abb_fips_dic[region.upper()]
-        ) \
+        ). \
+        sort_values(['fips', 'time']). \
+        reset_index(drop=True) \
         [['fips', 'region', 'time'] + covars]
-    #
-    # url = f'https://api.census.gov/data/timeseries/bds?get={",".join(variables)}&for={region}:*&YEAR=*'
-    # return pd.DataFrame(requests.get(url).json()).\
-    #     pipe(_make_header).\
-    #     pipe(lambda x: _county_fips(x) if region == 'county' else x).\
-    #     rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time'}).\
-    #     assign(
-    #         fips=lambda x: '00' if region == 'us' else x['fips'],
-    #         region=lambda x: x['fips'].map(c.all_fips_name_dic)
-    #     ). \
-    #     astype({**{var: 'int' for var in variables}, **{'time': 'int'}}).\
-    #     sort_values(['fips', 'time']).\
-    #     reset_index(drop=True) \
-    #     [['fips', 'region', 'time'] + variables]
