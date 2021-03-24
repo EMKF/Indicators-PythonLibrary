@@ -26,6 +26,8 @@ def bed(table, obs_level='all'):
             state abbreviation code
 
         # todo: implement this for obs_level='us'
+        #   1. pass in industry parameter
+        #   2. if obs_lebel='us' then put industry code in url
         industry: str, NAICS codes
             00: All
             11: Agriculture, forestry, fishing, and hunting
