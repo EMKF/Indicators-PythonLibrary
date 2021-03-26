@@ -55,11 +55,13 @@ def _format_covars7(df):
         astype(
             {
                 'time': 'int',
+                'end_year': 'int',
                 'establishments': 'int',
                 'employment': 'int',
                 'survival_since_birth': 'float',
             }
         )
+
 
 def table1(lines):
     cohort = 1994
@@ -118,10 +120,10 @@ def table7(lines):
 
     return pd.DataFrame(
             data_lst,
-            columns=['cohort_year', 'time', 'establishments', 'employment', 'survival_since_birth', 'survival_previous_year', 'average_emp']
+            columns=['time', 'end_year', 'establishments', 'employment', 'survival_since_birth', 'survival_previous_year', 'average_emp']
         ).\
-        pipe(_format_covars7).\
-        assign(age=lambda x: x['time'] - x['cohort_year'])
+        pipe(_format_covars7). \
+        assign(age=lambda x: x['end_year'] - x['time'])
 
 
 def _bed_data_create(table, region):
