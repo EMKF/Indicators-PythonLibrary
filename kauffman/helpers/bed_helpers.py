@@ -54,7 +54,7 @@ def _format_covars7(df):
         ).\
         astype(
             {
-                'year': 'int',
+                'time': 'int',
                 'establishments': 'int',
                 'employment': 'int',
                 'survival_since_birth': 'float',
@@ -121,7 +121,7 @@ def table7(lines):
             columns=['cohort_year', 'time', 'establishments', 'employment', 'survival_since_birth', 'survival_previous_year', 'average_emp']
         ).\
         pipe(_format_covars7).\
-        assign(age=lambda x: x['year'] - x['cohort_year'])
+        assign(age=lambda x: x['time'] - x['cohort_year'])
 
 
 def _bed_data_create(table, region):
