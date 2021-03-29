@@ -6,7 +6,7 @@ from kauffman.helpers import _bed_data_create, _bds_data_create, _bfs_data_creat
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
 # todo: mostly the code in each of these is the same...so can consolidate that
 
-def bed(table, obs_level='all',industry=00):
+def bed(table, obs_level='all', industry='00'):
     """
        todo: go through this doc string
        BED series is bdm (Establishment Age and Survival Data). Industry is 00, All.

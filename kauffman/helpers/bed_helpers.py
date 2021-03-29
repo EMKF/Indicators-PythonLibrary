@@ -126,14 +126,11 @@ def table7(lines):
         assign(age=lambda x: x['end_year'] - x['time'])
 
 
-def _bed_data_create(table, region, industry=00):
-
+def _bed_data_create(table, region, industry):
     print(f'Fetching BED for {region.upper()}')
 
     if region == 'us':
-        #url = f'https://www.bls.gov/bdm/us_age_naics_00_table{table}.txt'
-        url = f'https://www.bls.gov/bdm/us_age_naics_{industry}_table{table}.txt' #this works!
-        print(url)
+        url = f'https://www.bls.gov/bdm/us_age_naics_{industry}_table{table}.txt'
     else:
         url = f'https://www.bls.gov/bdm/{region}_age_total_table{table}.txt'
     lines = requests.get(url).text.split('\n')
