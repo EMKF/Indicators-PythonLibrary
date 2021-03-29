@@ -6,7 +6,7 @@ from kauffman.helpers import _bed_data_create, _bds_data_create, _bfs_data_creat
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
 # todo: mostly the code in each of these is the same...so can consolidate that
 
-def bed(table, obs_level='all'):
+def bed(table, obs_level='all',industry=00):
     """
        todo: go through this doc string
        BED series is bdm (Establishment Age and Survival Data). Industry is 00, All.
@@ -62,12 +62,11 @@ def bed(table, obs_level='all'):
 
     return pd.concat(
             [
-                _bed_data_create(table, region)
+                _bed_data_create(table, region, industry)
                 for region in region_lst
             ],
             axis=0
         )
-
 
 def bds(series_lst, obs_level='all'):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.

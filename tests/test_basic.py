@@ -1,6 +1,6 @@
 from context import kauffman
 
-from kauffman import bfs, bds, pep
+from kauffman import bfs, bds, pep, bed
 
 df = kauffman.bed(7, obs_level='us')
 
@@ -16,6 +16,7 @@ df = kauffman.bed(7, obs_level='us')
 
 #test = kauffman.bfs(['BA_BA'], obs_level='all', seasonally_adj=True, annualize=False, march_shift=True)
 #print(test) should test whether march shift alone anualizes
+
 
 # print(df)
 print(df.info())
