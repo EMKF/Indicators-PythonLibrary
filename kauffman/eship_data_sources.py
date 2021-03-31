@@ -58,16 +58,16 @@ def bed(table, obs_level='all', industry='00'):
     if type(obs_level) == list:
         region_lst = obs_level
     else:
-        if obs_level == 'us':
-            region_lst = [obs_level]
-        elif obs_level == 'state':
+        if obs_level.lower() == 'state':
             region_lst = c.states
-        else:
+        elif obs_level.lower() == 'all':
             region_lst = ['us'] + c.states
+        else:
+            region_lst = [obs_level.lower()]
 
     return pd.concat(
             [
-                _bed_data_create(table, region, industry)
+                _bed_data_create(table, region.lower(), industry)
                 for region in region_lst
             ],
             axis=0
