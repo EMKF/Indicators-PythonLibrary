@@ -31,6 +31,7 @@ def bed(table, obs_level='all', industry='00'):
         obs_level: str
             'all'
             'us'
+            'state'
             state abbreviation code
 
         industry: str, NAICS codes
