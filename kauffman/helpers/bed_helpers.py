@@ -4,13 +4,20 @@ import numpy as np
 import pandas as pd
 import kauffman.constants as c
 
-
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
 pd.set_option('expand_frame_repr', False)
 pd.set_option('display.max_rows', 30000)
 pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
+
+
+def _data_lines(table, region, industry):
+    if region == 'us':
+        url = f'https://www.bls.gov/bdm/us_age_naics_{industry}_table{table}.txt'
+    else:
+        url = f'https://www.bls.gov/bdm/{region}_age_total_table{table}.txt'
+    return requests.get(url).text.split('\n')
 
 
 def _format_covars1(df):
@@ -125,22 +132,50 @@ def table7(lines):
         pipe(_format_covars7). \
         assign(age=lambda x: x['end_year'] - x['time'])
 
+def _extract_rows(df, age, size):
+    # todo: make this table title dynamic
+    mask = df['Table 1-B-F: Annual gross job gains and gross job losses by age and base size of firm'] == 'Table 1-B-F: Annual gross job gains and gross job losses by age and base size of firm'
+    ind_lst = df.index[mask].tolist()
+
+    num_rows = ind_lst[1] - ind_lst[0] - 1
+    ind = ind_lst[c.age_size_lst.index((age, size))]
+
+    return df.iloc[(ind - num_rows) + 4:ind]
+
+def _remove_trailing_rows(df):
+    last_year_ind = df.index[df['Table 1-B-F: Annual gross job gains and gross job losses by age and base size of firm'] == 2020].tolist()[0]
+    return df.loc[:last_year_ind].reset_index(drop=True)
+
+def _column_headers(df):
+    df.columns = c.table1bf_columns
+    return df
+
+def _values_fix(df):
+    return df.\
+        replace('_', np.nan, regex=True). \
+        replace('N', np.nan, regex=True). \
+        replace(',', '', regex=True). \
+        astype(dict(zip(c.table1bf_columns[1:], [float] * len(c.table1bf_columns[1:]))))
+
+def table1bf(df, age=0, size=7):  # todo: make age and size variables in kauffman.bed()
+    return df.\
+        pipe(_extract_rows, age, size).\
+        pipe(_remove_trailing_rows).\
+        pipe(_column_headers). \
+        pipe(_values_fix)
+
 
 def _bed_data_create(table, region, industry):
     print(f'Fetching BED for {region.upper()}')
 
-    if region == 'us':
-        url = f'https://www.bls.gov/bdm/us_age_naics_{industry}_table{table}.txt'
-    else:
-        url = f'https://www.bls.gov/bdm/{region}_age_total_table{table}.txt'
-    lines = requests.get(url).text.split('\n')
-
     if table in range(1, 5):
-        df = table1(lines)
+        df = table1(_data_lines(table, region, industry))
     if table in [5, 6]:
-        df = table5(lines)
-    elif table == 7:
-        df = table7(lines)
+        df = table5(_data_lines(table, region, industry))
+    if table == 7:
+        df = table7(_data_lines(table, region, industry))
+    if table == '1bf':
+        df = table1bf(pd.read_excel('https://www.bls.gov/bdm/age_by_size/age_naics_base_ein_20201_t1.xlsx'))
 
     covars = df.columns.tolist()[1:]
     return df.\

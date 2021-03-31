@@ -9,7 +9,14 @@ from kauffman.helpers import _bed_data_create, _bds_data_create, _bfs_data_creat
 def bed(table, obs_level='all', industry='00'):
     """
        todo: go through this doc string
+    'https://www.bls.gov/bdm/us_age_naics_00_table1.txt
+    'https://www.bls.gov/bdm/age_by_size/age_naics_base_ein_20201_t4.xlsx  # firm
+    'https://www.bls.gov/bdm/age_by_size/age_naics_base_20201_t4.xlsx  # establishment
+
+
        BED series is bdm (Establishment Age and Survival Data). Industry is 00, All.
+        series: str         # todo
+            'bdm
 
         table: int,
             1: Private sector gross jobs gains and losses by establishment age
@@ -19,15 +26,13 @@ def bed(table, obs_level='all', industry='00'):
             5: Number of private sector establishments by age
             6: Private sector employment by establishment age
             7: Survival of private sector establishments by opening year
+            1bf: Annual gross job gains and gross job losses by age and base size of firm
 
         obs_level: str
             'all'
             'us'
             state abbreviation code
 
-        # todo: implement this for obs_level='us'
-        #   1. pass in industry parameter
-        #   2. if obs_lebel='us' then put industry code in url
         industry: str, NAICS codes
             00: All
             11: Agriculture, forestry, fishing, and hunting

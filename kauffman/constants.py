@@ -1,4 +1,5 @@
 import geonamescache
+from itertools import product
 
 states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
           "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
@@ -198,3 +199,26 @@ lfs_series_dict = {
     'civilian_labor_force': 'LNS11000000',
     'unemployment_rate': 'LNS14000000'
 }
+
+age_dic = {
+    0: 'Less than one year old',
+    1: '1 to 4 years',
+    2: '5 to 9 years',
+    3: '10 years or older',
+    4: 'All'
+}
+size_dic = {
+    0: '1 to 4 employees',
+    1: '5 to 9 employees',
+    2: '10 to 19 employees',
+    3: '20 to 49 employees',
+    4: '50 to 99 employees',
+    5: '100 to 499 employees',
+    6: '500 or more employees',
+    7: 'All'
+}
+age_size_lst = list(product(age_dic.keys(), size_dic.keys()))
+
+table1bf_columns = ['time', 'firms', 'establishments', 'net_change', 'total_job_gains', 'expanding_job_gains',
+                    'opening_job_gains', 'total_job_losses', 'contracting_job_losses', 'closing_job_losses']
+

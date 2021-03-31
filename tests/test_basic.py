@@ -2,7 +2,7 @@ from context import kauffman
 
 from kauffman import bfs, bds, pep, bed
 
-df = kauffman.bed(7, obs_level='us')
+df = kauffman.bed('1bf', obs_level='us')
 
 # df = kauffman.bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
 # df = kauffman.bfs(['BA_BA', 'BF_SBF8Q'], obs_level='state')
