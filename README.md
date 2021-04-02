@@ -83,8 +83,8 @@ Changing the parameters (see examples and documentation) makes the plots nicer.
 
 
 # TODO
-* remove unneeded libraries
-* clean up code
+* structure:
+    * data, tools subdirectories
 * remove main blocks
 * have test scripts
 * 

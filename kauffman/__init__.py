@@ -1,6 +1,7 @@
-from kauffman.eship_data_sources import bed, bds, bfs, pep
+__all__ = ['data', 'tools']
 
-__all__ = ['bed', 'bds', 'bfs', 'pep']
+# from kauffman.data.eship_data_sources import bed, bds, bfs, pep  # todo: do I need this? at least, I'm going to put it into a module called data
+# __all__ = ['bed', 'bds', 'bfs', 'pep', 'tools']
 
 # todo:
 # bfs, I don't know if region is the name or the abbreviation

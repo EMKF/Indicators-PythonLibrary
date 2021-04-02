@@ -53,7 +53,7 @@ def plot_maps():
     #     assign(fips=lambda x: x['region'].map(c.state_dic_temp)). \
     #     pub.choro_map('BA_BA', 'Business Applications 2019', 'Business Applications')
 
-    import kauffman.helpers.pep_helpers as pep
+    import kauffman.data.helpers.pep_helpers as pep
     pep.get_data('county'). \
         query('time == "2019"'). \
         astype({'population': 'int'}). \

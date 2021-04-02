@@ -1,6 +1,6 @@
 import pandas as pd
 import kauffman.constants as c
-from kauffman.helpers import _bed_data_create, _bds_data_create, _bfs_data_create, _pep_data_create
+from kauffman.data.helpers import _bed_data_create, _bds_data_create, _bfs_data_create, _pep_data_create
 
 
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
