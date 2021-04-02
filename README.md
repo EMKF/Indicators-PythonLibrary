@@ -83,10 +83,8 @@ Changing the parameters (see examples and documentation) makes the plots nicer.
 
 
 # TODO
-* structure:
-    * data, tools subdirectories
-* remove main blocks
-* have test scripts
+* cross walk tool in tools module. 
+* cleanup test scripts
 * 
 
 

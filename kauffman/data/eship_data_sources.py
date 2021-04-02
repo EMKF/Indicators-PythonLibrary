@@ -1,6 +1,7 @@
 import pandas as pd
 import kauffman.constants as c
-from kauffman.data.helpers import _bed_data_create, _bds_data_create, _bfs_data_create, _pep_data_create
+from kauffman.data.helpers import _bed_data_create, _bds_data_create, _bfs_data_create, _pep_data_create, \
+    _qwi_data_create
 
 
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
@@ -211,7 +212,7 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
         )
 
 
-def pep(obs_level, start_year=None, end_year=None):
+def pep(obs_level='all', start_year=None, end_year=None):
     """ Create a pandas data frame with results from a PEP query. Column order: fips, region, time, POP.
 
     Collects nation- and state-level population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
@@ -234,6 +235,7 @@ def pep(obs_level, start_year=None, end_year=None):
 
     end_year-- latest end year is 2019
     """
+    # todo: do we want to allow user to filter by year? if not, remove these two parameters.
 
     if type(obs_level) == list:
         region_lst = obs_level
@@ -246,6 +248,54 @@ def pep(obs_level, start_year=None, end_year=None):
     return pd.concat(
             [
                 _pep_data_create(region)
+                for region in region_lst
+            ],
+            axis=0
+        )
+
+
+def qwi(indicator_lst='all', obs_level='all', start_year=None, end_year=None, private=True, by_age=True, annualize='January',
+        strata=None):
+    """
+    Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
+    extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
+    Census's API in the case of state, MSA, or county (https://api.census.gov/data/timeseries/qwi/sa/examples.html).
+
+    obs_level:
+        'state': resident population of state from 1990 through 2019
+        'us': resident population in the united states from 1959 through 2019
+
+    indicator_lst: str or lst
+        'All': default, will return all QWI indicaotrs;
+        otherwise: return list of indicators plus 'time', 'ownercode', 'firmage', and 'fips'
+
+    start_year: earliest start year is 2000
+
+    end_year: latest end year is 2019
+
+    annualize: None, str
+        'None': leave as quarterly data
+        'January': annualize using Q1 as beginning of year
+        'March': annualize using Q2 as beginning of year
+
+    strat: lst
+        empty
+        'sex': stratify by gender
+        'industry': stratify by industry, NAICS 2-digit
+
+    """
+
+    if type(obs_level) == list:
+        region_lst = obs_level
+    else:
+        if obs_level in ['us', 'state', 'county']:
+            region_lst = [obs_level]
+        else:
+            region_lst = ['us', 'state', 'county']
+    # todo: make it so the user can specify a specific state, list of states, specific county, or list of counties
+    return pd.concat(
+            [
+                _qwi_data_create(indicator_lst, region, start_year, end_year, private, by_age, annualize, strata)
                 for region in region_lst
             ],
             axis=0

@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from kauffman import constants as c
 #todo figure out this unresolved reference ^. needed to run eship tests
-import kauffman.cross_walk as cw
+import kauffman.tools.cross_walk as cw
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)

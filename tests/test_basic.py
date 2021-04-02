@@ -1,10 +1,14 @@
 from context import kauffman
 
-from kauffman.data import bfs, bds, pep, bed
+from kauffman.data import bfs, bds, pep, bed, qwi
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation
 
-def data_fetch():
-    df = bed('1bf', obs_level=['AL', 'US', 'MO'])
+def _data_fetch():
+    # todo: test this against what I'm seeing in kauffman_indicators
+    df = qwi()
+
+
+    # df = bed('1bf', obs_level=['AL', 'US', 'MO'])
     # df = bed('1bf', obs_level=['AL', 'US', 'MO'])
 
     # df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
@@ -22,7 +26,7 @@ def data_fetch():
     print(df.tail())
 
 
-def data_tools():
+def _distribution_tests():
     # df = bfs(['BA_BA'], obs_level='us'). \
     #     query('BA_BA == BA_BA'). \
     #     sort_values('BA_BA', ascending=False). \
@@ -38,6 +42,10 @@ def data_tools():
     excess_conditional_expectation(df, 'BA_BA', 'Business Applications', sign='positive')
 
 
+def _cross_walk():
+    pass
+
 if __name__ == '__main__':
-    # data_fetch()
-    data_tools()
+    _data_fetch()
+    # _distribution_tests()
+    # _cross_walk()
