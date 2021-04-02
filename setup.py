@@ -7,10 +7,9 @@ setup(
     author_email='thowe@kauffman.org',
     packages=find_packages(),
     install_requires=[
-        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache'
+        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0'
     ],
     version='2.1.3',
-    # The license can be anything you like
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
     long_description=open('README.md').read(),
