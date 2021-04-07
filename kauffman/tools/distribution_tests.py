@@ -113,6 +113,15 @@ def excess_conditional_expectation(df, outcome, outcome_label, sign='positive'):
     plt.show()
 
 
+def maximum_quartic_variation(df, outcome):
+    """
+    The contribution of the maximum quartic variations over n samples.
+
+    The frequency should be decided prior calling this function.
+    """
+    Q_n = (df[outcome] ** 4).max() / (df[outcome] ** 4).sum()
+    print(f'Maximum quartic variations: {round(Q_n, 3)}')
+
 
 def sigma_calc(df_ba):
     sigma = (df_ba['BA_BA'].max() - df_ba['BA_BA'].mean()) / df_ba['BA_BA'].std()

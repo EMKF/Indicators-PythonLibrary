@@ -1,7 +1,8 @@
 from context import kauffman
 
 from kauffman.data import bfs, bds, pep, bed, qwi
-from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation
+from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
+    maximum_quartic_variation
 
 def _data_fetch():
     # todo: test this against what I'm seeing in kauffman_indicators
@@ -39,13 +40,14 @@ def _distribution_tests():
         query('BA_BA == BA_BA'). \
         reset_index(drop=True)
     # maximum_to_sum_plot(df, 'BA_BA')
-    excess_conditional_expectation(df, 'BA_BA', 'Business Applications', sign='positive')
+    # excess_conditional_expectation(df, 'BA_BA', 'Business Applications', sign='positive')
+    maximum_quartic_variation(df, 'BA_BA')
 
 
 def _cross_walk():
     pass
 
 if __name__ == '__main__':
-    _data_fetch()
-    # _distribution_tests()
+    # _data_fetch()
+    _distribution_tests()
     # _cross_walk()
