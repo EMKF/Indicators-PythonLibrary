@@ -7,10 +7,9 @@ import numpy as np
 
 def _data_lines(table = 1, firm_size = 1):
 
-    url = 'https://www.bls.gov/web/cewbd/f.01.table1_d.txt'
-    # url = 'https://www.bls.gov/web/cewbd/f.0{firm_size}.table{table}_d.txt'
+    url = f'https://www.bls.gov/web/cewbd/f.0{firm_size}.table{table}_d.txt'
     lines = requests.get(url).text.split('\n')
-
+    return lines
 # 1 and 2 should include the thousands code and comma removal, 3 and 4 tables should not.
 
 def table_1(lines): #works for 1 and 2
@@ -29,7 +28,6 @@ def table_1(lines): #works for 1 and 2
             if line_list[0] in ['January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December']:
                 row.append([year] + line_list) #if the first element is a month, inputs the most recent year, concatenates the list, and appends
 
-    row[2:] = row[2:]*1000
 
     df = pd.DataFrame(
             row,
@@ -37,7 +35,7 @@ def table_1(lines): #works for 1 and 2
         ) #.\
         # pipe(_format_covars1)
 
-    df = df.replace(',', '', regex=True, inplace=True)
+    df.replace(',', '', regex=True, inplace=True)
     df.iloc[:, 2:9] = df.iloc[:, 2:9].apply(pd.to_numeric)
     df.iloc[:, 2:9] = df.iloc[:, 2:9] * 1000
 
@@ -60,7 +58,6 @@ def table_3(lines): #works for 3 and 4
             if line_list[0] in ['January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December']:
                 row.append([year] + line_list) #if the first element is a month, inputs the most recent year, concatenates the list, and appends
 
-    row[2:] = row[2:]*1000
 
     df = pd.DataFrame(
             row,
@@ -92,5 +89,9 @@ def abe_data_create(table, firm_size): #todo test this
 
     if table in range(1, 3):
         df = table_1(_data_lines(table, firm_size))
-    if table in [3, 5]:
+    if table in range(3, 5):
         df = table_3(_data_lines(table, firm_size))
+    return df
+
+#test. the code works
+abe_data_create(3,9)
