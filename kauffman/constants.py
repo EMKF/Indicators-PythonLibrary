@@ -222,3 +222,25 @@ age_size_lst = list(product(age_dic.keys(), size_dic.keys()))
 table1bf_columns = ['time', 'firms', 'establishments', 'net_change', 'total_job_gains', 'expanding_job_gains',
                     'opening_job_gains', 'total_job_losses', 'contracting_job_losses', 'closing_job_losses']
 
+table_firm_size_columns = ['time', 'quarter', 'net_change', 'total_job_gains', 'expanding_firms_job_gains',
+             'opening_firms_job_gains', 'total_job_losses', 'contracting_firms_job_losses',
+             'closing_firms_job_losses']
+
+size_dic2 = {
+    1: '1 to 4 employees',
+    2: '5 to 9 employees',
+    3: '10 to 19 employees',
+    4: '20 to 49 employees',
+    5: '50 to 99 employees',
+    6: '100 to 249 employees',
+    7: '250 to 499 employees',
+    8: '500 to 999 employees',
+    9: '1000 or more employees'
+}
+
+month_to_quarter_dict = {
+    'March': 1,
+    'June': 2,
+    'September': 3,
+    'December': 4
+}

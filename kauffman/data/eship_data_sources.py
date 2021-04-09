@@ -1,13 +1,14 @@
 import pandas as pd
 import kauffman.constants as c
-from kauffman.data.helpers import _bed_data_create, _bds_data_create, _bfs_data_create, _pep_data_create, \
-    _qwi_data_create
+from kauffman.data.helpers.bed_helpers.firm_size_helpers import _firm_size_data_create
+from kauffman.data.helpers.bed_helpers.est_age_surv_helpers import _est_age_surv_data_create
+from kauffman.data.helpers import _bds_data_create, _bfs_data_create, _pep_data_create, _qwi_data_create
 
 
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
 # todo: mostly the code in each of these is the same...so can consolidate that
 
-def bed(table, obs_level='all', industry='00'):
+def bed(series, table, obs_level='all', industry='00'):
     """
        todo: go through this doc string
     'https://www.bls.gov/bdm/us_age_naics_00_table1.txt
@@ -15,9 +16,11 @@ def bed(table, obs_level='all', industry='00'):
     'https://www.bls.gov/bdm/age_by_size/age_naics_base_20201_t4.xlsx  # establishment
 
 
+        # todo...series and table need to be lumped together somehow
        BED series is bdm (Establishment Age and Survival Data). Industry is 00, All.
-        series: str         # todo
-            'bdm
+        series: str
+            'bdm: firm size'
+            'bdm: establishment age and survival'
 
         table: int,
             1: Private sector gross jobs gains and losses by establishment age
@@ -57,6 +60,17 @@ def bed(table, obs_level='all', industry='00'):
             72: Accommodation and food services
             81: Other services (except public administration)
     """
+    # todo: integrate this somehow above
+    """
+    Private Sector Firm-Level Job Gains and Losses
+
+    table:
+        1: Seasonally Adjusted, 2: Not Seasonally Adjusted, 3: As % Employment Seasonally Adjusted, 4: As % Employment Not Seasonally Adjusted
+    firm size: (number of employees)
+        1: 1-4 , 2: 5-9 , 3: 10-19 , 4: 20-49 , 5: 50-99, 6: 100-249 , 7: 250-499 , 8: 500-999 , 9: >1000
+
+    """
+
     if type(obs_level) == list:
         region_lst = obs_level
     else:
@@ -67,13 +81,23 @@ def bed(table, obs_level='all', industry='00'):
         else:
             region_lst = [obs_level.lower()]
 
-    return pd.concat(
-            [
-                _bed_data_create(table, region.lower(), industry)
-                for region in region_lst
-            ],
-            axis=0
-        )
+    if series == 'firm size':
+        return pd.concat(
+                [
+                    _firm_size_data_create(table, size)
+                    for size in range(1, 10)
+                ],
+                axis=0
+            )
+    elif series == 'establishment age and survival':
+        return pd.concat(
+                [
+                    _est_age_surv_data_create(table, region.lower(), industry)
+                    for region in region_lst
+                ],
+                axis=0
+            )
+
 
 def bds(series_lst, obs_level='all'):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.

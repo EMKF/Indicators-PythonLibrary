@@ -6,10 +6,13 @@ from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_cond
 
 def _data_fetch():
     # todo: test this against what I'm seeing in kauffman_indicators
-    df = qwi()
+    # df = qwi()
 
 
-    # df = bed('1bf', obs_level=['AL', 'US', 'MO'])
+    # df = bed('firm size', 1)
+    # df = bed('firm size', 2)
+    # df = bed('firm size', 3)
+    df = bed('firm size', 4)
     # df = bed('1bf', obs_level=['AL', 'US', 'MO'])
 
     # df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
@@ -48,6 +51,6 @@ def _cross_walk():
     pass
 
 if __name__ == '__main__':
-    # _data_fetch()
-    _distribution_tests()
+    _data_fetch()
+    # _distribution_tests()
     # _cross_walk()
