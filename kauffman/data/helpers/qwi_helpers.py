@@ -82,7 +82,7 @@ def _us_fetch_data_all(private, by_age, strat):
     pause2 = 3
 
     chrome_options = Options()
-    #chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--headless')
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
