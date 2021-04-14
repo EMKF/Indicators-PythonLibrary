@@ -51,7 +51,6 @@ def _build_df_header(df):
 
 
 def _fetch_from_url(url, syq):
-    print('\t{}'.format(syq), end='...')
     r = requests.get(url)
     try:
         df = pd.DataFrame(r.json()).pipe(_build_df_header)
@@ -132,7 +131,6 @@ def _us_fetch_data_all(private, by_age, strat):
     driver.find_element_by_id('continue_to_export').click()
 
     # Summary and Export
-    print('\tExport tab...')
     time.sleep(pause2)
     driver.find_element_by_id('submit_request').click()
     try:
@@ -186,8 +184,6 @@ def _annualizer(df, annualize, strat):
 
 
 def _qwi_data_create(indicator_lst, region, start_year, end_year, private, by_age, annualize, strata):
-    print('Extracting QWI data for {}...'.format(region))
-
     if region == 'state':
         df = _county_msa_state_fetch_data_all(region, start_year, end_year). \
             astype({'state': 'str'}). \
@@ -229,26 +225,4 @@ def _qwi_data_create(indicator_lst, region, start_year, end_year, private, by_ag
         pipe(_annualizer, annualize, strata)
     # pipe(_annualizer if annualize else lambda x: x)
 
-
-if __name__ == '__main__':
-    # get_data('us', annualize=True).to_csv('/Users/thowe/Downloads/qwi_us.csv', index=False)
-    # get_data('county', annualize=True).to_csv('/Users/thowe/Downloads/qwi_county.csv', index=False)
-    # get_data('msa', annualize=True).to_csv('/Users/thowe/Downloads/qwi_msa.csv', index=False)
-    # get_data('state', annualize=True).to_csv('/Users/thowe/Downloads/qwi_state.csv', index=False)
-    #
-    # df = get_data('state', start_year=2016, end_year=2017, annualize='March')
-    # print(df)
-
-    # df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=['sex', 'industry'])    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January', strat=['sex', 'industry'])
-    df = get_data('us', ['Emp', 'EmpS'], start_year=2016, end_year=2017, annualize='January')
-    print(df)
-    # print(_annualizer(joblib.load('/Users/thowe/Downloads/scratch.pkl'), 'January', True).head(50))
-    # sys.exit()
-
-
-# todo: specify public or private
-# todo: does annualize work for all indicators? Some might not because of how they are defined.
-
-
-
-
+# todo: print statements etc.

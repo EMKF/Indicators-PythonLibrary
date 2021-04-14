@@ -31,7 +31,6 @@ def df_create(lines):
 
 
 def _firm_size_data_create(table, firm_size):
-    print(f'Fetching BED, Firm Size for U.S.')
     return df_create(_data_lines(table, firm_size)).\
         assign(
             size=c.size_dic2[firm_size],

@@ -1,8 +1,7 @@
 import requests
 import pandas as pd
-from kauffman import constants as c
-#todo figure out this unresolved reference ^. needed to run eship tests
-import kauffman.tools.cross_walk as cw
+import kauffman.constants as c
+import kauffman.tools.cross_walk as cw  # todo fix
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -108,6 +107,7 @@ def _state_us_fetch_data_all(region):
 
 
 def _msa_fetch_2004_2009():
+    # todo
     """Crosswalks county population data to msa and calculates population for the latter"""
     return cw.get_data(). \
         merge(

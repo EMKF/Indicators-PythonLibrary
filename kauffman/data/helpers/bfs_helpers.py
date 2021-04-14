@@ -71,7 +71,6 @@ def _annualize(df, annualize, bf_helper_lst, march_shift):
 
 
 def _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift):
-    print(f'Fetching BFS for {region}')
     if march_shift: annualize = True
 
     bf_helper_lst = []

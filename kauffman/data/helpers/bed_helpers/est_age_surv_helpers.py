@@ -166,8 +166,6 @@ def table1bf(df, age=0, size=7):  # todo: make age and size variables in kauffma
 
 
 def _est_age_surv_data_create(table, region, industry):
-    print(f'Fetching BED, Establishment Age and Survival for {region.upper()}')
-
     if table in range(1, 5):
         df = table1(_data_lines(table, region, industry))
     if table in [5, 6]:

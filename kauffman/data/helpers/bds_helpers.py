@@ -23,8 +23,6 @@ def _county_fips(df):
 
 
 def _bds_data_create(variables, region):
-    print(f'Fetching BDS for {region}')
-
     url = f'https://api.census.gov/data/timeseries/bds?get={",".join(variables)}&for={region}:*&YEAR=*'
     return pd.DataFrame(requests.get(url).json()).\
         pipe(_make_header).\
