@@ -7,11 +7,9 @@ from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_cond
 def _data_fetch():
     # todo: test this against what I'm seeing in kauffman_indicators
 
-    df = acs(['B24092_004E', 'B24092_013E'])
-    # : 'private_self_employed_m',
-    # : 'private_self_employed_f',
+    # df = acs(['B24092_004E', 'B24092_013E'])
 
-    # df = qwi(obs_level='us', annualize=None)
+    df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
     # df = qwi(obs_level='state')
 
 
@@ -32,8 +30,8 @@ def _data_fetch():
     # df = pep(obs_level='state')
 
     print(df.info())
-    print(df.head())
-    print(df.tail())
+    print(df.head(50))
+    print(df.tail(50))
 
 
 def _distribution_tests():

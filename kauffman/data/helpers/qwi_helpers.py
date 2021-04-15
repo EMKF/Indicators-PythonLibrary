@@ -78,37 +78,38 @@ def _county_msa_state_fetch_data_all(obs_level):
 
 
 def _us_fetch_data_all(private, by_age, strat):
-    print('\tFiring up selenium extractor...')
+    # print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--headless')
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
-    print('\tGeography tab...')
+    # print('\tGeography tab...')
     time.sleep(pause1)
     driver.find_element_by_id('continue_with_selection_label').click()
 
     # Firm Characteristics
-    print('\tFirm Characteristics tab...')
+    # print('\tFirm Characteristics tab...')
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
     if by_age:
         for box in range(0, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
             # time.sleep(pause1)
-        time.sleep(pause1)
+        # time.sleep(pause1)
+
     if 'industry' in strat:
-        elems = driver.find_elements_by_xpath("//a[@href]")[13]
+        elems = driver.find_elements_by_xpath("//a[@href]")[12]
         driver.execute_script("arguments[0].click();", elems)
     driver.find_element_by_id('continue_to_worker_char').click()
 
     # Worker Characteristics
-    print('\tWorker Characteristics tab...')
+    # print('\tWorker Characteristics tab...')
     if 'sex' in strat:
         # driver.find_element_by_id('dijit_form_CheckBox_12').click()
         driver.find_element_by_id('dijit_form_CheckBox_13').click()
@@ -116,7 +117,7 @@ def _us_fetch_data_all(private, by_age, strat):
     driver.find_element_by_id('continue_to_indicators').click()
 
     # Indicators
-    print('\tIndicators tab...')
+    # print('\tIndicators tab...')
     for _ in range(0, 3):
         driver.find_element_by_class_name('ClosedGroup').click()
         time.sleep(pause2)
@@ -126,10 +127,10 @@ def _us_fetch_data_all(private, by_age, strat):
     driver.find_element_by_id('continue_to_quarters').click()
 
     # Quarters
-    print('\tQuarters tab...')
+    # print('\tQuarters tab...')
     for quarter in range(1, 5):
         driver.find_element_by_xpath('//*[@title="Check All Q{}"]'.format(quarter)).click()
-        time.sleep(pause1)
+        # time.sleep(pause1)
     driver.find_element_by_id('continue_to_export').click()
 
     # Summary and Export
@@ -185,8 +186,8 @@ def _annualizer(df, annualize, covars):
 
 
 def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
+    # todo: need to sort out the by_age, by_size, private, and strata keywords
     covars = ['time', 'firmage', 'fips', 'ownercode'] + strata
-    # todo: make strata work
 
     if region == 'state':
         df = _county_msa_state_fetch_data_all(region). \
@@ -207,16 +208,14 @@ def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
             ). \
-            rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'}) \
-            [covars + indicator_lst]  # todo: maybe I don't need this here but at the end
+            rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
 
     return df. \
-        reset_index(drop=True). \
         astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
-        reset_index(drop=True)  # \
-        # [covars + variables]
+        reset_index(drop=True) \
+        [covars + indicator_lst]
 
 
 
