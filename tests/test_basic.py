@@ -1,18 +1,24 @@
 from context import kauffman
 
-from kauffman.data import bfs, bds, pep, bed, qwi
+from kauffman.data import acs, bfs, bds, pep, bed, qwi
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation
 
 def _data_fetch():
     # todo: test this against what I'm seeing in kauffman_indicators
-    # df = qwi()
+
+    df = acs(['B24092_004E', 'B24092_013E'])
+    # : 'private_self_employed_m',
+    # : 'private_self_employed_f',
+
+    # df = qwi(obs_level='us', annualize=None)
+    # df = qwi(obs_level='state')
 
 
     # df = bed('firm size', 1)
     # df = bed('firm size', 2)
     # df = bed('firm size', 3)
-    df = bed('firm size', 4)
+    # df = bed('firm size', 4)
     # df = bed('1bf', obs_level=['AL', 'US', 'MO'])
 
     # df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
@@ -54,3 +60,15 @@ if __name__ == '__main__':
     _data_fetch()
     # _distribution_tests()
     # _cross_walk()
+
+#     df = get_data(['B24081_001E', 'B24092_017E', 'B24092_018E'])
+#     print(df)
+#     sys.exit()
+#     # raw_data_createB24081()
+#     # raw_data_createB24092()
+#
+#     # harry_plotter_overall()
+#     # harry_plotter_gender()
+#
+#     agg_raw_data_create()
+#

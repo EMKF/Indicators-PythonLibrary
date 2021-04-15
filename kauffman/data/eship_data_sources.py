@@ -2,11 +2,46 @@ import pandas as pd
 import kauffman.constants as c
 from kauffman.data.helpers.bed_helpers.firm_size_helpers import _firm_size_data_create
 from kauffman.data.helpers.bed_helpers.est_age_surv_helpers import _est_age_surv_data_create
-from kauffman.data.helpers import _bds_data_create, _bfs_data_create, _pep_data_create, _qwi_data_create
+from kauffman.data.helpers import _acs_data_create, _bds_data_create, _bfs_data_create, _pep_data_create, _qwi_data_create
 
 
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
 # todo: mostly the code in each of these is the same...so can consolidate that
+
+def acs(series_lst):
+    """
+        https://api.census.gov/data/2019/acs/acs1/variables.html
+
+        'B24081_001E': 'total',
+        'B24081_002E': 'private',
+        'B24081_003E': 'private_employee',
+        'B24081_004E': 'private_self_employed',
+        'B24081_005E': 'non_profit',
+        'B24081_006E': 'local_government',
+        'B24081_007E': 'state_government',
+        'B24081_008E': 'federal_government',
+        'B24081_009E': 'self_employed_not_inc',
+        'B24092_001E': 'total_m',
+        'B24092_002E': 'private_m',
+        'B24092_003E': 'private_employee_m',
+        'B24092_004E': 'private_self_employed_m',
+        'B24092_005E': 'non_profit_m',
+        'B24092_006E': 'local_government_m',
+        'B24092_007E': 'state_government_m',
+        'B24092_008E': 'federal_government_m',
+        'B24092_009E': 'self_employed_not_inc_m',
+        'B24092_010E': 'total_f',
+        'B24092_011E': 'private_f',
+        'B24092_012E': 'private_employee_f',
+        'B24092_013E': 'private_self_employed_f',
+        'B24092_014E': 'non_profit_f',
+        'B24092_015E': 'local_government_f',
+        'B24092_016E': 'state_government_f',
+        'B24092_017E': 'federal_government_f',
+        'B24092_018E': 'self_employed_not_inc_f'
+    """
+    return _acs_data_create(series_lst)
+
 
 def bed(series, table, obs_level='all', industry='00'):
     """
@@ -236,7 +271,7 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
         )
 
 
-def pep(obs_level='all', start_year=None, end_year=None):
+def pep(obs_level='all'):
     """ Create a pandas data frame with results from a PEP query. Column order: fips, region, time, POP.
 
     Collects nation- and state-level population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
@@ -255,9 +290,6 @@ def pep(obs_level='all', start_year=None, end_year=None):
         'state': resident population of state from 1990 through 2019
         'us': resident population in the united states from 1959 through 2019
 
-    start_year-- earliest start year is 1900
-
-    end_year-- latest end year is 2019
     """
     # todo: do we want to allow user to filter by year? if not, remove these two parameters.
 
@@ -278,8 +310,7 @@ def pep(obs_level='all', start_year=None, end_year=None):
         )
 
 
-def qwi(indicator_lst='all', obs_level='all', start_year=None, end_year=None, private=True, by_age=True, annualize='January',
-        strata=None):
+def qwi(indicator_lst='all', obs_level='all', private=True, by_age=True, annualize='January', strata=[]):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -290,19 +321,48 @@ def qwi(indicator_lst='all', obs_level='all', start_year=None, end_year=None, pr
         'us': resident population in the united states from 1959 through 2019
 
     indicator_lst: str or lst
-        'All': default, will return all QWI indicaotrs;
+        'all': default, will return all QWI indicaotrs;
         otherwise: return list of indicators plus 'time', 'ownercode', 'firmage', and 'fips'
 
-    start_year: earliest start year is 2000
-
-    end_year: latest end year is 2019
+        EmpSpv: Full-Quarter Employment in the Previous Quarter: Counts
+        SepBeg: Beginning-of-Quarter Separations
+        EmpS: Full-Quarter Employment (Stable): Counts
+        FrmJbLsS: Firm Job Loss (Stable): Counts
+        HirAEndReplr: Replacement Hiring Rate
+        HirAEnd: End-of-Quarter Hires
+        FrmJbLs: Firm Job Loss: Counts (Job Destruction)
+        EarnS: Full Quarter Employment (Stable): Average Monthly Earnings
+        HirR: Hires Recalls: Counts
+        FrmJbC: Firm Job Change:Net Change
+        Emp: Beginning-of-Quarter Employment: Counts
+        FrmJbGnS: Firm Job Gains (Stable): Counts
+        HirAs: Hires All (Stable): Counts (Flows into Full-QuarterEmployment)
+        SepSnx: Separations (Stable), Next Quarter: Counts (Flow out of Full-Quarter Employment)
+        HirNs: Hires New (Stable): Counts (New Hires to Full-Quarter Status)
+        Sep: Separations: Counts
+        EarnHirAS: Hires All (Stable): Average Monthly Earnings
+        Payroll: Total Quarterly Payroll: Sum
+        HirA: Hires All: Counts (Accessions)
+        FrmJbCS: Job Change (Stable): Net Change
+        EmpTotal: Employment-Reference Quarter: Counts
+        HirAEndRepl: Replacement Hires
+        EarnHirNS: Hires New (Stable): Average Monthly Earnings
+        TurnOvrS: Turnover (Stable)
+        HirN: Hires New: Counts
+        EarnBeg: End-of-Quarter Employment: Average Monthly Earnings
+        EmpEnd: End-of-Quarter Employment: Counts
+        SepBegR: Beginning-of-Quarter Separation Rate
+        EarnSepS: Separations (Stable): Average Monthly Earnings
+        HirAEndR: End-of-Quarter Hiring Rate
+        SepS: Separations (Stable): Counts (Flow out of Full-Quarter Employment)
+        FrmJbGn: Firm Job Gains: Counts (Job Creation)
 
     annualize: None, str
         'None': leave as quarterly data
         'January': annualize using Q1 as beginning of year
         'March': annualize using Q2 as beginning of year
 
-    strat: lst
+    strata: lst
         empty
         'sex': stratify by gender
         'industry': stratify by industry, NAICS 2-digit
@@ -317,9 +377,12 @@ def qwi(indicator_lst='all', obs_level='all', start_year=None, end_year=None, pr
         else:
             region_lst = ['us', 'state', 'county']
     # todo: make it so the user can specify a specific state, list of states, specific county, or list of counties
+
+    indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
+
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, start_year, end_year, private, by_age, annualize, strata)
+                _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata)
                 for region in region_lst
             ],
             axis=0

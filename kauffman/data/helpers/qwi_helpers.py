@@ -24,13 +24,15 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _region_year_lst(obs_level, start_year, end_year):
-    years = list(range(max(start_year, 2000), min(end_year, 2019) + 1))
+def _region_year_lst(obs_level):
+    # years = list(range(max(start_year, 2000), min(end_year, 2019) + 1))
+    # todo: make this programmatic
+    years = list(range(2000, 2022))
+
     if obs_level in ['state', 'county']:
         return list(product(c.state_abb_fips_dic.values(), years))
     if obs_level == 'msa':
         return list(product([(k, state) for k, states_lst in c.msa_fips_state_fips_dic.items() for state in states_lst], years))
-        # return list(product(c.msa_fips_state_fips_dic.items(), years))
 
 
 def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
@@ -62,7 +64,7 @@ def _fetch_from_url(url, syq):
     return df
 
 
-def _county_msa_state_fetch_data_all(obs_level, start_year, end_year):
+def _county_msa_state_fetch_data_all(obs_level):
     print('\tQuerying the Census QWI API...')
     return pd.concat(
         [
@@ -70,7 +72,7 @@ def _county_msa_state_fetch_data_all(obs_level, start_year, end_year):
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY')),
                 syq
             )
-            for syq in _region_year_lst(obs_level, start_year, end_year)  #[-40:]
+            for syq in _region_year_lst(obs_level)  #[-40:]
         ]
     )
 
@@ -98,7 +100,7 @@ def _us_fetch_data_all(private, by_age, strat):
     if by_age:
         for box in range(0, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
-            time.sleep(pause1)
+            # time.sleep(pause1)
         time.sleep(pause1)
     if 'industry' in strat:
         elems = driver.find_elements_by_xpath("//a[@href]")[13]
@@ -120,7 +122,7 @@ def _us_fetch_data_all(private, by_age, strat):
         time.sleep(pause2)
     for box in range(19, 50):
         driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
-        time.sleep(pause1)
+        # time.sleep(pause1)
     driver.find_element_by_id('continue_to_quarters').click()
 
     # Quarters
@@ -155,7 +157,7 @@ def _msa_combiner(df):
     return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
 
 
-def _annualizer(df, annualize, strat):
+def _annualizer(df, annualize, covars):
     if not annualize:
         return df
     elif annualize == 'March':
@@ -172,57 +174,57 @@ def _annualizer(df, annualize, strat):
                 time=lambda x: x['time'].str[:4],
             )
 
-    groupby_vars = ['fips', 'time', 'firmage'] if not strat else ['fips', 'time', 'firmage'] + strat
     return df. \
         assign(
-            row_count=lambda x: x['fips'].groupby([x[var] for var in groupby_vars]).transform('count')
+            row_count=lambda x: x['fips'].groupby([x[var] for var in covars]).transform('count')
         ). \
         query('row_count == 4'). \
         drop(columns=['row_count']). \
-        groupby(groupby_vars).apply(lambda x: pd.DataFrame.sum(x.set_index(groupby_vars), skipna=False)).\
+        groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, start_year, end_year, private, by_age, annualize, strata):
+def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
+    covars = ['time', 'firmage', 'fips', 'ownercode'] + strata
+    # todo: make strata work
+
     if region == 'state':
-        df = _county_msa_state_fetch_data_all(region, start_year, end_year). \
+        df = _county_msa_state_fetch_data_all(region). \
             astype({'state': 'str'}). \
             rename(columns={'state': 'fips'})
     elif region == 'county':
-        df = _county_msa_state_fetch_data_all(region, start_year, end_year). \
+        df = _county_msa_state_fetch_data_all(region). \
             assign(fips=lambda x: x['state'].astype(str) + x['county'].astype(str)). \
             drop(['state', 'county'], 1)
     elif region == 'msa':
-        df = _county_msa_state_fetch_data_all(region, start_year, end_year). \
+        df = _county_msa_state_fetch_data_all(region). \
             rename(columns={'metropolitan statistical area/micropolitan statistical area': 'fips'}). \
             pipe(_msa_year_filter). \
             drop('state', 1)
     else:
-        ui_covars = [
-            'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'HirA', 'HirN', 'HirR', 'Sep', 'HirAEnd', 'HirAEndR',
-            'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx', 'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC',
-            'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll',
-            'time', 'ownercode', 'firmage', 'fips'
-        ]
-        df = _us_fetch_data_all(private, by_age, strat=strata). \
+        df = _us_fetch_data_all(private, by_age, strata). \
             assign(
-            time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
-            fips='00'
-        ). \
+                time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
+                fips='00'
+            ). \
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'}) \
-            [ui_covars if not strata else ui_covars + strata]
-    #             query('{start_year}<=year<={end_year}'.format(start_year=max(start_year, 2000), end_year=min(end_year, 2019))).\  # todo: why did I do this here? Oh, the other region queries have dates built in
+            [covars + indicator_lst]  # todo: maybe I don't need this here but at the end
 
-    # todo: look for a better way to do this list garbage.
-    covars = ['time', 'firmage', 'fips'] if not strata else ['time', 'firmage', 'fips'] + strata
-    indicator_lst = [col for col in df.columns.tolist() if
-                     col not in covars + ['ownercode']] if not indicator_lst else indicator_lst
     return df. \
-        reset_index(drop=True) \
-        [indicator_lst + covars]. \
+        reset_index(drop=True). \
         astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
-        pipe(_msa_combiner if region == 'msa' else lambda x: x). \
-        pipe(_annualizer, annualize, strata)
-    # pipe(_annualizer if annualize else lambda x: x)
+        pipe(_annualizer, annualize, covars).\
+        sort_values(covars).\
+        reset_index(drop=True)  # \
+        # [covars + variables]
+
+
+
+    # todo: maybe put the msa combiner in the msa block above
+    # return df. \
+    #     reset_index(drop=True). \
+    #     astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
+    #     pipe(_msa_combiner if region == 'msa' else lambda x: x). \
+    #     pipe(_annualizer, annualize, strata)
 
 # todo: print statements etc.

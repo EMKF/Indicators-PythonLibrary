@@ -244,3 +244,45 @@ month_to_quarter_dict = {
     'September': 3,
     'December': 4
 }
+
+qwi_outcomes = [
+    'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'HirA', 'HirN', 'HirR', 'Sep', 'HirAEnd', 'HirAEndR',
+    'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx', 'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC',
+    'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll'
+]
+# qwi_covars = [
+#     'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'HirA', 'HirN', 'HirR', 'Sep', 'HirAEnd', 'HirAEndR',
+#     'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx', 'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC',
+#     'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll',
+#     'time', 'ownercode', 'firmage', 'fips'
+# ]
+
+acs_outcomes = {
+    'B24081_001E': 'total',
+    'B24081_002E': 'private',
+    'B24081_003E': 'private_employee',
+    'B24081_004E': 'private_self_employed',
+    'B24081_005E': 'non_profit',
+    'B24081_006E': 'local_government',
+    'B24081_007E': 'state_government',
+    'B24081_008E': 'federal_government',
+    'B24081_009E': 'self_employed_not_inc',
+    'B24092_001E': 'total_m',
+    'B24092_002E': 'private_m',
+    'B24092_003E': 'private_employee_m',
+    'B24092_004E': 'private_self_employed_m',
+    'B24092_005E': 'non_profit_m',
+    'B24092_006E': 'local_government_m',
+    'B24092_007E': 'state_government_m',
+    'B24092_008E': 'federal_government_m',
+    'B24092_009E': 'self_employed_not_inc_m',
+    'B24092_010E': 'total_f',
+    'B24092_011E': 'private_f',
+    'B24092_012E': 'private_employee_f',
+    'B24092_013E': 'private_self_employed_f',
+    'B24092_014E': 'non_profit_f',
+    'B24092_015E': 'local_government_f',
+    'B24092_016E': 'state_government_f',
+    'B24092_017E': 'federal_government_f',
+    'B24092_018E': 'self_employed_not_inc_f'
+}
