@@ -12,6 +12,15 @@ We are still developing this library, obviously, so local updating will be neces
 pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kcr
 ```
 
+# Feedback
+Questions or comments can be directed to indicators@kauffman.org.
+
+# Disclaimer
+The content presented in this repository is presented as a courtesy to be used only for informational purposes. The 
+content is provided “As Is” and is not represented to be error free. The Kauffman Foundation makes no representation or 
+warranty of any kind with respect to the content and any such representations or warranties are hereby expressly 
+disclaimed.
+
 
 ## TODO
 1. time series plotting and choropleth functions

@@ -310,7 +310,7 @@ def pep(obs_level='all'):
         )
 
 
-def qwi(indicator_lst='all', obs_level='all', private=True, by_age=True, annualize='January', strata=[]):
+def qwi(indicator_lst='all', obs_level='all', by_age_size=None, private=False, annualize='January', strata=[]):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -357,6 +357,16 @@ def qwi(indicator_lst='all', obs_level='all', private=True, by_age=True, annuali
         SepS: Separations (Stable): Counts (Flow out of Full-Quarter Employment)
         FrmJbGn: Firm Job Gains: Counts (Job Creation)
 
+    by_age_size: None, str
+        None: do not stratify by age or size categories
+        age: stratify by age
+        size: stratify by size
+
+    private: bool
+        True: All private only
+        False: All
+        if by_age_size is not None, then private is set to True
+
     annualize: None, str
         'None': leave as quarterly data
         'January': annualize using Q1 as beginning of year
@@ -366,6 +376,7 @@ def qwi(indicator_lst='all', obs_level='all', private=True, by_age=True, annuali
         empty
         'sex': stratify by gender
         'industry': stratify by industry, NAICS 2-digit
+
 
     """
 
@@ -380,9 +391,12 @@ def qwi(indicator_lst='all', obs_level='all', private=True, by_age=True, annuali
 
     indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
 
+    if by_age_size:
+        private = True
+
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata)
+                _qwi_data_create(indicator_lst, region, private, by_age_size, annualize, strata)
                 for region in region_lst
             ],
             axis=0
