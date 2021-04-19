@@ -9,7 +9,7 @@ def _data_fetch():
 
     # df = acs(['B24092_004E', 'B24092_013E'])
 
-    df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
+    # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
     # df = qwi(obs_level='state')
 
 
@@ -26,7 +26,7 @@ def _data_fetch():
 
     # df = bds(['FIRM', 'ESTAB'], obs_level='all')
 
-    # df = pep(obs_level='us')
+    df = pep(obs_level='us')
     # df = pep(obs_level='state')
 
     print(df.info())

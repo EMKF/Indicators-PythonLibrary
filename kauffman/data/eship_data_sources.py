@@ -186,11 +186,24 @@ def bds(series_lst, obs_level='all'):
         SUMLEVEL: Summary Level code
         ucgid: Uniform Census Geography Identifier clause
         YEAR: Year
-    ????
-    https://www.census.gov/econ/bfs/csv/bfs_us_apps_weekly_nsa.csv
-    from https://www.census.gov/econ/bfs/index.html?#
-    dictionary: https://www.census.gov/econ/bfs/pdf/bfs_weekly_data_dictionary.pdf
-    #todo clean this part up. Travis added these so he would know what the question mark is for
+
+
+            FAGE codes
+                1	Total	0	All firm ages
+            10	0 Years	1	Firms less than one year old
+            20	1 Year	1	Firms one year old
+            25	1-5 Years	2	Firms between one and five years old
+            30	2 Years	1	Firms two years old
+            40	3 Years	1	Firms three years old
+            50	4 Years	1	Firms four years old
+            60	5 Years	1	Firms five years old
+            70	6-10 Years	0	Firms between six and ten years old
+            75	11+ Years	2	Firms eleven or more years old
+            80	11-15 Years	1	Firms between eleven and fifteen years old
+            90	16-20 Years	1	Firms between sixteen and twenty years old
+            100	21-25 Years	1	Firms between twenty one and twenty five years old
+            110	26+ Years	1	Firms twenty six or more years old
+            150	Left Censored	0	"Firms of unknown age (born before 1977)”
 
     obs_level-- str or lst of the level of observation(s) to pull at.
             all:
