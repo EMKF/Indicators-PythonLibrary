@@ -147,7 +147,6 @@ def _url(region):
         ]
 
 def _make_header(df):
-    print(df.head())
     df.columns = df.iloc[0].tolist()
     return df.iloc[1:]
 
@@ -336,7 +335,6 @@ def _state_1970_1979():
         [['fips', 'region', 'time', 'POP']]
 
 
-# todo: is DC in these? No, these use abbreviations not names
 def _state_1980_1989():
     lines = requests.get('https://www2.census.gov/programs-surveys/popest/tables/1980-1990/state/asrh/st8090ts.txt').text.split('\n')
 
@@ -373,124 +371,111 @@ def _state_1990_1999():
         [['fips', 'region', 'time', 'POP']]
 
 
-def _pep_data_create(region):
-    print(f'Fetching PEP for {region}')
+def _state_2000_2009():
+    url = 'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for=state:*'
 
-
-    # # State 1900 through 1999
-    # df = pd.concat(
-    #         [
-    #             f()
-    #             for f in [_state_1900_1909, _state_1910_1919, _state_1920_1929, _state_1930_1939, _state_1940_1949, _state_1950_1959, _state_1960_1969, _state_1970_1979, _state_1980_1989, _state_1990_1999]
-    #         ],
-    #         axis=0
-    #     ).\
-    #     reset_index(drop=True)
-    # print(df.head())
-    # print(df.tail())
-
-
-    # # US 1900 through 1999
-    # df = pd.read_csv(
-    #         'https://www2.census.gov/programs-surveys/popest/tables/1900-1980/national/totals/popclockest.txt',
-    #         delim_whitespace=True,
-    #         skiprows=9,
-    #         skipfooter=25,
-    #         usecols=[2, 3],
-    #         names=['time', 'POP'],
-    #         converters={'POP': lambda x: x.replace(',', '')},
-    #     ).\
-    #     astype({'POP': 'int'})
-    # print(df.head())
-    # print(df.tail())
-    # print(df.info())
-
-    # todo: start with state 1990
-
-
-    # # 1990 through 1999, all regions
-    # url = 'https://www2.census.gov/programs-surveys/popest/tables/1990-2000/state/totals/st-99-07.txt'
-    # lines = requests.get(url).text.split('\n')
-    # df = requests.get().json()
-    # # pd.DataFrame(requests.get(url).json()). \
-
-    # print(pd.DataFrame(requests.get('https://api.census.gov/data/1990/pep/int_natrespop?get=YEAR,TOT_POP').json()))
-
-    # # US
-    df = pd.DataFrame(requests.get(f'https://api.census.gov/data/1990/pep/int_natrespop?get=YEAR,TOT_POP&key={os.getenv("BDS_KEY")}').json()). \
+    return pd.DataFrame(requests.get(url).json()). \
         pipe(_make_header). \
-        rename(columns={'YEAR': 'time', 'TOT_POP': 'POP'}). \
-        astype({'time': 'int', 'POP': 'int'}).\
-        query('time < 2000'). \
+        rename(columns={'GEONAME': 'region', 'DATE_': 'date'}). \
+        astype({'date': 'int'}). \
+        query('2 <= date <= 11').\
+        query('region not in ["Puerto Rico"]').\
         assign(
-            region='United States',
+            time=lambda x: '200' + (x['date'] - 2).astype(str),
             fips=lambda x: x['region'].map(c.all_name_fips_dic),
         ) \
         [['fips', 'region', 'time', 'POP']]
 
 
-    # # State
-    # print(f'https://api.census.gov/data/1990/pep/int_charagegroups?get=POP,YEAR&for=county:*&in=state:02key={os.getenv("BDS_KEY")}')
-    # print(f'https://api.census.gov/data/1990/pep/int_charagegroups?get=POP,YEAR,AGEGRP,RACE_SEX,HISP&for=county:*&in=state:02')
-    # sys.exit()
-    # df = pd.DataFrame(requests.get(f'https://api.census.gov/data/1990/pep/int_charagegroups?get=POP,YEAR&for=county:*&in=state:02key={os.getenv("BDS_KEY")}').json()). \
-    #     pipe(_make_header)
+def _state_2010_2019():
+    url = 'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=state:*'
 
-    print(df)
-
-
-    # # 2000 through 2009, all regions
-    # df = pd.read_csv('https://www2.census.gov/programs-surveys/popest/tables/2000-2009/state/totals/nst-est2009-01.csv', header=3).\
-    #     assign(region=lambda x: x['Unnamed: 0'].str.replace('.', '')).\
-    #     query('region not in ["Northeast", "Midwest", "South", "West"]').\
-    #     drop(['Unnamed: 0', 'Census', 'Estimates Base'], 1).\
-    #     pipe(_column_rename). \
-    #     iloc[:-7].\
-    #     replace(',', '', regex=True).\
-    #     pipe(_panel_create, range(2000, 2010)).\
-    #     astype({'POP': 'int'}). \
-    #     sort_values(['region', 'time']). \
-    #     reset_index(drop=True) \
-    #     [['region', 'time', 'POP']]
-    # print(df)
+    return pd.DataFrame(requests.get(url).json()). \
+        pipe(_make_header). \
+        rename(columns={'NAME': 'region', 'DATE_CODE': 'date'}). \
+        astype({'date': 'int'}). \
+        query('3 <= date <= 12').\
+        query('region not in ["Puerto Rico"]').\
+        assign(
+            time=lambda x: '20' + (x['date'] + 7).astype(str),
+            fips=lambda x: x['region'].map(c.all_name_fips_dic),
+        ) \
+        [['fips', 'region', 'time', 'POP']]
 
 
-    # # 2010 through 2019, all regions
-    # 'http://www2.census.gov/programs-surveys/popest/datasets/2010-2019/national/totals/nst-est2019-alldata.csv'
-    # df = pd.read_excel('https://www2.census.gov/programs-surveys/popest/tables/2010-2019/state/totals/nst-est2019-01.xlsx', header=3).\
-    #     assign(region=lambda x: x['Unnamed: 0'].str.replace('.', '')).\
-    #     query('region not in ["Northeast", "Midwest", "South", "West"]').\
-    #     drop(['Unnamed: 0', 'Census', 'Estimates Base'], 1).\
-    #     iloc[:-7].\
-    #     pipe(_panel_create, range(2010, 2020)). \
-    #     astype({'POP': 'int'}). \
-    #       sort_values(['region', 'time']). \
-    #         reset_index(drop=True) \
-        #       [['region', 'time', 'POP']]
-    # print(df)
+def _us_1900_1999():
+    return pd.read_csv(
+            'https://www2.census.gov/programs-surveys/popest/tables/1900-1980/national/totals/popclockest.txt',
+            delim_whitespace=True,
+            skiprows=9,
+            skipfooter=25,
+            usecols=[2, 3],
+            names=['time', 'POP'],
+            converters={'POP': lambda x: x.replace(',', '')},
+        ). \
+        assign(
+            region='United States',
+            fips='00'
+        )
 
 
-    sys.exit()
+def _us_2000_2009():
+    url = 'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for=us:1'
+
+    return pd.DataFrame(requests.get(url).json()). \
+        pipe(_make_header). \
+        rename(columns={'GEONAME': 'region', 'DATE_': 'date'}). \
+        astype({'date': 'int'}). \
+        query('2 <= date <= 11').\
+        query('region not in ["Puerto Rico"]').\
+        assign(
+            time=lambda x: '200' + (x['date'] - 2).astype(str),
+            fips=lambda x: x['region'].map(c.all_name_fips_dic),
+        ) \
+        [['fips', 'region', 'time', 'POP']]
 
 
+def _us_2010_2019():
+    url = 'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=us:*'
+
+    return pd.DataFrame(requests.get(url).json()). \
+        pipe(_make_header). \
+        rename(columns={'NAME': 'region', 'DATE_CODE': 'date'}). \
+        astype({'date': 'int'}). \
+        query('3 <= date <= 12').\
+        query('region not in ["Puerto Rico"]').\
+        assign(
+            time=lambda x: '20' + (x['date'] + 7).astype(str),
+            fips=lambda x: x['region'].map(c.all_name_fips_dic),
+        ) \
+        [['fips', 'region', 'time', 'POP']]
 
 
-    return pd.concat(
+def _pep_data_create(region):
+    print(f'Fetching PEP for {region}')
+
+    if region == 'state':
+        df = pd.concat(
+                [
+                    f() for f in
+                        [
+                            _state_1900_1909, _state_1910_1919, _state_1920_1929, _state_1930_1939, _state_1940_1949,
+                            _state_1950_1959, _state_1960_1969, _state_1970_1979, _state_1980_1989, _state_1990_1999,
+                            _state_2000_2009, _state_2010_2019
+                        ]
+                ],
+                axis=0
+            )
+    else:
+        df = pd.concat(
             [
-                pd.DataFrame(requests.get(url).json()). \
-                    pipe(_make_header). \
-                    rename(columns={'NAME': 'region', 'GEONAME': 'region', 'DATE_': 'date', 'DATE_CODE': 'date'}). \
-                    pipe(_obs_filter, ind). \
-                    assign(
-                        time=lambda x: '200' + (x['date'] - 2).astype(str) if ind == 0 else '20' + (x['date'] + 7).astype(str),
-                        fips=lambda x: x['region'].map(c.all_name_fips_dic),
-                    ) \
-                    [['fips', 'region', 'time', 'POP']]
-                for ind, url in enumerate(_url(region))
+                f() for f in [_us_1900_1999, _us_2000_2009, _us_2010_2019]
             ],
             axis=0
-        ). \
-        astype({'POP': 'int', 'time': 'int'}). \
+        )
+
+    return df. \
         sort_values(['fips', 'time']). \
-        reset_index(drop=True) \
+        reset_index(drop=True).\
+        astype({'POP': 'int', 'time': 'int'}) \
         [['fips', 'region', 'time', 'POP']]

@@ -26,12 +26,11 @@ def _data_fetch():
 
     # df = bds(['FIRM', 'ESTAB'], obs_level='all')
 
-    df = pep(obs_level='us')
-    # df = pep(obs_level='state')
+    # df = pep(obs_level='us')
+    df = pep(obs_level='state')
 
+    print(df)
     print(df.info())
-    print(df.head(50))
-    print(df.tail(50))
 
 
 def _distribution_tests():
