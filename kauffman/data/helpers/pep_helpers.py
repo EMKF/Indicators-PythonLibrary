@@ -5,6 +5,8 @@ import pandas as pd
 import kauffman.constants as c
 import kauffman.tools.cross_walk as cw  # todo fix
 
+# https://www.census.gov/programs-surveys/popest.html
+
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
 pd.set_option('expand_frame_repr', False)
@@ -334,6 +336,7 @@ def _state_1970_1979():
         [['fips', 'region', 'time', 'POP']]
 
 
+# todo: is DC in these? No, these use abbreviations not names
 def _state_1980_1989():
     lines = requests.get('https://www2.census.gov/programs-surveys/popest/tables/1980-1990/state/asrh/st8090ts.txt').text.split('\n')
 
@@ -353,15 +356,32 @@ def _state_1980_1989():
         [['fips', 'region', 'time', 'POP']]
 
 
+def _state_1990_1999():
+    lines = requests.get('https://www2.census.gov/programs-surveys/popest/tables/1990-2000/state/totals/st-99-07.txt').text.split('\n')
+
+    rows = []
+    for row in lines[28: 79]:
+        rows.append(
+            row.split()[:2] + \
+            [' '.join([element for element in row.split() if element not in row.split()[:2] + row.split()[-11:]])] + \
+            row.split()[-11:]
+        )
+    return pd.DataFrame(rows, columns=['block', 'fips', 'region'] + list(map(lambda x: f'POP{x}', range(1999, 1989, -1))) + ['census']).\
+        drop(['block', 'census'], 1). \
+        pipe(pd.wide_to_long, 'POP', i='region', j='time'). \
+        reset_index(drop=False) \
+        [['fips', 'region', 'time', 'POP']]
+
+
 def _pep_data_create(region):
     print(f'Fetching PEP for {region}')
 
 
-    # # State 1900 through 1989
+    # # State 1900 through 1999
     # df = pd.concat(
     #         [
     #             f()
-    #             for f in [_state_1900_1909, _state_1910_1919, _state_1920_1929, _state_1930_1939, _state_1940_1949, _state_1950_1959, _state_1960_1969, _state_1970_1979, _state_1980_1989]
+    #             for f in [_state_1900_1909, _state_1910_1919, _state_1920_1929, _state_1930_1939, _state_1940_1949, _state_1950_1959, _state_1960_1969, _state_1970_1979, _state_1980_1989, _state_1990_1999]
     #         ],
     #         axis=0
     #     ).\
@@ -385,7 +405,7 @@ def _pep_data_create(region):
     # print(df.tail())
     # print(df.info())
 
-    # todo: start with state 1990   
+    # todo: start with state 1990
 
 
     # # 1990 through 1999, all regions
@@ -436,6 +456,7 @@ def _pep_data_create(region):
 
 
     # # 2010 through 2019, all regions
+    # 'http://www2.census.gov/programs-surveys/popest/datasets/2010-2019/national/totals/nst-est2019-alldata.csv'
     # df = pd.read_excel('https://www2.census.gov/programs-surveys/popest/tables/2010-2019/state/totals/nst-est2019-01.xlsx', header=3).\
     #     assign(region=lambda x: x['Unnamed: 0'].str.replace('.', '')).\
     #     query('region not in ["Northeast", "Midwest", "South", "West"]').\
