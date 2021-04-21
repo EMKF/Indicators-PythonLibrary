@@ -7,9 +7,9 @@ setup(
     author_email='thowe@kauffman.org',
     packages=find_packages(),
     install_requires=[
-        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0', 'seaborn'
+        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0', 'seaborn', 'sklearn'
     ],
-    version='2.1.5',
+    version='2.1.6',
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
     long_description=open('README.md').read(),
