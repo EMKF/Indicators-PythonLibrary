@@ -6,10 +6,14 @@ setup(
     author='Travis Howe',
     author_email='thowe@kauffman.org',
     packages=find_packages(),
+    # install_requires=[
+    #     'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0', 'seaborn', 'sklearn'
+    # ],
     install_requires=[
-        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0', 'seaborn', 'sklearn'
+        'requests', 'boto3', 'geonamescache', 'joblib', 'matplotlib', 'numpy', 'pandas', 'scikit_learn', 'seaborn',
+        'selenium', 'webdriver_manager', 'xlrd'
     ],
-    version='2.1.6',
+    version='2.1.7',
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
     long_description=open('README.md').read(),
