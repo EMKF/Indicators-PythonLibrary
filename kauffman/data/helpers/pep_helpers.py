@@ -452,8 +452,6 @@ def _us_2010_2019():
 
 
 def _pep_data_create(region):
-    print(f'Fetching PEP for {region}')
-
     if region == 'state':
         df = pd.concat(
                 [
