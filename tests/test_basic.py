@@ -5,10 +5,10 @@ from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_cond
     maximum_quartic_variation
 
 def _data_fetch():
-    # todo: test this against what I'm seeing in kauffman_indicators
 
     # df = acs(['B24092_004E', 'B24092_013E'])
 
+    # todo: test this against what I'm seeing in kauffman_indicators
     # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
     # df = qwi(obs_level='state')
 

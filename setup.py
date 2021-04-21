@@ -7,7 +7,7 @@ setup(
     author_email='thowe@kauffman.org',
     packages=find_packages(),
     install_requires=[
-        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0'
+        'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0', 'seaborn'
     ],
     version='2.1.4',
     license='MIT',
