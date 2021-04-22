@@ -31,6 +31,7 @@ def _region_year_lst(obs_level):
 
     if obs_level in ['state', 'county']:
         return list(product(c.state_abb_fips_dic.values(), years))
+        # return list(product(['29'], [2010]))
     if obs_level == 'msa':
         return list(product([(k, state) for k, states_lst in c.msa_fips_state_fips_dic.items() for state in states_lst], years))
 
@@ -43,7 +44,6 @@ def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
         for_region = 'for=county:*&in=state:{0}'.format(fips)
     else:
         for_region = 'for=state:{0}'.format(fips)
-
     return 'https://api.census.gov/data/timeseries/qwi/sa?get=Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,FrmJbGnS,FrmJbLsS,FrmJbCS,EarnS,EarnBeg,EarnHirAS,EarnHirNS,EarnSepS,Payroll&{0}&time={1}&ownercode=A05&{2}=1&{2}=2&{2}=3&{2}=4&{2}=5&key={3}'.format(for_region, year, firm_strat, bds_key)
 
 

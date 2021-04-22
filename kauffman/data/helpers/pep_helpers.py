@@ -3,7 +3,7 @@ import sys
 import requests
 import pandas as pd
 import kauffman.constants as c
-import kauffman.tools.cross_walk as cw  # todo fix
+# import kauffman.tools.cross_walk as cw  # todo fix
 
 # https://www.census.gov/programs-surveys/popest.html
 

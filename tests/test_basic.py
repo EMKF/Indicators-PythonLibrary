@@ -2,7 +2,7 @@ from context import kauffman
 
 from kauffman.data import acs, bfs, bds, pep, bed, qwi
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
-    maximum_quartic_variation
+    maximum_quartic_variation, county_msa_cross_walk
 
 def _data_fetch():
 
@@ -50,22 +50,13 @@ def _distribution_tests():
     maximum_quartic_variation(df, 'BA_BA')
 
 
-def _cross_walk():
-    pass
+def _etl_tests():
+    df = qwi(['Emp'], obs_level='county', annualize=False).\
+        pipe(county_msa_cross_walk, 'fips')
+    print(df.head(10))
+
 
 if __name__ == '__main__':
-    _data_fetch()
+    # _data_fetch()
     # _distribution_tests()
-    # _cross_walk()
-
-#     df = get_data(['B24081_001E', 'B24092_017E', 'B24092_018E'])
-#     print(df)
-#     sys.exit()
-#     # raw_data_createB24081()
-#     # raw_data_createB24092()
-#
-#     # harry_plotter_overall()
-#     # harry_plotter_gender()
-#
-#     agg_raw_data_create()
-#
+    _etl_tests()

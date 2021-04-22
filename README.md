@@ -26,3 +26,4 @@ disclaimed.
 1. time series plotting and choropleth functions
 2. * cross walk tool in tools module.
 3. PEP state level functions...cleanup 
+4. thousands parameter in read_excel and probably read_csv

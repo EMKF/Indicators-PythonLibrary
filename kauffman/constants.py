@@ -7,7 +7,7 @@ states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
 
-abb_fips_dic = {
+state_abb_fips_dic = {
     'WA': '53', 'DE': '10', 'DC': '11', 'WI': '55', 'WV': '54', 'HI': '15',
     'FL': '12', 'WY': '56', 'PR': '72', 'NJ': '34', 'NM': '35', 'TX': '48',
     'LA': '22', 'NC': '37', 'ND': '38', 'NE': '31', 'TN': '47', 'NY': '36',
@@ -19,9 +19,9 @@ abb_fips_dic = {
     'SC': '45', 'KY': '21', 'OR': '41', 'SD': '46', 'US': '00'
 }
 
-fips_abb_dic = {v: k for k, v in abb_fips_dic.items()}
+fips_abb_dic = {v: k for k, v in state_abb_fips_dic.items()}
 
-name_abb_dic = {
+state_name_abb_dic = {
     'Alabama': 'AL',
     'Alaska': 'AK',
     'Arizona': 'AZ',
@@ -80,7 +80,7 @@ name_abb_dic = {
     'United States': 'US'
 }
 
-abb_name_dic = dict(map(reversed, name_abb_dic.items()))
+abb_name_dic = dict(map(reversed, state_name_abb_dic.items()))
 
 
 # todo: can I do this with the first of these lines? I don't know what genomaescache has. Given I import it, I might as well use it if I can.
