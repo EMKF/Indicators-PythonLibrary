@@ -1,4 +1,4 @@
-from context import kauffman
+#from context import kauffman
 
 from kauffman.data import acs, bfs, bds, pep, bed, qwi
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
@@ -10,7 +10,7 @@ def _data_fetch():
 
     # todo: test this against what I'm seeing in kauffman_indicators
     # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
-    # df = qwi(obs_level='state')
+    df = qwi(obs_level='state')
 
 
     # df = bed('firm size', 1)
@@ -27,7 +27,7 @@ def _data_fetch():
     # df = bds(['FIRM', 'ESTAB'], obs_level='all')
 
     # df = pep(obs_level='us')
-    df = pep(obs_level='state')
+    # df = pep(obs_level='state')
 
     print(df)
     print(df.info())
@@ -57,6 +57,6 @@ def _etl_tests():
 
 
 if __name__ == '__main__':
-    # _data_fetch()
+     _data_fetch()
     # _distribution_tests()
-    _etl_tests()
+    #_etl_tests()

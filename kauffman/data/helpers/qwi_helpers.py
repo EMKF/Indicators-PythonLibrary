@@ -39,12 +39,12 @@ def _region_year_lst(obs_level):
 def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
     if region == 'msa':
         # for_region = 'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{0}'.format(state)
-        for_region = 'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:{msa_fips}&in=state:{state_fips}'.format(msa_fips=fips[0], state_fips=fips[1])
+        for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:{fips[0]}&in=state:{fips[1]}'
     elif region == 'county':
-        for_region = 'for=county:*&in=state:{0}'.format(fips)
+        for_region = f'for=county:*&in=state:{fips}'
     else:
-        for_region = 'for=state:{0}'.format(fips)
-    return 'https://api.census.gov/data/timeseries/qwi/sa?get=Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,FrmJbGnS,FrmJbLsS,FrmJbCS,EarnS,EarnBeg,EarnHirAS,EarnHirNS,EarnSepS,Payroll&{0}&time={1}&ownercode=A05&{2}=1&{2}=2&{2}=3&{2}=4&{2}=5&key={3}'.format(for_region, year, firm_strat, bds_key)
+        for_region = f'for=state:{fips}'
+    return 'https://api.census.gov/data/timeseries/qwi/rh?get=Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,FrmJbGnS,FrmJbLsS,FrmJbCS,EarnS,EarnBeg,EarnHirAS,EarnHirNS,EarnSepS,Payroll&{0}&time={1}&ownercode=A05&{2}=1&{2}=2&{2}=3&{2}=4&{2}=5&key={3}'.format(for_region, year, firm_strat, bds_key)
 
 
 def _build_df_header(df):
@@ -52,14 +52,14 @@ def _build_df_header(df):
     return df[1:]
 
 
-def _fetch_from_url(url, syq):
+def _fetch_from_url(url):
     r = requests.get(url)
     try:
         df = pd.DataFrame(r.json()).pipe(_build_df_header)
-        print('Success')
-        # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  # essentially the same as above; the rename function does not, apparently, give access to df
+        # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  
+        # essentially the same as above; the rename function does not, apparently, give access to df
     except:
-        print('Fail\n')
+        print('Fail', r, url, '\n')
         df = pd.DataFrame()
     return df
 
@@ -70,7 +70,6 @@ def _county_msa_state_fetch_data_all(obs_level):
         [
             _fetch_from_url(
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY')),
-                syq
             )
             for syq in _region_year_lst(obs_level)  #[-40:]
         ]
@@ -182,7 +181,7 @@ def _annualizer(df, annualize, covars):
         query('row_count == 4'). \
         drop(columns=['row_count']). \
         groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\
-        reset_index(drop=False)
+        reset_index(drop=False, name='Total')
 
 
 def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
