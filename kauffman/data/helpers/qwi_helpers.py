@@ -44,7 +44,7 @@ def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
         for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
-    return 'https://api.census.gov/data/timeseries/qwi/rh?get=Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,FrmJbGnS,FrmJbLsS,FrmJbCS,EarnS,EarnBeg,EarnHirAS,EarnHirNS,EarnSepS,Payroll&{0}&time={1}&ownercode=A05&{2}=1&{2}=2&{2}=3&{2}=4&{2}=5&key={3}'.format(for_region, year, firm_strat, bds_key)
+    return 'https://api.census.gov/data/timeseries/qwi/sa?get=Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,FrmJbGnS,FrmJbLsS,FrmJbCS,EarnS,EarnBeg,EarnHirAS,EarnHirNS,EarnSepS,Payroll&{0}&time={1}&ownercode=A05&{2}=1&{2}=2&{2}=3&{2}=4&{2}=5&key={3}'.format(for_region, year, firm_strat, bds_key)
 
 
 def _build_df_header(df):
@@ -56,10 +56,11 @@ def _fetch_from_url(url):
     r = requests.get(url)
     try:
         df = pd.DataFrame(r.json()).pipe(_build_df_header)
+        print('Success', end=' ')
         # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  
         # essentially the same as above; the rename function does not, apparently, give access to df
     except:
-        print('Fail', r, url, '\n')
+        print('Fail', r)
         df = pd.DataFrame()
     return df
 
@@ -181,7 +182,9 @@ def _annualizer(df, annualize, covars):
         query('row_count == 4'). \
         drop(columns=['row_count']). \
         groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\
-        reset_index(drop=False, name='Total')
+        reset_index(drop=False, name='Total').\
+        pivot(index=covars, columns=0, values='Total').\
+        reset_index(drop=False)
 
 
 def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):

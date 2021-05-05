@@ -396,7 +396,7 @@ def qwi(indicator_lst='all', obs_level='all', by_age_size=None, private=False, a
     if type(obs_level) == list:
         region_lst = obs_level
     else:
-        if obs_level in ['us', 'state', 'county']:
+        if obs_level in ['us', 'state', 'county', 'msa']:
             region_lst = [obs_level]
         else:
             region_lst = ['us', 'state', 'county']
