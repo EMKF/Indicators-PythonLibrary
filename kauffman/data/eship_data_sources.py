@@ -323,7 +323,7 @@ def pep(obs_level='all'):
         )
 
 
-def qwi(indicator_lst='all', obs_level='all', by_age_size=None, private=False, annualize='January', strata=[]):
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', strata=[]):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -392,24 +392,46 @@ def qwi(indicator_lst='all', obs_level='all', by_age_size=None, private=False, a
 
 
     """
+    ## Scenarios to handle: overall us, state, county, msa; all; list of states (for state, county, msa), single state
 
-    if type(obs_level) == list:
-        region_lst = obs_level
-    else:
-        if obs_level in ['us', 'state', 'county', 'msa']:
+    # TODO: Clean this up
+    # TODO: Double check that this covers all scenarios
+    # TODO: Do we need to provide for an option where you can have data on both us and state level for example?
+    # TODO: Think about user-friendliness; ex: should we allow them to put obs_level = 'CO' and assume state-level data?
+    if obs_level == 'all':
+        region_lst = ['us', 'state', 'county', 'msa']
+    elif obs_level in ['us', 'state', 'county', 'msa']:
+        if state_list == 'all':
             region_lst = [obs_level]
+        elif type(state_list) == list:
+            # TODO: What do we do in this scenario to differentiate the various levels?
+            region_lst = state_list
+        elif state_list in c.states:
+            region_lst = [state_list]
         else:
-            region_lst = ['us', 'state', 'county']
-    # todo: make it so the user can specify a specific state, list of states, specific county, or list of counties
+            print('Invalid input to state_level')
+    else:
+        print('Invalid input to obs_level.')
+
 
     indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
 
-    if by_age_size:
+    if any(item in strata for item in ['age', 'size']):
         private = True
+    
+    # TODO: Consider broadcasting the by_age_size and strata combination into qwi_helpers and deleting this
+    # TODO: Otherwise, clean this up: Surely there is a better way
+    strata_other = list(set(strata) - ['age', 'size'])
+    if 'age' in strata:
+        by_age_size = 'age'
+    elif 'size' in strata:
+        by_age_size = 'size'
+    else:
+        by_age_size = None
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, private, by_age_size, annualize, strata)
+                _qwi_data_create(indicator_lst, region, private, by_age_size, annualize, strata_other)
                 for region in region_lst
             ],
             axis=0

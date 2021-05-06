@@ -31,9 +31,12 @@ def _region_year_lst(obs_level):
 
     if obs_level in ['state', 'county']:
         return list(product(c.state_abb_fips_dic.values(), years))
-        # return list(product(['29'], [2010]))
-    if obs_level == 'msa':
-        return list(product([(k, state) for k, states_lst in c.msa_fips_state_fips_dic.items() for state in states_lst], years))
+    elif obs_level == 'msa':
+        msa_states = [(k, state) for k, states_lst in c.msa_fips_state_fips_dic.items() for state in states_lst]
+        return list(product(msa_states, years))
+    else:
+        state = [c.state_abb_fips_dic[obs_level]]
+        return list(product(state, years))
 
 
 def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
@@ -60,12 +63,12 @@ def _fetch_from_url(url):
         # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  
         # essentially the same as above; the rename function does not, apparently, give access to df
     except:
-        print('Fail', r)
+        print('Fail', r, url)
         df = pd.DataFrame()
     return df
 
 
-def _county_msa_state_fetch_data_all(obs_level):
+def _county_msa_state_fetch_data(obs_level):
     print('\tQuerying the Census QWI API...')
     return pd.concat(
         [
@@ -192,25 +195,30 @@ def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
     covars = ['time', 'firmage', 'fips', 'ownercode'] + strata
 
     if region == 'state':
-        df = _county_msa_state_fetch_data_all(region). \
+        df = _county_msa_state_fetch_data(region). \
             astype({'state': 'str'}). \
             rename(columns={'state': 'fips'})
     elif region == 'county':
-        df = _county_msa_state_fetch_data_all(region). \
+        df = _county_msa_state_fetch_data(region). \
             assign(fips=lambda x: x['state'].astype(str) + x['county'].astype(str)). \
             drop(['state', 'county'], 1)
     elif region == 'msa':
-        df = _county_msa_state_fetch_data_all(region). \
+        df = _county_msa_state_fetch_data(region). \
             rename(columns={'metropolitan statistical area/micropolitan statistical area': 'fips'}). \
             pipe(_msa_year_filter). \
             drop('state', 1)
-    else:
+    elif region == 'us':
         df = _us_fetch_data_all(private, by_age, strata). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
             ). \
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
+    else:
+        # KT TODO: Somehow combine this with state (make sure we don't need to do this for counties)
+        df = _county_msa_state_fetch_data(region).\
+            astype({'state': 'str'}). \
+            rename(columns={'state': 'fips'})
 
     return df. \
         astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
