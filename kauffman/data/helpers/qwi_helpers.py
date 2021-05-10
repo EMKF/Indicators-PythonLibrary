@@ -24,19 +24,17 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _region_year_lst(obs_level):
+def _region_year_lst(obs_level, state_list):
     # years = list(range(max(start_year, 2000), min(end_year, 2019) + 1))
     # todo: make this programmatic
-    years = list(range(2000, 2022))
+    years = list(range(2000, 2021))
 
     if obs_level in ['state', 'county']:
-        return list(product(c.state_abb_fips_dic.values(), years))
+        return list(product(state_list, years))
     elif obs_level == 'msa':
-        msa_states = [(k, state) for k, states_lst in c.msa_fips_state_fips_dic.items() for state in states_lst]
+        msa_dic_items = c.msa_fips_state_fips_dic.items()
+        msa_states = [(k, s) for k, states in msa_dic_items for s in states if s in state_list]
         return list(product(msa_states, years))
-    else:
-        state = [c.state_abb_fips_dic[obs_level]]
-        return list(product(state, years))
 
 
 def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
@@ -68,14 +66,14 @@ def _fetch_from_url(url):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level):
+def _county_msa_state_fetch_data(obs_level, state_list):
     print('\tQuerying the Census QWI API...')
     return pd.concat(
         [
             _fetch_from_url(
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY')),
             )
-            for syq in _region_year_lst(obs_level)  #[-40:]
+            for syq in _region_year_lst(obs_level, state_list)  #[-40:]
         ]
     )
 
@@ -185,25 +183,23 @@ def _annualizer(df, annualize, covars):
         query('row_count == 4'). \
         drop(columns=['row_count']). \
         groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\
-        reset_index(drop=False, name='Total').\
-        pivot(index=covars, columns=0, values='Total').\
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
+def _qwi_data_create(indicator_lst, region, state_list, private, by_age, annualize, strata):
     # todo: need to sort out the by_age, by_size, private, and strata keywords
     covars = ['time', 'firmage', 'fips', 'ownercode'] + strata
 
     if region == 'state':
-        df = _county_msa_state_fetch_data(region). \
+        df = _county_msa_state_fetch_data(region, state_list). \
             astype({'state': 'str'}). \
             rename(columns={'state': 'fips'})
     elif region == 'county':
-        df = _county_msa_state_fetch_data(region). \
+        df = _county_msa_state_fetch_data(region, state_list). \
             assign(fips=lambda x: x['state'].astype(str) + x['county'].astype(str)). \
             drop(['state', 'county'], 1)
     elif region == 'msa':
-        df = _county_msa_state_fetch_data(region). \
+        df = _county_msa_state_fetch_data(region, state_list). \
             rename(columns={'metropolitan statistical area/micropolitan statistical area': 'fips'}). \
             pipe(_msa_year_filter). \
             drop('state', 1)
@@ -214,14 +210,9 @@ def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
                 fips='00'
             ). \
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
-    else:
-        # KT TODO: Somehow combine this with state (make sure we don't need to do this for counties)
-        df = _county_msa_state_fetch_data(region).\
-            astype({'state': 'str'}). \
-            rename(columns={'state': 'fips'})
 
     return df. \
-        astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
+        apply(pd.to_numeric, errors='ignore'). \
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
         reset_index(drop=True) \

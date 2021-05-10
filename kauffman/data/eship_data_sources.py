@@ -397,41 +397,36 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     # TODO: Clean this up
     # TODO: Double check that this covers all scenarios
     # TODO: Do we need to provide for an option where you can have data on both us and state level for example?
-    # TODO: Think about user-friendliness; ex: should we allow them to put obs_level = 'CO' and assume state-level data?
-    if obs_level == 'all':
-        region_lst = ['us', 'state', 'county', 'msa']
+    # TODO: Think about user-friendliness; ex: should we allow them to put obs_level = 'CO' and assume state-level data?  
+    if type(obs_level) == list:
+        region_lst = obs_level
     elif obs_level in ['us', 'state', 'county', 'msa']:
-        if state_list == 'all':
-            region_lst = [obs_level]
-        elif type(state_list) == list:
-            # TODO: What do we do in this scenario to differentiate the various levels?
-            region_lst = state_list
-        elif state_list in c.states:
-            region_lst = [state_list]
-        else:
-            print('Invalid input to state_level')
+        region_lst = [obs_level]
+    elif obs_level == 'all':
+        region_lst = ['us', 'state', 'county', 'msa']
     else:
         print('Invalid input to obs_level.')
 
-
-    indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
-
-    if any(item in strata for item in ['age', 'size']):
-        private = True
-    
-    # TODO: Consider broadcasting the by_age_size and strata combination into qwi_helpers and deleting this
-    # TODO: Otherwise, clean this up: Surely there is a better way
-    strata_other = list(set(strata) - ['age', 'size'])
-    if 'age' in strata:
-        by_age_size = 'age'
-    elif 'size' in strata:
-        by_age_size = 'size'
+    if type(state_list) == str:
+        if state_list == 'all':
+            state_list = [c.state_abb_fips_dic[s] for s in c.states]
+        else:
+            state_list = [c.state_abb_fips_dic[state_list]]
     else:
+        state_list = [c.state_abb_fips_dic[s] for s in state_list]
+
+    # TODO: Consider broadcasting the by_age_size and strata combination into qwi_helpers and deleting this
+    strata_other = list(set(strata) - {'age', 'size'})
+    by_age_size = list(set(strata) - set(strata_other))
+    if len(by_age_size) == 0:
         by_age_size = None
 
+    private = True if by_age_size else private
+    indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
+     
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, private, by_age_size, annualize, strata_other)
+                _qwi_data_create(indicator_lst, region, state_list, private, by_age_size, annualize, strata_other)
                 for region in region_lst
             ],
             axis=0
