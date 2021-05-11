@@ -1,3 +1,4 @@
+from re import S
 import pandas as pd
 import kauffman.constants as c
 from kauffman.data.helpers.bed_helpers.firm_size_helpers import _firm_size_data_create
@@ -392,38 +393,28 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
 
     """
-    ## Scenarios to handle: overall us, state, county, msa; all; list of states (for state, county, msa), single state
-
-    # TODO: Clean this up
-    # TODO: Double check that this covers all scenarios
-    # TODO: Do we need to provide for an option where you can have data on both us and state level for example?
-    # TODO: Think about user-friendliness; ex: should we allow them to put obs_level = 'CO' and assume state-level data?  
-    if type(obs_level) == list:
-        region_lst = obs_level
-    elif obs_level in ['us', 'state', 'county', 'msa']:
+    if obs_level in ['us', 'state', 'county', 'msa']:
         region_lst = [obs_level]
     elif obs_level == 'all':
         region_lst = ['us', 'state', 'county', 'msa']
     else:
         print('Invalid input to obs_level.')
 
-    if type(state_list) == str:
-        if state_list == 'all':
-            state_list = [c.state_abb_fips_dic[s] for s in c.states]
-        else:
-            state_list = [c.state_abb_fips_dic[state_list]]
-    else:
-        state_list = [c.state_abb_fips_dic[s] for s in state_list]
+    if state_list == 'all':
+        state_list = [s for s in c.states]
+    elif type(state_list) == str:
+        state_list = [state_list]
+
+    state_list = [c.state_abb_fips_dic[s] for s in state_list]  
 
     # TODO: Consider broadcasting the by_age_size and strata combination into qwi_helpers and deleting this
     strata_other = list(set(strata) - {'age', 'size'})
     by_age_size = list(set(strata) - set(strata_other))
-    if len(by_age_size) == 0:
-        by_age_size = None
+    by_age_size = None if len(by_age_size) == 0 else by_age_size
 
     private = True if by_age_size else private
     indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
-     
+
     return pd.concat(
             [
                 _qwi_data_create(indicator_lst, region, state_list, private, by_age_size, annualize, strata_other)
