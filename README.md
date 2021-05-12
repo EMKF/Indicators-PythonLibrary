@@ -27,3 +27,4 @@ disclaimed.
 2. * cross walk tool in tools module.
 3. PEP state level functions...cleanup 
 4. thousands parameter in read_excel and probably read_csv
+5. some convetion for the dics in constants and updated in the scripts

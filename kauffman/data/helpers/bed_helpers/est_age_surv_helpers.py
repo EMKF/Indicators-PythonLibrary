@@ -174,13 +174,13 @@ def _est_age_surv_data_create(table, region, industry):
         df = table7(_data_lines(table, region, industry))
     if table == '1bf':
         url = f'https://www.bls.gov/bdm/age_by_size/{"" if region == "us" else f"{region}_"}age_naics_base_ein_20201_t1.xlsx'
-        df = table1bf(pd.read_excel(url))
+        df = table1bf(pd.read_excel(url, engine='xlrd'))
 
     covars = df.columns.tolist()[1:]
     return df.\
         assign(
             region=c.abb_name_dic[region.upper()],
-            fips=c.abb_fips_dic[region.upper()]
+            fips=c.state_abb_fips_dic[region.upper()]
         ). \
         sort_values(['fips', 'time']). \
         reset_index(drop=True) \
