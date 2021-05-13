@@ -330,11 +330,14 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
     Census's API in the case of state, MSA, or county (https://api.census.gov/data/timeseries/qwi/sa/examples.html).
 
-    obs_level:
+    obs_level: str, lst
         'state': resident population of state from 1990 through 2019
+        'msa':
+        'county':
         'us': resident population in the united states from 1959 through 2019
+        'all': default, returns data on all of the above observation levels
 
-    indicator_lst: str or lst
+    indicator_lst: str, lst
         'all': default, will return all QWI indicaotrs;
         otherwise: return list of indicators plus 'time', 'ownercode', 'firmage', and 'fips'
 
@@ -371,10 +374,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         SepS: Separations (Stable): Counts (Flow out of Full-Quarter Employment)
         FrmJbGn: Firm Job Gains: Counts (Job Creation)
 
-    by_age_size: None, str
-        None: do not stratify by age or size categories
-        age: stratify by age
-        size: stratify by size
+    state_list: str, lst
+        'all': default, includes all US states and D.C.
+        otherwise: a state or list of states, identified using postal code abbreviations
 
     private: bool
         True: All private only
@@ -386,12 +388,12 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         'January': annualize using Q1 as beginning of year
         'March': annualize using Q2 as beginning of year
 
-    strata: lst
-        empty
+    strata: lst, str
+        empty: default
+        'age': stratify by age
+        'size': stratify by size
         'sex': stratify by gender
         'industry': stratify by industry, NAICS 2-digit
-
-
     """
     if obs_level in ['us', 'state', 'county', 'msa']:
         region_lst = [obs_level]
@@ -405,7 +407,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     elif type(state_list) == str:
         state_list = [state_list]
 
-    state_list = [c.state_abb_fips_dic[s] for s in state_list]  
+    state_list = [c.state_abb_fips_dic[s] for s in state_list]
 
     # Split up strata into variables: strata_other and by_age_size
     strata_other = list(set(strata) - {'age', 'size'})
@@ -413,7 +415,13 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     by_age_size = None if len(by_age_size) == 0 else by_age_size
     private = True if by_age_size else private
-    indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
+
+    if indicator_lst == 'all':
+        indicator_lst = c.qwi_outcomes
+    elif type(indicator_lst) == str:
+        indicator_lst = [indicator_lst]
+
+    strata = [strata] if type(strata) == str else strata
 
     return pd.concat(
             [
