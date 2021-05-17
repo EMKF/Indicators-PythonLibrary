@@ -409,19 +409,19 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     state_list = [c.state_abb_fips_dic[s] for s in state_list]
 
-    # Split up strata into variables: strata_other and by_age_size
-    strata_other = list(set(strata) - {'age', 'size'})
-    by_age_size = list(set(strata) - set(strata_other))
-
-    by_age_size = None if len(by_age_size) == 0 else by_age_size
-    private = True if by_age_size else private
-
     if indicator_lst == 'all':
         indicator_lst = c.qwi_outcomes
     elif type(indicator_lst) == str:
         indicator_lst = [indicator_lst]
 
     strata = [strata] if type(strata) == str else strata
+
+    # Split up strata into variables: strata_other and by_age_size
+    strata_other = list(set(strata) - {'age', 'size'})
+    by_age_size = list(set(strata) - set(strata_other))
+
+    by_age_size = None if len(by_age_size) == 0 else by_age_size
+    private = True if by_age_size else private
 
     return pd.concat(
             [
