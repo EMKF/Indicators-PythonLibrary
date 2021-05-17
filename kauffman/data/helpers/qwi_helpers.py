@@ -74,11 +74,11 @@ def _fetch_from_url(url):
     r = requests.get(url)
     try:
         df = pd.DataFrame(r.json()).pipe(_build_df_header)
-        #print('Success', end=' ')
+        print('Success', end=' ')
         # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  
         # essentially the same as above; the rename function does not, apparently, give access to df
     except:
-        #print('Fail', r, url)
+        print('Fail', r, url)
         df = pd.DataFrame()
     return df
 
