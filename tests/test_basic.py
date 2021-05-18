@@ -10,6 +10,8 @@ def _data_fetch():
 
     # todo: test this against what I'm seeing in kauffman_indicators
     # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
+    df = qwi(obs_level='msa', state_list=['CO', 'UT'], strata=['firmsize'])
+    
     df = qwi(obs_level='state')
     df = qwi(obs_level='msa')
     df = qwi(obs_level='county')

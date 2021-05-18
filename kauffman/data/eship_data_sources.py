@@ -332,8 +332,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     obs_level: str, lst
         'state': resident population of state from 1990 through 2019
-        'msa':
-        'county':
+        'msa': resident population of msa from 1990 through 2019
+        'county': resident population of county from 1990 through 2019
         'us': resident population in the united states from 1959 through 2019
         'all': default, returns data on all of the above observation levels
 
@@ -390,8 +390,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     strata: lst, str
         empty: default
-        'age': stratify by age
-        'size': stratify by size
+        'firmage': stratify by age
+        'firmsize': stratify by size
         'sex': stratify by gender
         'industry': stratify by industry, NAICS 2-digit
     """
@@ -415,17 +415,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         indicator_lst = [indicator_lst]
 
     strata = [strata] if type(strata) == str else strata
-
-    # Split up strata into variables: strata_other and by_age_size
-    strata_other = list(set(strata) - {'age', 'size'})
-    by_age_size = list(set(strata) - set(strata_other))
-
-    by_age_size = None if len(by_age_size) == 0 else by_age_size
-    private = True if by_age_size else private
+    private = True if any(x in ['firmage', 'firmsize'] for x in strata) else private
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, state_list, private, by_age_size, annualize, strata_other)
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata)
                 for region in region_lst
             ],
             axis=0

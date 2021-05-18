@@ -38,8 +38,14 @@ def _region_year_lst(obs_level, state_list):
 
 
 def _build_strata_url(strata):
-    url_section = '{0}=1&{0}=2&{0}=3&{0}=4&{0}=5'.format('firmage')
-
+    url_section = ''
+    
+    if 'firmage' in strata:
+        for f in range(0,6):
+            url_section = url_section + f'&firmage={f}'
+    if 'firmsize' in strata:
+        for f in range(0,6):
+            url_section = url_section + f'&firmsize={f}'
     if 'sex' in strata:
         url_section = url_section + '&sex=0&sex=1&sex=2'
     if 'industry' in strata:
@@ -48,7 +54,7 @@ def _build_strata_url(strata):
 
     return url_section
 
-def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
+def _build_url(fips, year, region, bds_key, firm_strat):
     base_url = 'https://api.census.gov/data/timeseries/qwi/sa?'
     var_list = 'Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,' + \
         'HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,' + \
@@ -61,7 +67,7 @@ def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
         for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
-    return '{0}get={1}&{2}&time={3}&ownercode=A05&{4}&key={5}'. \
+    return '{0}get={1}&{2}&time={3}&ownercode=A05{4}&key={5}'. \
         format(base_url, var_list, for_region, year, strata_section, bds_key)
 
 
@@ -95,7 +101,7 @@ def _county_msa_state_fetch_data(obs_level, state_list, strata):
     )
 
 
-def _us_fetch_data_all(private, by_age, strat):
+def _us_fetch_data_all(private, strat):
     # print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
@@ -115,7 +121,7 @@ def _us_fetch_data_all(private, by_age, strat):
     # print('\tFirm Characteristics tab...')
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
-    if by_age:
+    if any(x in ['firmage', 'firmsize'] for x in strat):
         for box in range(0, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
             # time.sleep(pause1)
@@ -161,23 +167,6 @@ def _us_fetch_data_all(private, by_age, strat):
         return pd.read_csv(href)
 
 
-def _msa_year_filter(df):
-    return df. \
-        assign(
-            msa_states=lambda x: x[['state', 'fips']].groupby('fips').\
-                transform(lambda y: len(y.unique().tolist())),
-            time_count=lambda x: x[['fips', 'time', 'firmage', 'msa_states']].\
-                groupby(['fips', 'time', 'firmage']).transform('count')
-        ). \
-        query('time_count == msa_states'). \
-        drop(columns=['msa_states', 'time_count']).\
-        reset_index(drop=True)
-
-
-def _msa_combiner(df):
-    return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
-
-
 def _annualizer(df, annualize, covars):
     if not annualize:
         return df
@@ -205,9 +194,9 @@ def _annualizer(df, annualize, covars):
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, state_list, private, by_age, annualize, strata):
+def _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata):
     # todo: need to sort out the by_age, by_size, private, and strata keywords
-    covars = ['time', 'firmage', 'fips', 'ownercode'] + strata
+    covars = ['time', 'fips', 'ownercode'] + strata
 
     if region == 'state':
         df = _county_msa_state_fetch_data(region, state_list, strata). \
@@ -220,10 +209,9 @@ def _qwi_data_create(indicator_lst, region, state_list, private, by_age, annuali
     elif region == 'msa':
         df = _county_msa_state_fetch_data(region, state_list, strata). \
             rename(columns={'metropolitan statistical area/micropolitan statistical area': 'fips'}). \
-            pipe(_msa_year_filter). \
             drop('state', 1)
     elif region == 'us':
-        df = _us_fetch_data_all(private, by_age, strata). \
+        df = _us_fetch_data_all(private, strata). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
