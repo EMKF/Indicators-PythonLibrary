@@ -23,18 +23,3 @@ disclaimed.
 
 
 ## TODO
-1. library that downloads; one that pulls from database and analyzes
-
-#### analyze
-
-
-#### pull
-1. QA/QC pep data county and msa data
-2. cleanup pep_helpers
-    1. get rid of unused functions
-    2. refactor redundant code
-2. etl, cw function, groupby too, not just merge
-2. cross walk tool in tools module.
-3. PEP state level functions...cleanup 
-4. thousands parameter in read_excel and probably read_csv
-5. some convetion for the dics in constants and updated in the scripts

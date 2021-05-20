@@ -246,16 +246,11 @@ month_to_quarter_dict = {
 }
 
 qwi_outcomes = [
-    'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'HirA', 'HirN', 'HirR', 'Sep', 'HirAEnd', 'HirAEndR',
-    'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx', 'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC',
-    'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll'
+    'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnS', 'EarnSepS', 'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'FrmJbC',
+    'FrmJbCS', 'FrmJbGn', 'FrmJbGnS', 'FrmJbLs', 'FrmJbLsS', 'HirA', 'HirAEnd', 'HirAEndR', 'HirAEndRepl',
+    'HirAEndReplr', 'HirAs', 'HirN', 'HirNs', 'HirR', 'Payroll', 'Sep', 'SepBeg', 'SepBegR', 'SepS', 'SepSnx',
+    'TurnOvrS'
 ]
-# qwi_covars = [
-#     'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'HirA', 'HirN', 'HirR', 'Sep', 'HirAEnd', 'HirAEndR',
-#     'SepBeg', 'SepBegR', 'HirAs', 'HirNs', 'SepS', 'SepSnx', 'TurnOvrS', 'FrmJbGn', 'FrmJbLs', 'FrmJbC',
-#     'FrmJbGnS', 'FrmJbLsS', 'FrmJbCS', 'EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS', 'Payroll',
-#     'time', 'ownercode', 'firmage', 'fips'
-# ]
 
 acs_outcomes = {
     'B24081_001E': 'total',

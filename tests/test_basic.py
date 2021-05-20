@@ -1,9 +1,11 @@
 #from context import kauffman
 
+import sys
 import pandas as pd
 from kauffman.data import acs, bfs, bds, pep, bed, qwi
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
-    maximum_quartic_variation, county_msa_cross_walk
+    maximum_quartic_variation
+from kauffman.tools.etl import county_msa_cross_walk as cw
 
 
 pd.set_option('max_columns', 1000)
@@ -19,10 +21,27 @@ def _data_fetch():
 
     # df = acs(['B24092_004E', 'B24092_013E'])
 
+    # todo: why are some outcomes vastly different when aggregating counties? Calculations?
+    qwi(obs_level='msa', state_list=['CO']).\
+        pipe(lambda x: print(x))
+
+    qwi(obs_level='county', state_list=['CO']). \
+        pipe(cw, 'fips'). \
+        drop(['fips_county', 'region'], 1). \
+        groupby(['fips_msa', 'CBSA Title', 'time']).sum(). \
+        reset_index(drop=False). \
+        rename(columns={'CBSA Title': 'region', 'fips_msa': 'fips'}).\
+        query('fips == "19740"').\
+        pipe(lambda x: print(x))
+    sys.exit()
+
+
     # todo: test this against what I'm seeing in kauffman_indicators
     # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
-    df = qwi(obs_level='msa', state_list=['CO', 'UT'], strata=['firmsize'])
-    
+    df = qwi(obs_level='county', state_list=['CO'])
+    # df = qwi(obs_level='state', state_list=['UT'], strata=['firmsize'])
+    # df = qwi(obs_level='msa', state_list=['CO', 'UT'], strata=['firmsize'])
+
     df = qwi(obs_level='state')
     df = qwi(obs_level='msa')
     df = qwi(obs_level='county')

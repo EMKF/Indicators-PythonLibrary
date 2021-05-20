@@ -59,6 +59,7 @@ def county_msa_cross_walk(df_county, fips_county):
         ).\
         assign(fips_county=lambda x: x['FIPS State Code'] + x['FIPS County Code']).\
         rename(columns={'CBSA Code': 'fips_msa'}).\
+        astype({'fips_msa': 'str'}).\
         drop(['FIPS State Code', 'FIPS County Code'], 1)
 
     return df_county.\
@@ -66,8 +67,5 @@ def county_msa_cross_walk(df_county, fips_county):
         merge(df_cw, how='left', on='fips_county')  #.\
         # query('fips == fips'). \
         # astype({'fips': 'int'})
-#     todo: how far do I want to take this? I could do the entire MSA transformation, or just leave as the merged dataframe.
-
-
-
-# 1. merge with cw, 2. groupby .
+# todo: I can't just groupby and sum wrt cw(), since there might be missing county values
+#   also need to pass in the aggregating function...might be mean, not sum. Might also be more complicated.

@@ -325,6 +325,7 @@ def pep(obs_level='all'):
 
 
 def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', strata=[]):
+    # todo: I don't think MSA and state_list will work, because of the issue of MSAs crossing state lines. Is there a way around this?
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
