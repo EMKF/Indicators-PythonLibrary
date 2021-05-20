@@ -43,6 +43,8 @@ def file_from_s3(file, bucket, key):
 def county_msa_cross_walk(df_county, fips_county):
     """
     Receives county level data, and merges (on county fips) with a dataframe with CBSA codes.
+
+    fips_county: fips column name
     """
     df_cw = pd.read_excel(
             'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
@@ -67,3 +69,5 @@ def county_msa_cross_walk(df_county, fips_county):
 #     todo: how far do I want to take this? I could do the entire MSA transformation, or just leave as the merged dataframe.
 
 
+
+# 1. merge with cw, 2. groupby .

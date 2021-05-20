@@ -310,10 +310,10 @@ def pep(obs_level='all'):
     if type(obs_level) == list:
         region_lst = obs_level
     else:
-        if obs_level in ['us', 'state', 'county']:
+        if obs_level in ['us', 'state', 'msa', 'county']:
             region_lst = [obs_level]
         else:
-            region_lst = ['us', 'state', 'county']
+            region_lst = ['us', 'state', 'msa', 'county']
 
     return pd.concat(
             [
