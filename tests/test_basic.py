@@ -1,4 +1,4 @@
-from context import kauffman
+#from context import kauffman
 
 import pandas as pd
 from kauffman.data import acs, bfs, bds, pep, bed, qwi
@@ -21,7 +21,11 @@ def _data_fetch():
 
     # todo: test this against what I'm seeing in kauffman_indicators
     # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
-    # df = qwi(obs_level='state')
+    df = qwi(obs_level='msa', state_list=['CO', 'UT'], strata=['firmsize'])
+    
+    df = qwi(obs_level='state')
+    df = qwi(obs_level='msa')
+    df = qwi(obs_level='county')
 
 
     # df = bed('firm size', 1)
@@ -72,6 +76,6 @@ def _etl_tests():
 
 
 if __name__ == '__main__':
-    _data_fetch()
+     _data_fetch()
     # _distribution_tests()
-    # _etl_tests()
+    #_etl_tests()

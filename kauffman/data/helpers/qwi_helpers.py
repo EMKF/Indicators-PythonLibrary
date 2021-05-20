@@ -24,27 +24,51 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _region_year_lst(obs_level):
+def _region_year_lst(obs_level, state_list):
     # years = list(range(max(start_year, 2000), min(end_year, 2019) + 1))
     # todo: make this programmatic
-    years = list(range(2000, 2022))
+    years = list(range(2000, 2021))
 
     if obs_level in ['state', 'county']:
-        return list(product(c.state_abb_fips_dic.values(), years))
-        # return list(product(['29'], [2010]))
-    if obs_level == 'msa':
-        return list(product([(k, state) for k, states_lst in c.msa_fips_state_fips_dic.items() for state in states_lst], years))
+        return list(product(state_list, years))
+    elif obs_level == 'msa':
+        msa_dic_items = c.msa_fips_state_fips_dic.items()
+        msa_states = [(k, s) for k, states in msa_dic_items for s in states if s in state_list]
+        return list(product(msa_states, years))
 
 
-def _build_url(fips, year, region, bds_key, firm_strat='firmage'):
+def _build_strata_url(strata):
+    url_section = ''
+    
+    if 'firmage' in strata:
+        for f in range(0,6):
+            url_section = url_section + f'&firmage={f}'
+    if 'firmsize' in strata:
+        for f in range(0,6):
+            url_section = url_section + f'&firmsize={f}'
+    if 'sex' in strata:
+        url_section = url_section + '&sex=0&sex=1&sex=2'
+    if 'industry' in strata:
+        for i in [11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
+            url_section = url_section + f'&industry={i}'
+
+    return url_section
+
+def _build_url(fips, year, region, bds_key, firm_strat):
+    base_url = 'https://api.census.gov/data/timeseries/qwi/sa?'
+    var_list = 'Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,' + \
+        'HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,' + \
+        'FrmJbGnS,FrmJbLsS,FrmJbCS,EarnS,EarnBeg,EarnHirAS,EarnHirNS,EarnSepS,Payroll'
+    strata_section = _build_strata_url(firm_strat)
     if region == 'msa':
         # for_region = 'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{0}'.format(state)
-        for_region = 'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:{msa_fips}&in=state:{state_fips}'.format(msa_fips=fips[0], state_fips=fips[1])
+        for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:{fips[0]}&in=state:{fips[1]}'
     elif region == 'county':
-        for_region = 'for=county:*&in=state:{0}'.format(fips)
+        for_region = f'for=county:*&in=state:{fips}'
     else:
-        for_region = 'for=state:{0}'.format(fips)
-    return 'https://api.census.gov/data/timeseries/qwi/sa?get=Emp,EmpEnd,EmpS,EmpTotal,EmpSpv,HirA,HirN,HirR,Sep,HirAEnd,SepBeg,HirAEndRepl,HirAEndR,SepBegR,HirAEndReplr,HirAs,HirNs,SepS,SepSnx,TurnOvrS,FrmJbGn,FrmJbLs,FrmJbC,FrmJbGnS,FrmJbLsS,FrmJbCS,EarnS,EarnBeg,EarnHirAS,EarnHirNS,EarnSepS,Payroll&{0}&time={1}&ownercode=A05&{2}=1&{2}=2&{2}=3&{2}=4&{2}=5&key={3}'.format(for_region, year, firm_strat, bds_key)
+        for_region = f'for=state:{fips}'
+    return '{0}get={1}&{2}&time={3}&ownercode=A05{4}&key={5}'. \
+        format(base_url, var_list, for_region, year, strata_section, bds_key)
 
 
 def _build_df_header(df):
@@ -52,32 +76,32 @@ def _build_df_header(df):
     return df[1:]
 
 
-def _fetch_from_url(url, syq):
+def _fetch_from_url(url):
     r = requests.get(url)
     try:
         df = pd.DataFrame(r.json()).pipe(_build_df_header)
-        print('Success')
-        # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  # essentially the same as above; the rename function does not, apparently, give access to df
+        print('Success', end=' ')
+        # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  
+        # essentially the same as above; the rename function does not, apparently, give access to df
     except:
-        print('Fail\n')
+        print('Fail', r, url)
         df = pd.DataFrame()
     return df
 
 
-def _county_msa_state_fetch_data_all(obs_level):
+def _county_msa_state_fetch_data(obs_level, state_list, strata):
     print('\tQuerying the Census QWI API...')
     return pd.concat(
         [
             _fetch_from_url(
-                _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY')),
-                syq
+                _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata),
             )
-            for syq in _region_year_lst(obs_level)  #[-40:]
+            for syq in _region_year_lst(obs_level, state_list)  #[-40:]
         ]
     )
 
 
-def _us_fetch_data_all(private, by_age, strat):
+def _us_fetch_data_all(private, strat):
     # print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
@@ -97,7 +121,7 @@ def _us_fetch_data_all(private, by_age, strat):
     # print('\tFirm Characteristics tab...')
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
-    if by_age:
+    if any(x in ['firmage', 'firmsize'] for x in strat):
         for box in range(0, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
             # time.sleep(pause1)
@@ -143,21 +167,6 @@ def _us_fetch_data_all(private, by_age, strat):
         return pd.read_csv(href)
 
 
-def _msa_year_filter(df):
-    return df. \
-        assign(
-            msa_states=lambda x: x[['state', 'fips']].groupby('fips').transform(lambda y: len(y.unique().tolist())),
-            time_count=lambda x: x[['fips', 'time', 'firmage', 'msa_states']].groupby(['fips', 'time', 'firmage']).transform('count')
-        ). \
-        query('time_count == msa_states'). \
-        drop(columns=['msa_states', 'time_count']).\
-        reset_index(drop=True)
-
-
-def _msa_combiner(df):
-    return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
-
-
 def _annualizer(df, annualize, covars):
     if not annualize:
         return df
@@ -185,25 +194,24 @@ def _annualizer(df, annualize, covars):
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
+def _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata):
     # todo: need to sort out the by_age, by_size, private, and strata keywords
-    covars = ['time', 'firmage', 'fips', 'ownercode'] + strata
+    covars = ['time', 'fips', 'ownercode'] + strata
 
     if region == 'state':
-        df = _county_msa_state_fetch_data_all(region). \
+        df = _county_msa_state_fetch_data(region, state_list, strata). \
             astype({'state': 'str'}). \
             rename(columns={'state': 'fips'})
     elif region == 'county':
-        df = _county_msa_state_fetch_data_all(region). \
+        df = _county_msa_state_fetch_data(region, state_list, strata). \
             assign(fips=lambda x: x['state'].astype(str) + x['county'].astype(str)). \
             drop(['state', 'county'], 1)
     elif region == 'msa':
-        df = _county_msa_state_fetch_data_all(region). \
+        df = _county_msa_state_fetch_data(region, state_list, strata). \
             rename(columns={'metropolitan statistical area/micropolitan statistical area': 'fips'}). \
-            pipe(_msa_year_filter). \
             drop('state', 1)
-    else:
-        df = _us_fetch_data_all(private, by_age, strata). \
+    elif region == 'us':
+        df = _us_fetch_data_all(private, strata). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
@@ -211,7 +219,7 @@ def _qwi_data_create(indicator_lst, region, private, by_age, annualize, strata):
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
 
     return df. \
-        astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
+        apply(pd.to_numeric, errors='ignore'). \
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
         reset_index(drop=True) \
