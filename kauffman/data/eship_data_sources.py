@@ -1,3 +1,4 @@
+from re import S
 import pandas as pd
 import kauffman.constants as c
 from kauffman.data.helpers.bed_helpers.firm_size_helpers import _firm_size_data_create
@@ -323,17 +324,20 @@ def pep(obs_level='all'):
         )
 
 
-def qwi(indicator_lst='all', obs_level='all', by_age_size=None, private=False, annualize='January', strata=[]):
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', strata=[]):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
     Census's API in the case of state, MSA, or county (https://api.census.gov/data/timeseries/qwi/sa/examples.html).
 
-    obs_level:
+    obs_level: str, lst
         'state': resident population of state from 1990 through 2019
+        'msa': resident population of msa from 1990 through 2019
+        'county': resident population of county from 1990 through 2019
         'us': resident population in the united states from 1959 through 2019
+        'all': default, returns data on all of the above observation levels
 
-    indicator_lst: str or lst
+    indicator_lst: str, lst
         'all': default, will return all QWI indicaotrs;
         otherwise: return list of indicators plus 'time', 'ownercode', 'firmage', and 'fips'
 
@@ -370,10 +374,9 @@ def qwi(indicator_lst='all', obs_level='all', by_age_size=None, private=False, a
         SepS: Separations (Stable): Counts (Flow out of Full-Quarter Employment)
         FrmJbGn: Firm Job Gains: Counts (Job Creation)
 
-    by_age_size: None, str
-        None: do not stratify by age or size categories
-        age: stratify by age
-        size: stratify by size
+    state_list: str, lst
+        'all': default, includes all US states and D.C.
+        otherwise: a state or list of states, identified using postal code abbreviations
 
     private: bool
         True: All private only
@@ -385,31 +388,38 @@ def qwi(indicator_lst='all', obs_level='all', by_age_size=None, private=False, a
         'January': annualize using Q1 as beginning of year
         'March': annualize using Q2 as beginning of year
 
-    strata: lst
-        empty
+    strata: lst, str
+        empty: default
+        'firmage': stratify by age
+        'firmsize': stratify by size
         'sex': stratify by gender
         'industry': stratify by industry, NAICS 2-digit
-
-
     """
-
-    if type(obs_level) == list:
-        region_lst = obs_level
+    if obs_level in ['us', 'state', 'county', 'msa']:
+        region_lst = [obs_level]
+    elif obs_level == 'all':
+        region_lst = ['us', 'state', 'county', 'msa']
     else:
-        if obs_level in ['us', 'state', 'county']:
-            region_lst = [obs_level]
-        else:
-            region_lst = ['us', 'state', 'county']
-    # todo: make it so the user can specify a specific state, list of states, specific county, or list of counties
+        print('Invalid input to obs_level.')
 
-    indicator_lst = (c.qwi_outcomes if indicator_lst == 'all' else indicator_lst)
+    if state_list == 'all':
+        state_list = c.states
+    elif type(state_list) == str:
+        state_list = [state_list]
 
-    if by_age_size:
-        private = True
+    state_list = [c.state_abb_fips_dic[s] for s in state_list]
+
+    if indicator_lst == 'all':
+        indicator_lst = c.qwi_outcomes
+    elif type(indicator_lst) == str:
+        indicator_lst = [indicator_lst]
+
+    strata = [strata] if type(strata) == str else strata
+    private = True if any(x in ['firmage', 'firmsize'] for x in strata) else private
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, private, by_age_size, annualize, strata)
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata)
                 for region in region_lst
             ],
             axis=0
