@@ -331,7 +331,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
     Census's API in the case of state, MSA, or county (https://api.census.gov/data/timeseries/qwi/sa/examples.html).
 
-    obs_level: str, lst
+    obs_level: str
         'state': resident population of state from 1990 through 2019
         'msa': resident population of msa from 1990 through 2019
         'county': resident population of county from 1990 through 2019
@@ -404,11 +404,12 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         print('Invalid input to obs_level.')
 
     if state_list == 'all':
-        state_list = c.states
-    elif type(state_list) == str:
-        state_list = [state_list]
-
-    state_list = [c.state_abb_fips_dic[s] for s in state_list]
+        state_list = [c.state_abb_fips_dic[s] for s in c.states]
+    elif type(state_list) == list:
+        if obs_level != 'msa':
+            state_list = [c.state_abb_fips_dic[s] for s in state_list]
+        else:
+            state_list = [c.state_abb_fips_dic[s] for s in c.states]
 
     if indicator_lst == 'all':
         indicator_lst = c.qwi_outcomes

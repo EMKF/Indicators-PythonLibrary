@@ -23,3 +23,28 @@ disclaimed.
 
 
 ## TODO
+Quiz:
+* if you know someone is an accomplished mathemitician, where is s/he from?
+* if you know someone is an accomplished philosopher, where is s/he from?
+* if you know someone is an accomplished entrepreneur, where is s/he from?
+
+Levels
+* BA
+* BDS
+* RNE * population
+
+rates:
+* actualization (formation per application)
+* newness (Formation per firm)
+* BF per person (formation per person)
+* RNE (KESE)  
+
+Holes:
+stock
+leaving
+more nuanced entering
+
+
+Exit: Dollar saved is a dollar earned...generating eship versus not losing entrepreneurs
+Stock: 
+More nuanced measures: 

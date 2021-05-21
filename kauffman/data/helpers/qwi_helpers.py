@@ -29,18 +29,13 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _region_year_lst(obs_level, state_list):
-    # years = list(range(max(start_year, 2000), min(end_year, 2019) + 1))
-    # todo: make this programmatic
-    years = list(range(2018, 2021))
-    # years = list(range(2000, 2021))
-
-    if obs_level in ['state', 'county']:
-        return list(product(state_list, years))
-    elif obs_level == 'msa':
-        msa_dic_items = c.msa_fips_state_fips_dic.items()
-        msa_states = [(k, s) for k, states in msa_dic_items for s in states if s in state_list]
-        return list(product(msa_states, years))
+def _state_year_lst(state_lst):
+    out_lst = []
+    for state in state_lst:
+        start_year = int(c.qwi_start_end_year_dic[state]['start_year'])
+        end_year = int(c.qwi_start_end_year_dic[state]['end_year'])
+        out_lst += list(product([state], range(start_year, end_year + 1)))
+    return out_lst
 
 
 def _build_strata_url(strata):
@@ -60,14 +55,15 @@ def _build_strata_url(strata):
 
     return url_section
 
+
 def _build_url(fips, year, region, bds_key, firm_strat):
+    # print(f'{fips}, {year}')
     base_url = 'https://api.census.gov/data/timeseries/qwi/sa?'
     var_lst = ','.join(c.qwi_outcomes)
     strata_section = _build_strata_url(firm_strat)
 
     if region == 'msa':
-        # for_region = 'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{0}'.format(state)
-        for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:{fips[0]}&in=state:{fips[1]}'
+        for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
     elif region == 'county':
         for_region = f'for=county:*&in=state:{fips}'
     else:
@@ -85,28 +81,26 @@ def _fetch_from_url(url):
     r = requests.get(url)
     try:
         df = pd.DataFrame(r.json()).pipe(_build_df_header)
-        print('Success', end=' ')
-        # return pd.DataFrame(r.json()).pipe(lambda x: x.rename(columns=dict(zip(x.columns, x.iloc[0]))))[1:]  
-        # essentially the same as above; the rename function does not, apparently, give access to df
     except:
         print('Fail', r, url)
         df = pd.DataFrame()
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_list, strata):
+def _county_msa_state_fetch_data(obs_level, state_lst, strata):
     print('\tQuerying the Census QWI API...')
     return pd.concat(
         [
             _fetch_from_url(
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata),
             )
-            for syq in _region_year_lst(obs_level, state_list)  #[-40:]
+            for syq in _state_year_lst(state_lst)
         ]
     )
 
 
-def _us_fetch_data_all(private, strat):
+
+def _us_fetch_data(private, strat):
     # print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
@@ -205,55 +199,55 @@ def _annualizer(df, annualize, covars):
     # groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\  # this line is so we get a nan if a value is missing
 
 
-
-def _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata):
-    covars = ['time', 'fips', 'ownercode'] + strata
-
+def _covar_create_fips_region(df, region):
     if region == 'state':
-        df = _county_msa_state_fetch_data('state', state_list, strata). \
-            astype({'state': 'str'}). \
-            rename(columns={'state': 'fips'})
+        df['fips'] = df['state'].astype(str)
     elif region == 'county':
-        df = _county_msa_state_fetch_data('county', state_list, strata). \
-            assign(fips=lambda x: x['state'].astype(str) + x['county'].astype(str)). \
-            drop(['state', 'county'], 1)
-    elif region == 'msa':
-        # pull the county data
-        # what to do here...county to msa or just msa and try and group by msa across states?
-        df = _county_msa_state_fetch_data('county', state_list, strata). \
-            rename(columns={'metropolitan statistical area/micropolitan statistical area': 'fips'}). \
-            drop('state', 1)
-    elif region == 'us':
-        df = _us_fetch_data_all(private, strata). \
+        df['fips'] = df['state'].astype(str) + df['county'].astype(str)
+    else:
+        df['fips'] = df['metropolitan statistical area/micropolitan statistical area'].astype(str)
+    return df.assign(region=lambda x: x['fips'].map(c.all_fips_name_dic))
+
+
+def _obs_filter_groupby_msa(df, covars, region):
+    if region != 'msa':
+        return df
+    return df. \
+        assign(
+            msa_states=lambda x: x[['state', 'fips']].groupby('fips').transform(lambda y: len(y.unique().tolist())),
+            time_count=lambda x: x[covars + ['msa_states']].groupby(covars).transform('count')
+        ). \
+        query('time_count == msa_states'). \
+        drop(columns=['msa_states', 'time_count']).\
+        groupby(covars).sum().\
+        reset_index(drop=False)
+
+
+def _msa_combiner(df):
+    return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
+
+
+def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strata):
+    covars = ['time', 'fips', 'region', 'ownercode'] + strata
+
+    if region != 'us':
+        df = _county_msa_state_fetch_data(region, state_lst, strata).\
+            pipe(_covar_create_fips_region, region). \
+            pipe(_obs_filter_groupby_msa, covars, region)
+    else:  # region == 'us'
+        df = _us_fetch_data(private, strata). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 fips='00'
             ). \
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
 
-    print('\n')  # todo, remove after
-    # print(df.head())
-    # sys.exit()
-    return df. \
+    print('\n')  #remove
+
+    return df \
+        [covars + indicator_lst].\
         pipe(_cols_to_numeric).\
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
-        reset_index(drop=True). \
-        assign(region=lambda x: x['fips'].map(c.all_fips_name_dic)) \
-        [['time', 'fips', 'region', 'ownercode'] + strata + indicator_lst]
-
-    # todo: pull the county for a state, cross-walk, create the msa, and then compare to actual msa values.
-
-
-
-
-
-
-    # todo: maybe put the msa combiner in the msa block above
-    # return df. \
-    #     reset_index(drop=True). \
-    #     astype(dict(zip(indicator_lst, ['float'] * len(indicator_lst)))). \
-    #     pipe(_msa_combiner if region == 'msa' else lambda x: x). \
-    #     pipe(_annualizer, annualize, strata)
-
-# todo: print statements etc.
+        reset_index(drop=True)
+# todo: year filter? annualize four quarters?

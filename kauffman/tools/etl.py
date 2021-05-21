@@ -1,5 +1,9 @@
+import io
 import boto3
+import requests
 import pandas as pd
+from zipfile import ZipFile
+
 
 def file_to_s3(file, s3_bucket, s3_file):
     """
@@ -38,6 +42,15 @@ def file_from_s3(file, bucket, key):
     """
     s3 = boto3.client('s3')
     s3.download_fileobj(bucket, key, file)
+
+
+def read_zip(zip_url, filename):
+    """
+    Reads a csv file from a zip file online. Example: 'public2018.csv' from
+    'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
+    """
+    z = ZipFile(io.BytesIO(requests.get(zip_url).content))
+    return pd.read_csv(z.open(filename), encoding='cp1252')
 
 
 def county_msa_cross_walk(df_county, fips_county):

@@ -1,3 +1,4 @@
+import pandas as pd
 import geonamescache
 from itertools import product
 
@@ -82,16 +83,40 @@ state_name_abb_dic = {
 
 abb_name_dic = dict(map(reversed, state_name_abb_dic.items()))
 
+def msa_fips_name_dic():
+    return pd.read_excel(
+        'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+        header=2,
+        skipfooter=4,
+        usecols=[0, 3],
+    ). \
+        assign(fips=lambda x: x['CBSA Code'].astype(str)). \
+        drop('CBSA Code', 1).\
+        drop_duplicates('fips').\
+        set_index(['fips']).\
+        to_dict()['CBSA Title']
+
+
 
 # todo: can I do this with the first of these lines? I don't know what genomaescache has. Given I import it, I might as well use it if I can.
 all_fips_name_dic = {
     **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()},
+    **msa_fips_name_dic(),
     **{k: abb_name_dic[v] for k, v in fips_abb_dic.items() if v != 'PR'}
 }
 all_name_fips_dic = dict(map(reversed, all_fips_name_dic.items()))
 
 
-
+qwi_start_end_year_dic = pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
+        [['State', 'Start Quarter', 'End Quarter']].\
+        assign(
+            start_year=lambda x: x['Start Quarter'].str.split().str[0],
+            end_year=lambda x: x['End Quarter'].str.split().str[0],
+            fips=lambda x: x['State'].map(state_abb_fips_dic),
+        ).\
+        set_index('fips') \
+        [['start_year', 'end_year']].\
+        to_dict('index')
 
 
 

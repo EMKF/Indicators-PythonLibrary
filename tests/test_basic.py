@@ -5,7 +5,7 @@ import pandas as pd
 from kauffman.data import acs, bfs, bds, pep, bed, qwi
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation
-from kauffman.tools.etl import county_msa_cross_walk as cw
+from kauffman.tools.etl import county_msa_cross_walk as cw, read_zip
 
 
 pd.set_option('max_columns', 1000)
@@ -20,6 +20,12 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 def _data_fetch():
 
     # df = acs(['B24092_004E', 'B24092_013E'])
+
+    # df = qwi(obs_level='state', state_list=['MO'], annualize=False)
+    df = qwi(obs_level='state')
+    print(df)
+    sys.exit()
+
 
     # todo: why are some outcomes vastly different when aggregating counties? Calculations?
     qwi(obs_level='msa', state_list=['CO']).\
@@ -89,12 +95,17 @@ def _distribution_tests():
 
 
 def _etl_tests():
-    df = qwi(['Emp'], obs_level='county', annualize=False).\
-        pipe(county_msa_cross_walk, 'fips')
-    print(df.head(10))
+    # df = qwi(['Emp'], obs_level='county', annualize=False).\
+    #     pipe(county_msa_cross_walk, 'fips')
+    # print(df.head(10))
+
+    url = 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
+    df = read_zip(url, 'public2018.csv')
+    print(df.head())
+
 
 
 if __name__ == '__main__':
-     _data_fetch()
+     # _data_fetch()
     # _distribution_tests()
-    #_etl_tests()
+    _etl_tests()
