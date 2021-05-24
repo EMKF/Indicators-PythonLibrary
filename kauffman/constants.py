@@ -20,7 +20,7 @@ state_abb_fips_dic = {
     'SC': '45', 'KY': '21', 'OR': '41', 'SD': '46', 'US': '00'
 }
 
-fips_abb_dic = {v: k for k, v in state_abb_fips_dic.items()}
+state_fips_abb_dic = {v: k for k, v in state_abb_fips_dic.items()}
 
 state_name_abb_dic = {
     'Alabama': 'AL',
@@ -81,7 +81,7 @@ state_name_abb_dic = {
     'United States': 'US'
 }
 
-abb_name_dic = dict(map(reversed, state_name_abb_dic.items()))
+state_abb_name_dic = dict(map(reversed, state_name_abb_dic.items()))
 
 def msa_fips_name_dic():
     return pd.read_excel(
