@@ -22,8 +22,8 @@ def _data_fetch():
     # df = acs(['B24092_004E', 'B24092_013E'])
 
     # df = qwi(obs_level='state', state_list=['MO'], annualize=False)
-    df = qwi(obs_level='state')
-    print(df)
+    df = qwi(obs_level='state', state_list=['MO'])
+    print(df.info())
     sys.exit()
 
 
@@ -68,7 +68,7 @@ def _data_fetch():
 
     # df = pep(obs_level='us')
     # df = pep(obs_level='state')
-    df = pep(obs_level='msa')
+    # df = pep(obs_level='msa')
     # df = pep(obs_level='county')
 
     print(df.head())
@@ -106,6 +106,6 @@ def _etl_tests():
 
 
 if __name__ == '__main__':
-     # _data_fetch()
+     _data_fetch()
     # _distribution_tests()
-    _etl_tests()
+    # _etl_tests()

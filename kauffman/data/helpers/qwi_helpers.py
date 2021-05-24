@@ -185,7 +185,7 @@ def _annualizer(df, annualize, covars):
     else:
         df = df. \
             assign(
-                time=lambda x: x['time'].str[:4],
+                time=lambda x: x['time'].str[:4].astype(int),
             )
 
     return df. \
