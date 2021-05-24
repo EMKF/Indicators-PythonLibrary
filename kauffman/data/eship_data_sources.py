@@ -342,6 +342,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         'all': default, will return all QWI indicaotrs;
         otherwise: return list of indicators plus 'time', 'ownercode', 'firmage', and 'fips'
 
+        # todo: alphabetize this list
         EmpSpv: Full-Quarter Employment in the Previous Quarter: Counts
         SepBeg: Beginning-of-Quarter Separations
         EmpS: Full-Quarter Employment (Stable): Counts
@@ -374,6 +375,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         HirAEndR: End-of-Quarter Hiring Rate
         SepS: Separations (Stable): Counts (Flow out of Full-Quarter Employment)
         FrmJbGn: Firm Job Gains: Counts (Job Creation)
+
+        ***HirAEndRepl  HirAEndReplr are not available for US
 
     state_list: str, lst
         'all': default, includes all US states and D.C.

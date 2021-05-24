@@ -22,8 +22,9 @@ def _data_fetch():
     # df = acs(['B24092_004E', 'B24092_013E'])
 
     # df = qwi(obs_level='state', state_list=['MO'], annualize=False)
-    df = qwi(obs_level='state', state_list=['MO'])
-    print(df.info())
+    # df = qwi(obs_level='state', state_list=['MO'])
+    df = qwi(obs_level='us', private=True, strata=['firmage'])
+    print(df)
     sys.exit()
 
 
@@ -44,6 +45,11 @@ def _data_fetch():
 
     # todo: test this against what I'm seeing in kauffman_indicators
     # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
+
+    print(df)
+    sys.exit()
+
+
     df = qwi(obs_level='county', state_list=['CO'])
     # df = qwi(obs_level='state', state_list=['UT'], strata=['firmsize'])
     # df = qwi(obs_level='msa', state_list=['CO', 'UT'], strata=['firmsize'])

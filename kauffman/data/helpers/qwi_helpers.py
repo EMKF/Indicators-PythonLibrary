@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import requests
+import numpy as np
 import pandas as pd
 from itertools import product
 from kauffman import constants as c
@@ -100,7 +101,7 @@ def _county_msa_state_fetch_data(obs_level, state_lst, strata):
 
 
 
-def _us_fetch_data(private, strat):
+def _us_fetch_data(private, strata):
     # print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
@@ -120,20 +121,23 @@ def _us_fetch_data(private, strat):
     # print('\tFirm Characteristics tab...')
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
-    if any(x in ['firmage', 'firmsize'] for x in strat):
+
+    # todo: fix this
+    # if any(x in ['firmage', 'firmsize'] for x in strata):
+    if 'firmage' in strata:
         for box in range(0, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
             # time.sleep(pause1)
         # time.sleep(pause1)
 
-    if 'industry' in strat:
+    if 'industry' in strata:
         elems = driver.find_elements_by_xpath("//a[@href]")[12]
         driver.execute_script("arguments[0].click();", elems)
     driver.find_element_by_id('continue_to_worker_char').click()
 
     # Worker Characteristics
     # print('\tWorker Characteristics tab...')
-    if 'sex' in strat:
+    if 'sex' in strata:
         # driver.find_element_by_id('dijit_form_CheckBox_12').click()
         driver.find_element_by_id('dijit_form_CheckBox_13').click()
         driver.find_element_by_id('dijit_form_CheckBox_14').click()
@@ -159,6 +163,7 @@ def _us_fetch_data(private, strat):
     # Summary and Export
     time.sleep(pause2)
     driver.find_element_by_id('submit_request').click()
+
     try:
         element = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.LINK_TEXT, 'CSV')))
     finally:
@@ -238,7 +243,9 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
         df = _us_fetch_data(private, strata). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
-                fips='00'
+                fips='00',
+                HirAEndRepl=np.nan,
+                HirAEndReplr=np.nan
             ). \
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
 
