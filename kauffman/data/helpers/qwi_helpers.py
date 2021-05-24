@@ -102,7 +102,6 @@ def _county_msa_state_fetch_data(obs_level, state_lst, strata):
 
 
 def _us_fetch_data(private, strata):
-    # print('\tFiring up selenium extractor...')
     pause1 = 1
     pause2 = 3
 
@@ -113,12 +112,10 @@ def _us_fetch_data(private, strata):
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
-    # print('\tGeography tab...')
     time.sleep(pause1)
     driver.find_element_by_id('continue_with_selection_label').click()
 
     # Firm Characteristics
-    # print('\tFirm Characteristics tab...')
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
 
@@ -127,8 +124,6 @@ def _us_fetch_data(private, strata):
     if 'firmage' in strata:
         for box in range(0, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
-            # time.sleep(pause1)
-        # time.sleep(pause1)
 
     if 'industry' in strata:
         elems = driver.find_elements_by_xpath("//a[@href]")[12]
@@ -136,7 +131,6 @@ def _us_fetch_data(private, strata):
     driver.find_element_by_id('continue_to_worker_char').click()
 
     # Worker Characteristics
-    # print('\tWorker Characteristics tab...')
     if 'sex' in strata:
         # driver.find_element_by_id('dijit_form_CheckBox_12').click()
         driver.find_element_by_id('dijit_form_CheckBox_13').click()
@@ -144,7 +138,6 @@ def _us_fetch_data(private, strata):
     driver.find_element_by_id('continue_to_indicators').click()
 
     # Indicators
-    # print('\tIndicators tab...')
     for _ in range(0, 3):
         driver.find_element_by_class_name('ClosedGroup').click()
         time.sleep(pause2)
@@ -154,10 +147,8 @@ def _us_fetch_data(private, strata):
     driver.find_element_by_id('continue_to_quarters').click()
 
     # Quarters
-    # print('\tQuarters tab...')
     for quarter in range(1, 5):
         driver.find_element_by_xpath('//*[@title="Check All Q{}"]'.format(quarter)).click()
-        # time.sleep(pause1)
     driver.find_element_by_id('continue_to_export').click()
 
     # Summary and Export
@@ -171,8 +162,8 @@ def _us_fetch_data(private, strata):
         return pd.read_csv(href)
 
 
-def _cols_to_numeric(df):
-    df[c.qwi_outcomes] = df[c.qwi_outcomes].apply(pd.to_numeric, errors='ignore')
+def _cols_to_numeric(df, indicator_lst):
+    df[indicator_lst] = df[indicator_lst].apply(pd.to_numeric, errors='ignore')
     return df
 
 
@@ -253,7 +244,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
 
     return df \
         [covars + indicator_lst].\
-        pipe(_cols_to_numeric).\
+        pipe(_cols_to_numeric, indicator_lst).\
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
         reset_index(drop=True)

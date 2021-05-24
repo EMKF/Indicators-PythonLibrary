@@ -419,6 +419,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     elif type(indicator_lst) == str:
         indicator_lst = [indicator_lst]
 
+    # todo: keep this?
+    # if annualize and any(x in c.qwi_averaged_outcomes for x in indicator_lst):
+    #     raise Exception(f'{indicator_lst} is not compatible with annualize==True')
+
+
     strata = [strata] if type(strata) == str else strata
     private = True if any(x in ['firmage', 'firmsize'] for x in strata) else private
 

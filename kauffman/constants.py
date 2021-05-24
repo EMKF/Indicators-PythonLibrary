@@ -277,6 +277,8 @@ qwi_outcomes = [
     'TurnOvrS'
 ]
 
+qwi_averaged_outcomes = ['EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS']
+
 acs_outcomes = {
     'B24081_001E': 'total',
     'B24081_002E': 'private',

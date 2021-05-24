@@ -23,8 +23,8 @@ def _data_fetch():
 
     # df = qwi(obs_level='state', state_list=['MO'], annualize=False)
     # df = qwi(obs_level='state', state_list=['MO'])
-    df = qwi(obs_level='us', private=True, strata=['firmage'])
-    print(df)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
+    print(df.head(10))
     sys.exit()
 
 
