@@ -179,7 +179,7 @@ def _est_age_surv_data_create(table, region, industry):
     covars = df.columns.tolist()[1:]
     return df.\
         assign(
-            region=c.abb_name_dic[region.upper()],
+            region=c.state_abb_name_dic[region.upper()],
             fips=c.state_abb_fips_dic[region.upper()]
         ). \
         sort_values(['fips', 'time']). \

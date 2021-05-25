@@ -85,6 +85,7 @@ def _fetch_from_url(url):
     except:
         print('Fail', r, url)
         df = pd.DataFrame()
+    print(url, df.head(1))
     return df
 
 
@@ -95,10 +96,9 @@ def _county_msa_state_fetch_data(obs_level, state_lst, strata):
             _fetch_from_url(
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata),
             )
-            for syq in _state_year_lst(state_lst)
+            for syq in _state_year_lst(state_lst)[:3]
         ]
     )
-
 
 
 def _us_fetch_data(private, strata):
@@ -208,6 +208,7 @@ def _covar_create_fips_region(df, region):
 def _obs_filter_groupby_msa(df, covars, region):
     if region != 'msa':
         return df
+
     return df. \
         assign(
             msa_states=lambda x: x[['state', 'fips']].groupby('fips').transform(lambda y: len(y.unique().tolist())),
@@ -241,7 +242,8 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
             rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
 
     print('\n')  #remove
-
+    print(df.head())
+    sys.exit()
     return df \
         [covars + indicator_lst].\
         pipe(_cols_to_numeric, indicator_lst).\

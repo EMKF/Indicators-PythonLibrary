@@ -102,7 +102,7 @@ def msa_fips_name_dic():
 all_fips_name_dic = {
     **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()},
     **msa_fips_name_dic(),
-    **{k: abb_name_dic[v] for k, v in fips_abb_dic.items() if v != 'PR'}
+    **{k: state_abb_name_dic[v] for k, v in state_fips_abb_dic.items() if v != 'PR'}
 }
 all_name_fips_dic = dict(map(reversed, all_fips_name_dic.items()))
 
