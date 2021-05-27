@@ -18,18 +18,10 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def _data_fetch():
-    df = bed('establishment age and survival', 7)
-    print(df.head())
-
-    sys.exit()
-
-
-
     # df = acs(['B24092_004E', 'B24092_013E'])
 
-    # df = qwi(obs_level='state', state_list=['MO'], annualize=False)
-    # df = qwi(obs_level='state', state_list=['MO'])
-    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', private=True, strata=['firmage'], annualize=True)
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', private=True, strata=['firmage'], annualize=True)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
     print(df.head(10))
     sys.exit()
 

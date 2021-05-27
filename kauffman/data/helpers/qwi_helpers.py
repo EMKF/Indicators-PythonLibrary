@@ -2,8 +2,8 @@
 https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
 """
 
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context  # what is this? I forgot
+# import ssl
+# ssl._create_default_https_context = ssl._create_unverified_context  # what is this? I forgot
 
 import os
 import sys
@@ -58,7 +58,6 @@ def _build_strata_url(strata):
 
 
 def _build_url(fips, year, region, bds_key, firm_strat):
-    # print(f'{fips}, {year}')
     base_url = 'https://api.census.gov/data/timeseries/qwi/sa?'
     var_lst = ','.join(c.qwi_outcomes)
     strata_section = _build_strata_url(firm_strat)
@@ -85,18 +84,16 @@ def _fetch_from_url(url):
     except:
         print('Fail', r, url)
         df = pd.DataFrame()
-    print(url, df.head(1))
     return df
 
 
 def _county_msa_state_fetch_data(obs_level, state_lst, strata):
-    print('\tQuerying the Census QWI API...')
     return pd.concat(
         [
             _fetch_from_url(
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata),
             )
-            for syq in _state_year_lst(state_lst)[:3]
+            for syq in _state_year_lst(state_lst)[:5]
         ]
     )
 
@@ -200,15 +197,16 @@ def _covar_create_fips_region(df, region):
         df['fips'] = df['state'].astype(str)
     elif region == 'county':
         df['fips'] = df['state'].astype(str) + df['county'].astype(str)
-    else:
+    elif region == 'msa':
         df['fips'] = df['metropolitan statistical area/micropolitan statistical area'].astype(str)
+    else:
+        df = df.assign(fips='00')
     return df.assign(region=lambda x: x['fips'].map(c.all_fips_name_dic))
 
 
 def _obs_filter_groupby_msa(df, covars, region):
     if region != 'msa':
         return df
-
     return df. \
         assign(
             msa_states=lambda x: x[['state', 'fips']].groupby('fips').transform(lambda y: len(y.unique().tolist())),
@@ -220,34 +218,25 @@ def _obs_filter_groupby_msa(df, covars, region):
         reset_index(drop=False)
 
 
-def _msa_combiner(df):
-    return df.groupby(['fips', 'firmage', 'time']).sum().reset_index(drop=False)
-
-
 def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strata):
     covars = ['time', 'fips', 'region', 'ownercode'] + strata
 
     if region != 'us':
-        df = _county_msa_state_fetch_data(region, state_lst, strata).\
-            pipe(_covar_create_fips_region, region). \
-            pipe(_obs_filter_groupby_msa, covars, region)
+        df = _county_msa_state_fetch_data(region, state_lst, strata)
     else:  # region == 'us'
         df = _us_fetch_data(private, strata). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
-                fips='00',
                 HirAEndRepl=np.nan,
                 HirAEndReplr=np.nan
             ). \
-            rename(columns={'geography': 'region', 'HirAS': 'HirAs', 'HirNS': 'HirNs'})  # \
+            rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
 
-    print('\n')  #remove
-    print(df.head())
-    sys.exit()
-    return df \
+    return df. \
+        pipe(_covar_create_fips_region, region). \
+        pipe(_cols_to_numeric, indicator_lst). \
+        pipe(_obs_filter_groupby_msa, covars, region) \
         [covars + indicator_lst].\
-        pipe(_cols_to_numeric, indicator_lst).\
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
         reset_index(drop=True)
-# todo: year filter? annualize four quarters?
