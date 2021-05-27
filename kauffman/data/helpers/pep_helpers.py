@@ -312,7 +312,7 @@ def _state_1900_1909():
         reset_index(drop=False). \
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000,
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -330,7 +330,7 @@ def _state_1910_1919():
         reset_index(drop=False). \
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000,
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -348,7 +348,7 @@ def _state_1920_1929():
         reset_index(drop=False). \
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000,
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -366,7 +366,7 @@ def _state_1930_1939():
         reset_index(drop=False). \
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000,
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -384,7 +384,7 @@ def _state_1940_1949():
         reset_index(drop=False). \
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000,
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -405,7 +405,7 @@ def _state_1950_1959():
         query('time < 1960'). \
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000,
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -426,7 +426,7 @@ def _state_1960_1969():
         query('time < 1970'). \
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000,
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -447,7 +447,7 @@ def _state_1970_1979():
         astype({'POP': 'int'}).\
         query('time < 1980'). \
         assign(
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -466,7 +466,7 @@ def _state_1980_1989():
         astype({'POP': 'int'}).\
         query('time < 1990'). \
         assign(
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_name_dic),
             fips=lambda x: x['region'].map(c.all_name_fips_dic)
         ) \
         [['fips', 'region', 'time', 'POP']]

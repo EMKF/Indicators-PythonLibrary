@@ -20,26 +20,23 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 def _data_fetch():
     # df = acs(['B24092_004E', 'B24092_013E'])
 
-    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', private=True, strata=['firmage'], annualize=True)
-    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
-    print(df.head(10))
-    sys.exit()
-
-
-    # todo: test this against what I'm seeing in kauffman_indicators
-    # df = qwi(indicator_lst=['Emp', 'HirA'], obs_level='us', annualize=None, strata=['sex', 'industry'])
+    df = qwi(['EarnBeg'], obs_level='us', private=True, annualize=True) \
+        [['time', 'EarnBeg']]. \
+        rename(columns={'EarnBeg': 'EarnBeg_us'}). \
+        apply(pd.to_numeric)
 
     print(df)
+    print(df.info())
     sys.exit()
 
-
-    df = qwi(obs_level='county', state_list=['CO'])
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', private=True, strata=['firmage'], annualize=True)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
+    # df = qwi(obs_level='county', state_list=['CO'])
     # df = qwi(obs_level='state', state_list=['UT'], strata=['firmsize'])
     # df = qwi(obs_level='msa', state_list=['CO', 'UT'], strata=['firmsize'])
-
-    df = qwi(obs_level='state')
-    df = qwi(obs_level='msa')
-    df = qwi(obs_level='county')
+    # df = qwi(obs_level='state')
+    # df = qwi(obs_level='msa')
+    # df = qwi(obs_level='county')
 
 
     # df = bed('firm size', 1)
