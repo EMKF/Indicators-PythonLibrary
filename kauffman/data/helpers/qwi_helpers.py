@@ -93,7 +93,7 @@ def _county_msa_state_fetch_data(obs_level, state_lst, strata):
             _fetch_from_url(
                 _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata),
             )
-            for syq in _state_year_lst(state_lst)[:5]
+            for syq in _state_year_lst(state_lst)
         ]
     )
 

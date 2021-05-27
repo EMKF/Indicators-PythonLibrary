@@ -13,7 +13,7 @@ setup(
         'requests', 'boto3', 'geonamescache', 'joblib', 'matplotlib', 'numpy', 'pandas', 'scikit_learn', 'seaborn',
         'selenium', 'webdriver_manager', 'xlrd'
     ],
-    version='2.2.5',
+    version='2.2.6',
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
     long_description=open('README.md', encoding='utf8').read(),
