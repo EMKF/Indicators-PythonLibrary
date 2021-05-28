@@ -2,7 +2,7 @@
 
 import sys
 import pandas as pd
-from kauffman.data import acs, bfs, bds, pep, bed, qwi
+from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation
 from kauffman.tools.etl import county_msa_cross_walk as cw, read_zip
@@ -18,6 +18,12 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def _data_fetch():
+
+    df = shed()
+    print(df.head())
+    sys.exit()
+
+
     # df = acs(['B24092_004E', 'B24092_013E'])
 
     df = qwi(['EarnBeg'], obs_level='us', private=True, annualize=True) \

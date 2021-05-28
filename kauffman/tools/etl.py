@@ -59,7 +59,7 @@ def read_zip(zip_url, filename):
     'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
     """
     z = ZipFile(io.BytesIO(requests.get(zip_url).content))
-    return pd.read_csv(z.open(filename), encoding='cp1252')
+    return pd.read_csv(z.open(filename), encoding='cp1252', low_memory=False)
 
 
 def county_msa_cross_walk(df_county, fips_county):

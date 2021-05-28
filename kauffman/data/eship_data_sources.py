@@ -3,7 +3,8 @@ import pandas as pd
 import kauffman.constants as c
 from kauffman.data.helpers.bed_helpers.firm_size_helpers import _firm_size_data_create
 from kauffman.data.helpers.bed_helpers.est_age_surv_helpers import _est_age_surv_data_create
-from kauffman.data.helpers import _acs_data_create, _bds_data_create, _bfs_data_create, _pep_data_create, _qwi_data_create
+from kauffman.data.helpers import _acs_data_create, _bds_data_create, _bfs_data_create, _pep_data_create, \
+    _qwi_data_create, _shed_data_create
 
 
 # todo: updates (1) move the column and renaming lines to _helpers files and reindenxing.
@@ -434,3 +435,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
             ],
             axis=0
         )
+
+
+
+def shed():
+    """
+    todo
+    """
+    return _shed_data_create()
