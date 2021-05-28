@@ -35,7 +35,7 @@ __all__ = ['data', 'tools']
 #       1. after moving the get_data functions, delete.
 #       2. rename file from datasource.py to datasource_helpers.py
 #       3. move these helpers files to a new subdirectory named "helpers"
-#   5. cleanup the constants.py file
+#   5. cleanup the hm_constants.py file
 #       1. won't be able to do this until at least the qwi function is integrated into eship_data_sources.py and tested
 #   6. can we move data_manager.py into the kauffman_tools subdirectory in the scratch directory?
 #   7. get it ready for publication on pypi
