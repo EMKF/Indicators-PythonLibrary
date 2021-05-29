@@ -62,12 +62,15 @@ def read_zip(zip_url, filename):
     return pd.read_csv(z.open(filename), encoding='cp1252', low_memory=False)
 
 
-def county_msa_cross_walk(df_county, fips_county):
+def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
     """
     Receives county level data, and merges (on county fips) with a dataframe with CBSA codes.
 
     fips_county: fips column name
     """
+    outcomes = [outcomes] if type(outcomes) == str else outcomes
+    df_county[outcomes] = df_county[outcomes].apply(pd.to_numeric)
+
     df_cw = pd.read_excel(
             'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
             header=2,
@@ -87,11 +90,13 @@ def county_msa_cross_walk(df_county, fips_county):
     return df_county.\
         rename(columns={fips_county: 'fips_county'}).\
         merge(df_cw, how='left', on='fips_county').\
-        drop(['fips_county', 'region'], 1).\
-        groupby(['fips_msa', 'CBSA Title', 'time']).sum().\
+        drop(['fips_county', 'region'], 1) \
+        [['fips_msa', 'CBSA Title', 'time'] + outcomes].\
+        groupby(['fips_msa', 'CBSA Title', 'time']).agg(agg_method).\
         reset_index(drop=False).\
         rename(columns={'CBSA Title': 'region'})
         # query('fips == fips'). \
-        # astype({'fips': 'int'})
 # todo: I can't just groupby and sum wrt cw(), since there might be missing county values
-#   also need to pass in the aggregating function...might be mean, not sum. Might also be more complicated.
+
+
+

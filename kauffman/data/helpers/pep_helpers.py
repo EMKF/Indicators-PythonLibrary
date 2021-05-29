@@ -308,7 +308,7 @@ def _pep_data_create(region):
     elif region == 'msa':
         df = _pep_data_create('county').\
             pipe(cw, 'fips'). \
-            assign(fips=lambda x: x['fips_msa'].astype(int).astype(str)) \
+            rename({'fips_msa':'fips'}) \
             [['fips', 'region', 'time', 'population']]
     elif region == 'state':
         df = pd.concat(
