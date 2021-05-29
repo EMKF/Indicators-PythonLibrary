@@ -86,7 +86,11 @@ def county_msa_cross_walk(df_county, fips_county):
 
     return df_county.\
         rename(columns={fips_county: 'fips_county'}).\
-        merge(df_cw, how='left', on='fips_county')  #.\
+        merge(df_cw, how='left', on='fips_county').\
+        drop(['fips_county', 'region'], 1).\
+        groupby(['fips_msa', 'CBSA Title', 'time']).sum().\
+        reset_index(drop=False).\
+        rename(columns={'CBSA Title': 'region'})
         # query('fips == fips'). \
         # astype({'fips': 'int'})
 # todo: I can't just groupby and sum wrt cw(), since there might be missing county values

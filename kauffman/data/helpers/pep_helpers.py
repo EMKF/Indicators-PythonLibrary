@@ -308,10 +308,6 @@ def _pep_data_create(region):
     elif region == 'msa':
         df = _pep_data_create('county').\
             pipe(cw, 'fips'). \
-            drop(['fips_county', 'region'], 1).\
-            groupby(['fips_msa', 'CBSA Title', 'time']).sum().\
-            reset_index(drop=False).\
-            rename(columns={'CBSA Title': 'region'}). \
             assign(fips=lambda x: x['fips_msa'].astype(int).astype(str)) \
             [['fips', 'region', 'time', 'population']]
     elif region == 'state':
