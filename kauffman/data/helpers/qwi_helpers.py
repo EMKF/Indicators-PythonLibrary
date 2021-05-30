@@ -103,7 +103,7 @@ def _us_fetch_data(private, strata):
     pause2 = 3
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
@@ -116,10 +116,12 @@ def _us_fetch_data(private, strata):
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
 
-    # todo: fix this
-    # if any(x in ['firmage', 'firmsize'] for x in strata):
     if 'firmage' in strata:
         for box in range(0, 6):
+            driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
+
+    if 'firmsize' in strata:
+        for box in range(6, 12):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
 
     if 'industry' in strata:
