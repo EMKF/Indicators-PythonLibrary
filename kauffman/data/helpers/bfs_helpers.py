@@ -87,8 +87,8 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift)
     return df. \
         assign(
             time=pd.to_datetime(df['Period'], format='%b-%Y'),
-            region=c.state_abb_name_dic[region],
-            fips=lambda x: c.state_abb_fips_dic[region],
+            region=c.state_abb_to_name[region],
+            fips=lambda x: c.state_abb_to_fips[region],
         ). \
         drop('Period', 1). \
         pipe(_annualize, annualize, bf_helper_lst, march_shift) \

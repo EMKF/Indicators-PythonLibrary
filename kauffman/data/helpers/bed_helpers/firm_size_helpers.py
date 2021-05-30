@@ -23,9 +23,9 @@ def df_create(lines):
             if line_list[0] in ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']:
                 row.append([year] + line_list)
 
-    df = pd.DataFrame(row, columns=c.table_firm_size_columns).\
+    df = pd.DataFrame(row, columns=c.table_firm_size_cols).\
         replace(',', '', regex=True).\
-        astype({col: 'float' for col in c.table_firm_size_columns[2:]})
+        astype({col: 'float' for col in c.table_firm_size_cols[2:]})
     df.iloc[:, 2:9] = df.iloc[:, 2:9] * 1000
     return df
 
@@ -33,9 +33,9 @@ def df_create(lines):
 def _firm_size_data_create(table, firm_size):
     return df_create(_data_lines(table, firm_size)).\
         assign(
-            size=c.size_dic2[firm_size],
+            size=c.size_code_to_label2[firm_size],
             fips='00',
             region='US',
-            quarter=lambda x: x['quarter'].map(c.month_to_quarter_dict)
+            quarter=lambda x: x['quarter'].map(c.month_to_quarter)
         ) \
-        [['fips', 'region', 'time', 'quarter', 'size'] + c.table_firm_size_columns[2:]]
+        [['fips', 'region', 'time', 'quarter', 'size'] + c.table_firm_size_cols[2:]]

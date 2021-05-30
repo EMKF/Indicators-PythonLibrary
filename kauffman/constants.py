@@ -1,6 +1,7 @@
 import pandas as pd
 import geonamescache
 from itertools import product
+import os
 
 states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
           "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
@@ -8,7 +9,7 @@ states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
 
-state_abb_fips_dic = {
+state_abb_to_fips = {
     'WA': '53', 'DE': '10', 'DC': '11', 'WI': '55', 'WV': '54', 'HI': '15',
     'FL': '12', 'WY': '56', 'PR': '72', 'NJ': '34', 'NM': '35', 'TX': '48',
     'LA': '22', 'NC': '37', 'ND': '38', 'NE': '31', 'TN': '47', 'NY': '36',
@@ -20,9 +21,9 @@ state_abb_fips_dic = {
     'SC': '45', 'KY': '21', 'OR': '41', 'SD': '46', 'US': '00'
 }
 
-state_fips_abb_dic = {v: k for k, v in state_abb_fips_dic.items()}
+state_fips_to_abb = {v: k for k, v in state_abb_to_fips.items()}
 
-state_name_abb_dic = {
+state_name_to_abb = {
     'Alabama': 'AL',
     'Alaska': 'AK',
     'Arizona': 'AZ',
@@ -81,9 +82,9 @@ state_name_abb_dic = {
     'United States': 'US'
 }
 
-state_abb_name_dic = dict(map(reversed, state_name_abb_dic.items()))
+state_abb_to_name = dict(map(reversed, state_name_to_abb.items()))
 
-def msa_fips_name_dic():
+def msa_fips_to_name():
     return pd.read_excel(
         'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
         header=2,
@@ -97,47 +98,31 @@ def msa_fips_name_dic():
         to_dict()['CBSA Title']
 
 
-
 # todo: can I do this with the first of these lines? I don't know what genomaescache has. Given I import it, I might as well use it if I can.
-all_fips_name_dic = {
+all_fips_to_name = {
     **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()},
-    **msa_fips_name_dic(),
-    **{k: state_abb_name_dic[v] for k, v in state_fips_abb_dic.items() if v != 'PR'}
+    **msa_fips_to_name(),
+    **{k: state_abb_to_name[v] for k, v in state_fips_to_abb.items() if v != 'PR'}
 }
-all_name_fips_dic = dict(map(reversed, all_fips_name_dic.items()))
+all_name_to_fips = dict(map(reversed, all_fips_to_name.items()))
 
-
-qwi_start_end_year_dic = pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
+qwi_start_to_end_year = pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
         [['State', 'Start Quarter', 'End Quarter']].\
         assign(
             start_year=lambda x: x['Start Quarter'].str.split().str[0],
             end_year=lambda x: x['End Quarter'].str.split().str[0],
-            fips=lambda x: x['State'].map(state_abb_fips_dic),
+            fips=lambda x: x['State'].map(state_abb_to_fips),
         ).\
         set_index('fips') \
         [['start_year', 'end_year']].\
         to_dict('index')
 
 
-
-
-
-
-
-###################
-
-import os
-
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 def filenamer(path):
     return os.path.join(ROOT_DIR, path)
 
-bfs_series = ['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q']
-bfs_series_brief = ['BF_SBF4Q', 'BF_DUR4Q']
-
-
-
-msa_fips_state_fips_dic = {
+msa_to_state_fips = {
     '12060': ['13'],
     '12420': ['48'],
     '12580': ['24'],
@@ -198,41 +183,17 @@ msa_fips_state_fips_dic = {
 #     '41180': '17', '41620': '49', '41700': '48', '41740': '06', '41860': '06', '41940': '06', '42660': '53', '45300': '12',
 #     '47260': '37', '47900': '11'
 # }
-# state_fips_msa_fips_dic = {v: k for k, v in msa_fips_state_fips_dic.items()}
+# state_fips_msa_fips_dic = {v: k for k, v in msa_to_state_fips.items()}
 
-indicator_dict = {
-    'state': '',
-    'bf_per_ba': 'NEW-EMPLOYER BUSINESS ACTUALIZATION',
-    'bf_per_capita': 'RATE OF NEW-EMPLOYER BUSINESS',
-    'avg_speed': 'NEW-EMPLOYER BUSINESS VELOCITY',
-    'bf_per_firm': 'EMPLOYER BUSINESS NEWNESS',
-    'index_geo': 'NEBAS INDEX',
-}
-
-ase_url_dict = {
-    'Sector, Gender, Ethnicity, Race, and Veteran Status': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSA01.zip?#',
-    'Sector, Gender, Ethnicity, Race, Veteran Status, and Year in Business': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSA02.zip?#',
-    'Sector, Gender, Ethnicity, Race, Veteran Status, and Receipts Size of Firm': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSA03.zip?#',
-    'Sector, Gender, Ethnicity, Race, Veteran Status, and Employment Size of Firm': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSA04.zip?#',
-    'Number of Owners in Business': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSCB01.zip?#',
-    'Majority of Business Family-Owned': 'https://www2.census.gov/econ20{year}/SE/sector00/SE{year}00CSCB02.zip?#'
-}
-
-lfs_series_dict = {
-    'inc_self_employment': 'LNU02048984',
-    'uninc_self_employment': 'LNU02027714',
-    'civilian_labor_force': 'LNS11000000',
-    'unemployment_rate': 'LNS14000000'
-}
-
-age_dic = {
+age_code_to_label = {
     0: 'Less than one year old',
     1: '1 to 4 years',
     2: '5 to 9 years',
     3: '10 years or older',
     4: 'All'
 }
-size_dic = {
+
+size_code_to_label = {
     0: '1 to 4 employees',
     1: '5 to 9 employees',
     2: '10 to 19 employees',
@@ -242,16 +203,16 @@ size_dic = {
     6: '500 or more employees',
     7: 'All'
 }
-age_size_lst = list(product(age_dic.keys(), size_dic.keys()))
+age_size_lst = list(product(age_code_to_label.keys(), size_code_to_label.keys()))
 
-table1bf_columns = ['time', 'firms', 'establishments', 'net_change', 'total_job_gains', 'expanding_job_gains',
+table1bf_cols = ['time', 'firms', 'establishments', 'net_change', 'total_job_gains', 'expanding_job_gains',
                     'opening_job_gains', 'total_job_losses', 'contracting_job_losses', 'closing_job_losses']
 
-table_firm_size_columns = ['time', 'quarter', 'net_change', 'total_job_gains', 'expanding_firms_job_gains',
+table_firm_size_cols = ['time', 'quarter', 'net_change', 'total_job_gains', 'expanding_firms_job_gains',
              'opening_firms_job_gains', 'total_job_losses', 'contracting_firms_job_losses',
              'closing_firms_job_losses']
 
-size_dic2 = {
+size_code_to_label2 = {
     1: '1 to 4 employees',
     2: '5 to 9 employees',
     3: '10 to 19 employees',
@@ -263,7 +224,7 @@ size_dic2 = {
     9: '1000 or more employees'
 }
 
-month_to_quarter_dict = {
+month_to_quarter = {
     'March': 1,
     'June': 2,
     'September': 3,
@@ -279,7 +240,7 @@ qwi_outcomes = [
 
 qwi_averaged_outcomes = ['EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS']
 
-acs_outcomes = {
+acs_code_to_var = {
     'B24081_001E': 'total',
     'B24081_002E': 'private',
     'B24081_003E': 'private_employee',
@@ -310,17 +271,9 @@ acs_outcomes = {
 }
 
 
-
-
-
-
-
-
-
-
 # todo: new constants to vet
 
-shed_dic = {
+shed_year_to_info = {
     2013: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_data_2013_(CSV).zip',
         'filename': 'SHED_public_use_data_2013.csv',
@@ -391,7 +344,7 @@ shed_dic = {
     },
 }
 
-shed_state_codes = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT",
+shed_state_code_to_abb = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT",
                             21: "NY", 22: "NJ", 23: "PA", 31: "OH", 32: "IN", 33: "IL", 34: "MI", 35: "WI",
                             41: "MN", 42: "IA", 43: "MO", 44: "ND", 45: "SD", 46: "NE", 47: "KS",
                             51: "DE", 52: "MD", 53: "DC", 54: "VA", 55: "WV", 56: "NC", 57: "SC", 58: "GA",
