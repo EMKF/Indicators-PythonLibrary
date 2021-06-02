@@ -146,7 +146,7 @@ def _format(df, astype_arg=None, query_arg=None, format_pop=True):
     return df.reset_index(drop=False).\
         assign(
             POP=lambda x: x['POP'].replace(',', '', regex=True).astype(int) * 1000 if format_pop else x['POP'],
-            region=lambda x: x['region'].map(c.abb_name_dic),
+            region=lambda x: x['region'].map(c.state_abb_to_name),
             fips=lambda x: x['region'].map(c.all_name_to_fips)
         ) \
         [['fips', 'region', 'time', 'POP']]
@@ -308,7 +308,7 @@ def _pep_data_create(region):
     elif region == 'msa':
         df = _pep_data_create('county').\
             pipe(cw, 'fips', ['population']). \
-            rename({'fips_msa':'fips'}) \
+            rename(columns={'fips_msa':'fips'}) \
             [['fips', 'region', 'time', 'population']]
     elif region == 'state':
         df = pd.concat(
