@@ -6,6 +6,7 @@ from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation
 from kauffman.tools.etl import county_msa_cross_walk as cw, read_zip
+from kauffman.tools.indicator import Indicator
 
 
 pd.set_option('max_columns', 1000)
@@ -18,13 +19,16 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def _data_fetch():
+    df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
+    print(df.head())
+    sys.exit()
+    # df = acs(['B24092_004E', 'B24092_013E'])
+
 
     df = shed()
     print(df.head())
     sys.exit()
 
-
-    # df = acs(['B24092_004E', 'B24092_013E'])
 
     df = qwi(['EarnBeg'], obs_level='us', private=True, annualize=True) \
         [['time', 'EarnBeg']]. \
@@ -96,8 +100,24 @@ def _etl_tests():
     print(df.head())
 
 
+def _indicator_tests():
+    df = bfs(['BA_BA'], obs_level='us', annualize=True)
+    print(df.info())
+
+    ind = Indicator(df)
+
+    # ind.rate('BA_BA', 'firms')
+    ind.\
+        rate('BA_BA', 'population').\
+        pipe(lambda x: print(x.head()))
+    # didn't work
+
+    # ind.\
+    #     rate('BA_BA', 'population').\
+    #     plot_ts(['BA_BA_per_population'])
 
 if __name__ == '__main__':
-     _data_fetch()
+     # _data_fetch()
     # _distribution_tests()
     # _etl_tests()
+    _indicator_tests()
