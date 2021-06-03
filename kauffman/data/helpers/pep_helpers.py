@@ -307,8 +307,7 @@ def _pep_data_create(region):
             assign(region=lambda x: x['fips'].map(c.all_fips_to_name))  # todo: can clean region up in the above functions, and also the functions at the return statement below: put those in _county fucntions or below?
     elif region == 'msa':
         df = _pep_data_create('county').\
-            pipe(cw, 'fips', ['population']). \
-            rename(columns={'fips_msa':'fips'}) \
+            pipe(cw, 'fips', ['population']) \
             [['fips', 'region', 'time', 'population']]
     elif region == 'state':
         df = pd.concat(
