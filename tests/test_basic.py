@@ -18,10 +18,12 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def _data_fetch():
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
+    print(df.head())
+    sys.exit()
 
     df = shed()
     print(df.head())
-    sys.exit()
 
 
     # df = acs(['B24092_004E', 'B24092_013E'])

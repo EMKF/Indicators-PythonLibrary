@@ -242,3 +242,115 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
         reset_index(drop=True)
+
+
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', strata=[]):
+    # todo: I don't think MSA and state_list will work, because of the issue of MSAs crossing state lines. Is there a way around this?
+    """
+    Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
+    extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
+    Census's API in the case of state, MSA, or county (https://api.census.gov/data/timeseries/qwi/sa/examples.html).
+
+    obs_level: str
+        'state': resident population of state from 1990 through 2019
+        'msa': resident population of msa from 1990 through 2019
+        'county': resident population of county from 1990 through 2019
+        'us': resident population in the united states from 1959 through 2019
+        'all': default, returns data on all of the above observation levels
+
+    indicator_lst: str, lst
+        'all': default, will return all QWI indicaotrs;
+        otherwise: return list of indicators plus 'time', 'ownercode', 'firmage', and 'fips'
+
+        # todo: alphabetize this list
+        EmpSpv: Full-Quarter Employment in the Previous Quarter: Counts
+        SepBeg: Beginning-of-Quarter Separations
+        EmpS: Full-Quarter Employment (Stable): Counts
+        FrmJbLsS: Firm Job Loss (Stable): Counts
+        HirAEndReplr: Replacement Hiring Rate
+        HirAEnd: End-of-Quarter Hires
+        FrmJbLs: Firm Job Loss: Counts (Job Destruction)
+        EarnS: Full Quarter Employment (Stable): Average Monthly Earnings
+        HirR: Hires Recalls: Counts
+        FrmJbC: Firm Job Change:Net Change
+        Emp: Beginning-of-Quarter Employment: Counts
+        FrmJbGnS: Firm Job Gains (Stable): Counts
+        HirAs: Hires All (Stable): Counts (Flows into Full-QuarterEmployment)
+        SepSnx: Separations (Stable), Next Quarter: Counts (Flow out of Full-Quarter Employment)
+        HirNs: Hires New (Stable): Counts (New Hires to Full-Quarter Status)
+        Sep: Separations: Counts
+        EarnHirAS: Hires All (Stable): Average Monthly Earnings
+        Payroll: Total Quarterly Payroll: Sum
+        HirA: Hires All: Counts (Accessions)
+        FrmJbCS: Job Change (Stable): Net Change
+        EmpTotal: Employment-Reference Quarter: Counts
+        HirAEndRepl: Replacement Hires
+        EarnHirNS: Hires New (Stable): Average Monthly Earnings
+        TurnOvrS: Turnover (Stable)
+        HirN: Hires New: Counts
+        EarnBeg: End-of-Quarter Employment: Average Monthly Earnings
+        EmpEnd: End-of-Quarter Employment: Counts
+        SepBegR: Beginning-of-Quarter Separation Rate
+        EarnSepS: Separations (Stable): Average Monthly Earnings
+        HirAEndR: End-of-Quarter Hiring Rate
+        SepS: Separations (Stable): Counts (Flow out of Full-Quarter Employment)
+        FrmJbGn: Firm Job Gains: Counts (Job Creation)
+
+        ***HirAEndRepl  HirAEndReplr are not available for US
+
+    state_list: str, lst
+        'all': default, includes all US states and D.C.
+        otherwise: a state or list of states, identified using postal code abbreviations
+
+    private: bool
+        True: All private only
+        False: All
+        if by_age_size is not None, then private is set to True
+
+    annualize: None, str
+        'None': leave as quarterly data
+        'January': annualize using Q1 as beginning of year
+        'March': annualize using Q2 as beginning of year
+
+    strata: lst, str
+        empty: default
+        'firmage': stratify by age
+        'firmsize': stratify by size
+        'sex': stratify by gender
+        'industry': stratify by industry, NAICS 2-digit
+    """
+    if obs_level in ['us', 'state', 'county', 'msa']:
+        region_lst = [obs_level]
+    elif obs_level == 'all':
+        region_lst = ['us', 'state', 'county', 'msa']
+    else:
+        print('Invalid input to obs_level.')
+
+    if state_list == 'all':
+        state_list = [c.state_abb_fips_dic[s] for s in c.states]
+    elif type(state_list) == list:
+        if obs_level != 'msa':
+            state_list = [c.state_abb_fips_dic[s] for s in state_list]
+        else:
+            state_list = [c.state_abb_fips_dic[s] for s in c.states]
+
+    if indicator_lst == 'all':
+        indicator_lst = c.qwi_outcomes
+    elif type(indicator_lst) == str:
+        indicator_lst = [indicator_lst]
+
+    # todo: keep this?
+    # if annualize and any(x in c.qwi_averaged_outcomes for x in indicator_lst):
+    #     raise Exception(f'{indicator_lst} is not compatible with annualize==True')
+
+
+    strata = [strata] if type(strata) == str else strata
+    private = True if any(x in ['firmage', 'firmsize'] for x in strata) else private
+
+    return pd.concat(
+            [
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata)
+                for region in region_lst
+            ],
+            axis=0
+        )
