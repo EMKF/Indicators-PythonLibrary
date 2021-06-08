@@ -2,6 +2,7 @@
 
 import sys
 import pandas as pd
+# from kauffman.data import shed
 from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation
@@ -19,12 +20,6 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def _data_fetch():
-    df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
-    print(df.head())
-    sys.exit()
-    # df = acs(['B24092_004E', 'B24092_013E'])
-
-
     df = shed()
     print(df.head())
     sys.exit()

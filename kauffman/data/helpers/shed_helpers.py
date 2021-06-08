@@ -1,6 +1,12 @@
 import pandas as pd
 import kauffman.constants as c
 from kauffman.tools.etl import read_zip
+from ..eship_data_sources import pep
+# from ...data import pep
+# from kauffman.data.eship_data_sources import pep
+# import kauffman.data.eship_data_sources as e
+pep()
+
 
 def _col_names_lowercase(df):
     df.columns = df.columns.str.lower()

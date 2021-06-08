@@ -53,3 +53,6 @@ class Indicator:
 #     b. tails, etc.
 #     c. weighted cross-tabs
 # 3. changed, like transformed in a rate
+
+
+# I might want to extend pandas: https://pandas.pydata.org/pandas-docs/stable/development/extending.html
