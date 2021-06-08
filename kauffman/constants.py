@@ -273,7 +273,7 @@ acs_code_to_var = {
 
 # todo: new constants to vet
 
-shed_year_to_info = {
+shed_dic = {
     2013: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_data_2013_(CSV).zip',
         'filename': 'SHED_public_use_data_2013.csv',
@@ -344,7 +344,7 @@ shed_year_to_info = {
     },
 }
 
-shed_state_code_to_abb = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT",
+state_shed_codes_to_abb = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT",
                             21: "NY", 22: "NJ", 23: "PA", 31: "OH", 32: "IN", 33: "IL", 34: "MI", 35: "WI",
                             41: "MN", 42: "IA", 43: "MO", 44: "ND", 45: "SD", 46: "NE", 47: "KS",
                             51: "DE", 52: "MD", 53: "DC", 54: "VA", 55: "WV", 56: "NC", 57: "SC", 58: "GA",

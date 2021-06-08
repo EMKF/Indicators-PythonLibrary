@@ -16,8 +16,8 @@ def _shed_data_create():
                 pipe(_col_names_lowercase).\
                 assign(
                     time=year,
-                    fips=lambda x: x['ppstaten'].map(c.shed_state_codes).map(c.state_abb_fips_dic),
-                    region=lambda x: x['ppstaten'].map(c.shed_state_codes).map(c.state_abb_name_dic),
+                    fips=lambda x: x['ppstaten'].map(c.state_shed_codes_to_abb).map(c.state_abb_to_fips),
+                    region=lambda x: x['ppstaten'].map(c.state_shed_codes_to_abb).map(c.state_abb_to_name),
                     e2=lambda x: x['e2'].map({-1: "refused", 0: "no", 1: "yes"}),
                     ppethm=lambda x: x['ppethm'].map({1: "White, Non‐Hispanic", 2: "Black, Non‐Hispanic", 3: "Other, Non‐Hispanic", 4: "Hispanic", 5: "2+ Races, Non‐Hispanic"}),
                     ppgender=lambda x: x['ppgender'].map({1: "Male", 2: "Female"})
