@@ -613,3 +613,42 @@ def _pep_data_create(region):
         rename(columns={'POP': 'population'}).\
         astype({'population': 'float', 'time': 'int'}) \
         [['fips', 'region', 'time', 'population']]
+
+
+def pep(obs_level='all'):
+    """ Create a pandas data frame with results from a PEP query. Column order: fips, region, time, POP.
+
+    Collects nation- and state-level population data, similar to https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
+    register here: https://research.stlouisfed.org/useraccount/apikey. For now, I'm just including my key until we
+    figure out the best way to do this.
+
+    #todo travis edit ^
+
+    Collects county-level population data from the Census API:
+
+    (as of 2020.03.16)
+
+    Keyword arguments:
+
+    obs_level-- str of the level of observation to pull from.
+        'state': resident population of state from 1990 through 2019
+        'us': resident population in the united states from 1959 through 2019
+
+    """
+    # todo: do we want to allow user to filter by year? if not, remove these two parameters.
+
+    if type(obs_level) == list:
+        region_lst = obs_level
+    else:
+        if obs_level in ['us', 'state', 'msa', 'county']:
+            region_lst = [obs_level]
+        else:
+            region_lst = ['us', 'state', 'msa', 'county']
+
+    return pd.concat(
+            [
+                _pep_data_create(region)
+                for region in region_lst
+            ],
+            axis=0
+        )

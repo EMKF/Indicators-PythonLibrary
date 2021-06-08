@@ -94,3 +94,58 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift)
         pipe(_annualize, annualize, bf_helper_lst, march_shift) \
         [['fips', 'region', 'time'] + series_lst]. \
         reset_index(drop=True)
+
+
+def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march_shift=False):
+    """ Create a pandas data frame with results from a BFS query. Column order: fips, region, time, series_lst.
+
+
+    Keyword arguments:
+    series_lst-- lst of variables to be pulled.
+
+        Variables:
+            BA_BA: 'Business Applications'
+            BA_CBA: 'Business Applications from Corporations'
+            BA_HBA: 'High-Propensity Business Applications'
+            BA_WBA: 'Business Applications with Planned Wages'
+            BF_BF4Q: 'Business Formations within Four Quarters'
+            BF_BF8Q: 'Business Formations within Eight Quarters'
+            BF_PBF4Q: Projected Business Formations within Four Quarters
+            BF_PBF8Q: Projected Business Formations within Eight Quarters
+            BF_SBF4Q: Spliced Business Formations within Four Quarter
+            BF_SBF8Q: Spliced Business Formations within Eight Quarters
+            BF_DUR4Q: Average Duration (in Quarters) from Business Application to Formation within Four Quarters
+            BF_DUR8Q: Average Duration (in Quarters) from Business Application to Formation within Eight Quarters
+
+    obs_level-- The level to pull observations for. ('state', 'us', or 'all')
+
+
+    seasonally_adj-- Option to use the census adjustment for seasonality and smooth the time series. (True or False)
+
+    annualize-- Aggregates across months and annulizes data. (True or False)
+
+    march_shift-- When True the year end is March, False the year end is December. (True or False)
+
+
+
+    """
+
+    if type(obs_level) == list:
+        region_lst = obs_level
+    else:
+        if obs_level == 'us':
+            region_lst = ['US']
+        elif obs_level == 'state':
+            region_lst = c.states
+        else:
+            region_lst = ['US'] + c.states
+
+    return pd.concat(
+            [
+                _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift)
+                for region in region_lst
+            ],
+            axis=0
+        )
+
+
