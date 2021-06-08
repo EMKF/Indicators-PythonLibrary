@@ -31,7 +31,7 @@ def _acs_data_create(series_lst):
         [
             _fetch_data(year, series_lst). \
                 pipe(_make_header). \
-                rename(columns=c.acs_outcomes). \
+                rename(columns=c.acs_code_to_var). \
                 drop('us', 1). \
                 reset_index(drop=True). \
                 assign(year=year)

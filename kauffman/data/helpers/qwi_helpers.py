@@ -33,8 +33,8 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 def _state_year_lst(state_lst):
     out_lst = []
     for state in state_lst:
-        start_year = int(c.qwi_start_end_year_dic[state]['start_year'])
-        end_year = int(c.qwi_start_end_year_dic[state]['end_year'])
+        start_year = int(c.qwi_start_to_end_year[state]['start_year'])
+        end_year = int(c.qwi_start_to_end_year[state]['end_year'])
         out_lst += list(product([state], range(start_year, end_year + 1)))
     return out_lst
 
@@ -103,7 +103,7 @@ def _us_fetch_data(private, strata):
     pause2 = 3
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
@@ -116,10 +116,12 @@ def _us_fetch_data(private, strata):
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
 
-    # todo: fix this
-    # if any(x in ['firmage', 'firmsize'] for x in strata):
     if 'firmage' in strata:
         for box in range(0, 6):
+            driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
+
+    if 'firmsize' in strata:
+        for box in range(6, 12):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
 
     if 'industry' in strata:
@@ -201,7 +203,7 @@ def _covar_create_fips_region(df, region):
         df['fips'] = df['metropolitan statistical area/micropolitan statistical area'].astype(str)
     else:
         df = df.assign(fips='00')
-    return df.assign(region=lambda x: x['fips'].map(c.all_fips_name_dic))
+    return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name))
 
 
 def _obs_filter_groupby_msa(df, covars, region):

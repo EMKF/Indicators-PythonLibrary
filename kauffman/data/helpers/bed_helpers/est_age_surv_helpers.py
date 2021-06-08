@@ -147,7 +147,7 @@ def _remove_trailing_rows(df):
     return df.loc[:last_year_ind].reset_index(drop=True)
 
 def _column_headers(df):
-    df.columns = c.table1bf_columns
+    df.columns = c.table1bf_cols
     return df
 
 def _values_fix(df):
@@ -155,7 +155,7 @@ def _values_fix(df):
         replace('_', np.nan, regex=True). \
         replace('N', np.nan, regex=True). \
         replace(',', '', regex=True). \
-        astype(dict(zip(c.table1bf_columns[1:], [float] * len(c.table1bf_columns[1:]))))
+        astype(dict(zip(c.table1bf_cols[1:], [float] * len(c.table1bf_cols[1:]))))
 
 def table1bf(df, age=0, size=7):  # todo: make age and size variables in kauffman.bed()
     return df.\
@@ -179,8 +179,8 @@ def _est_age_surv_data_create(table, region, industry):
     covars = df.columns.tolist()[1:]
     return df.\
         assign(
-            region=c.state_abb_name_dic[region.upper()],
-            fips=c.state_abb_fips_dic[region.upper()]
+            region=c.state_abb_to_name[region.upper()],
+            fips=c.state_abb_to_fips[region.upper()]
         ). \
         sort_values(['fips', 'time']). \
         reset_index(drop=True) \
