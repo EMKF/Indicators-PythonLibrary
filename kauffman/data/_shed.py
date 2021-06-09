@@ -50,8 +50,7 @@ def _shed_2014(series_lst):
                 ). \
                 rename(columns={"caseid": "id", "e2": "med_exp_12_months", "ppethm": "race_ethnicity", "ppage": "age",
                                 "ppgender": "gender", "b2": "man_financially"}) \
-                [['pop_weight', 'fips', 'region', 'time', ] + series_lst].\
-                pipe(_shed_binary_weighter)\
+                [['pop_weight', 'fips', 'region', 'time', ] + series_lst]
             for year in range(2014, 2015)
         ]
     )
@@ -118,7 +117,8 @@ def _shed_data_create(obs_level, series_lst):
     df = _shed_2014(series_lst).\
         append(_shed_2015_2017(series_lst), ignore_index=True).\
         append(_shed_2018(series_lst), ignore_index=True).\
-        append(_shed_2019_2020(series_lst),ignore_index=True)
+        append(_shed_2019_2020(series_lst),ignore_index=True). \
+        pipe(_shed_binary_weighter)
     # df = _shed_binary_weighter(series_lst)
     return df
     # if obs_level == 'us':
