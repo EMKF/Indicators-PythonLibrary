@@ -3,10 +3,12 @@
 import sys
 import pandas as pd
 from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
+
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation
 from kauffman.tools.etl import county_msa_cross_walk as cw, read_zip
 
+from kauffman.plotter import choropleth
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -98,8 +100,25 @@ def _etl_tests():
     print(df.head())
 
 
+def _plotter():
+    df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_state.csv').\
+        query('time == 2019').\
+        drop(['Unnamed: 0', 'region', 'time'], 1)
+
+    choropleth(
+        df,
+        'population',
+        'state',
+        [df.population.min(), df.population.max()],
+        'Population 2019',
+        'Source: Census',
+        # state_lst=['MO', 'KS', 'NE', 'IA'],
+        # include_ak=False,
+        # include_hi=False
+    )
 
 if __name__ == '__main__':
-     _data_fetch()
+     # _data_fetch()
     # _distribution_tests()
     # _etl_tests()
+    _plotter()
