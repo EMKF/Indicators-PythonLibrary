@@ -256,6 +256,7 @@ def _us_1900_1999():
             skipfooter=25,
             usecols=[2, 3],
             names=['time', 'POP'],
+            engine='python',
             converters={'POP': lambda x: x.replace(',', '')},
         ). \
         assign(
@@ -320,6 +321,7 @@ def _pep_data_create(region):
             [
                 f() for f in [_us_1900_1999, _us_2000_2009, _us_2010_2019]
             ],
+            sort=True,
             axis=0
         )
 

@@ -2,6 +2,7 @@
 
 import sys
 import pandas as pd
+
 from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
 
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
@@ -16,6 +17,20 @@ pd.set_option('expand_frame_repr', False)
 pd.set_option('display.max_rows', 40000)
 pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
+
+def _data_fetch():
+    # df = shed('us', ['gender', 'race_ethnicity'], ['med_exp_12_months', 'man_financially'])
+    df = shed(['med_exp_12_months', 'man_financially'], 'us',)
+    print(df.head())
+    print(df.info())
+    df.to_csv('/Users/hmurray/Desktop/data/SHED/may_2021/data_create/shed_test.csv')
+
+if __name__ == '__main__':
+     df = _data_fetch()
+
+sys.exit()
+
+
 
 
 
