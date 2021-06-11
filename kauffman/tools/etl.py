@@ -5,13 +5,13 @@ import pandas as pd
 from zipfile import ZipFile
 
 
-def read_zip(zip_url, filename):
-    """
-    Reads a csv file from a zip file online. Example: 'public2018.csv' from
-    'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
-    """
-    z = ZipFile(io.BytesIO(requests.get(zip_url).content))
-    return pd.read_csv(z.open(filename), encoding='cp1252')
+# def read_zip(zip_url, filename):
+#     """
+#     Reads a csv file from a zip file online. Example: 'public2018.csv' from
+#     'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
+#     """
+#     z = ZipFile(io.BytesIO(requests.get(zip_url).content))
+#     return pd.read_csv(z.open(filename), encoding='cp1252')
 
 
 def file_to_s3(file, s3_bucket, s3_file):
