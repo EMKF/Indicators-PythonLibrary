@@ -18,21 +18,6 @@ pd.set_option('display.max_rows', 40000)
 pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
-def _data_fetch():
-    # df = shed('us', ['gender', 'race_ethnicity'], ['med_exp_12_months', 'man_financially'])
-    df = shed(['med_exp_12_months', 'man_financially'], 'us',)
-    print(df.head())
-    print(df.info())
-    df.to_csv('/Users/hmurray/Desktop/data/SHED/may_2021/data_create/shed_test.csv')
-
-if __name__ == '__main__':
-     df = _data_fetch()
-
-sys.exit()
-
-
-
-
 
 def _data_fetch():
     df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
@@ -40,6 +25,11 @@ def _data_fetch():
     sys.exit()
 
     df = shed()
+    # df = shed('us', ['gender', 'race_ethnicity'], ['med_exp_12_months', 'man_financially'])
+    # df = shed(['med_exp_12_months', 'man_financially'], 'us',)
+    # print(df.head())
+
+
     print(df.head())
 
 

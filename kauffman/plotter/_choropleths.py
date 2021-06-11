@@ -10,9 +10,9 @@ from shapely.geometry import Polygon, MultiPolygon
 
 def _state_lst(state_lst, include_ak, include_hi):
     if state_lst:
-        return [int(c.state_abb_fips_dic[s]) for s in state_lst]
+        return [int(c.state_abb_to_fips[s]) for s in state_lst]
     else:
-        state_lst_fips = [int(c.state_abb_fips_dic[s]) for s in c.states]
+        state_lst_fips = [int(c.state_abb_to_fips[s]) for s in c.states]
         if not include_ak:
             state_lst_fips.remove(2)
         if not include_hi:
@@ -51,7 +51,32 @@ def _state_choropleth(df, outcome, outcome_interval, title, annotation, us_map):
     pd.json_normalize(geo_json, meta=['attributes', ['geometry', 'rings']]).\
         assign(
             geometry=lambda x: x['geometry.rings'].apply(_geo_format),
-            fips=lambda x: x['attributes.State_Code'].map(c.state_abb_fips_dic).astype(int)
+            fips=lambda x: x['attributes.State_Code'].map(c.state_abb_to_fips).astype(int)
+        ) \
+        [['fips', 'geometry']].\
+        pipe(gpd.GeoDataFrame, crs='EPSG:4326').\
+        set_geometry('geometry').\
+        merge(df, on='fips', how='right').\
+        pipe(_state_plotter, outcome, outcome_interval, title, annotation, us_map)
+
+
+def _county_choropleth(df, outcome, outcome_interval, title, annotation, us_map):
+    shapefile_url = 'https://services4.arcgis.com/QdHwhlbx61LR3TWb/arcgis/rest/services/US_Counties/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json'
+    geo_json = requests.get(shapefile_url).json()['features']
+
+    import io
+    from zipfile import ZipFile
+    zip_url = 'https://www2.census.gov/geo/tiger/TIGER2020/COUNTY/tl_2020_us_county.zip'
+    filename = 'tl_2020_us_county.shp'
+    z = ZipFile(io.BytesIO(requests.get(zip_url).content))
+    gdf = gpd.read_file(z.open(filename))
+    print(gdf.head())
+    sys.exit()
+
+    pd.json_normalize(geo_json, meta=['attributes', ['geometry', 'rings']]).\
+        assign(
+            geometry=lambda x: x['geometry.rings'].apply(_geo_format),
+            fips=lambda x: x['attributes.State_Code'].map(c.state_abb_to_fips).astype(int)
         ) \
         [['fips', 'geometry']].\
         pipe(gpd.GeoDataFrame, crs='EPSG:4326').\
