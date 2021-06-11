@@ -109,7 +109,6 @@ def _plotter():
     df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_state.csv').\
         query('time == 2019').\
         drop(['Unnamed: 0', 'region', 'time'], 1)
-
     choropleth(
         df,
         'population',
@@ -117,6 +116,29 @@ def _plotter():
         [df.population.min(), df.population.max()],
         'Population 2019',
         'Source: Census',
+        # state_lst=['MO', 'KS', 'NE', 'IA'],
+        # include_ak=False,
+        # include_hi=False
+    )
+    sys.exit()
+
+
+
+
+    df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_county.csv').\
+        query('time == 2019').\
+        drop(['region', 'time'], 1).\
+        assign(state=lambda x: x['fips'].apply(lambda y: '0' + str(y)[0] if len(str(y)) == 4 else str(y)[:2])).\
+        query('state not in ["02", "15"]').\
+        query('population > 100_000')
+    choropleth(
+        df,
+        'population',
+        'county',
+        [df.population.min(), df.population.max()],
+        'Population 2019',
+        'Source: Census',
+        us_map=True
         # state_lst=['MO', 'KS', 'NE', 'IA'],
         # include_ak=False,
         # include_hi=False
