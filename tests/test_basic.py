@@ -106,9 +106,11 @@ def _etl_tests():
 
 
 def _plotter():
+    ## state
     df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_state.csv').\
         query('time == 2019').\
-        drop(['Unnamed: 0', 'region', 'time'], 1)
+        drop(['Unnamed: 0', 'region', 'time'], 1).\
+        query('fips not in [2, 15]')
     choropleth(
         df,
         'population',
@@ -116,19 +118,18 @@ def _plotter():
         [df.population.min(), df.population.max()],
         'Population 2019',
         'Source: Census',
-        # state_lst=['MO', 'KS', 'NE', 'IA'],
-        # include_ak=False,
-        # include_hi=False
+        us_map=48
     )
     sys.exit()
 
-
-
-
+    ## county
     df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_county.csv').\
         query('time == 2019').\
         drop(['region', 'time'], 1).\
-        assign(state=lambda x: x['fips'].apply(lambda y: '0' + str(y)[0] if len(str(y)) == 4 else str(y)[:2])).\
+        assign(
+            fips=lambda x: x['fips'].apply(lambda y: '0' + str(y) if len(str(y)) == 4 else str(y)),
+            state=lambda x: x['fips'].apply(lambda y: '0' + str(y)[0] if len(str(y)) == 4 else str(y)[:2])
+        ).\
         query('state not in ["02", "15"]').\
         query('population > 100_000')
     choropleth(
@@ -138,11 +139,25 @@ def _plotter():
         [df.population.min(), df.population.max()],
         'Population 2019',
         'Source: Census',
-        us_map=True
-        # state_lst=['MO', 'KS', 'NE', 'IA'],
-        # include_ak=False,
-        # include_hi=False
+        us_map=48
     )
+
+    ## msa
+    # df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_msa.csv').\
+    #     query('time == 2019').\
+    #     astype({'fips': 'str'}).\
+    #     query('population > 1_000_000')
+    # choropleth(
+    #     df,
+    #     'population',
+    #     'msa',
+    #     [df.population.min(), df.population.max()],
+    #     'Population 2019',
+    #     'Source: Census',
+    #     us_map=48
+    # )
+
+
 
 if __name__ == '__main__':
      # _data_fetch()

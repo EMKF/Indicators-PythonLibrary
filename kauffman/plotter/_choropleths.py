@@ -10,18 +10,6 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, MultiPolygon
 
 
-def _state_lst(state_lst, include_ak, include_hi):
-    if state_lst:
-        return [int(c.state_abb_to_fips[s]) for s in state_lst]
-    else:
-        state_lst_fips = [int(c.state_abb_to_fips[s]) for s in c.states]
-        if not include_ak:
-            state_lst_fips.remove(2)
-        if not include_hi:
-            state_lst_fips.remove(15)
-        return state_lst_fips
-
-
 def _geo_format(x):
     if len(x) == 1:
         return Polygon(x[0])
@@ -50,7 +38,7 @@ def _plotter(gdf, outcome, outcome_interval, title, annotation, us_map):
 
     if us_map:
         _state_geo().\
-            pipe(_us_map_filter, gdf['fips'].unique()).\
+            loc[lambda x: ~x['fips'].isin([15, 2]) if us_map == 48 else x['fips'] == x['fips'] if us_map == 50 else x['fips'] != x['fips']].\
             plot(ax=ax, alpha=0.1, color='gray')
 
     gdf.plot(column=outcome, cmap='Blues', linewidth=0.8, ax=ax, edgecolor='0.8')
@@ -58,6 +46,7 @@ def _plotter(gdf, outcome, outcome_interval, title, annotation, us_map):
 
 
 def _state_geo():
+    # is this one or the census file better?
     shapefile_url = 'https://services2.arcgis.com/DEoxb4q3EJppiDKC/arcgis/rest/services/States_shapefile/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json'
     geo_json = requests.get(shapefile_url).json()['features']
 
@@ -71,37 +60,25 @@ def _state_geo():
         set_geometry('geometry')
 
 
-def _state_choropleth(df, outcome, outcome_interval, title, annotation, us_map):
-    _state_geo().\
-        merge(df, on='fips', how='right').\
-        pipe(_plotter, outcome, outcome_interval, title, annotation, us_map)
+def choropleth(df, outcome, obs_level, outcome_interval, title, annotation, us_map=48):
+    """
+    us_map: int,
+        50: all states
+        48: lower 48 states
+        0: no states
+    """
 
+    if obs_level == 'county':
+        gdf = gpd.read_file('https://www2.census.gov/geo/tiger/TIGER2020/COUNTY/tl_2020_us_county.zip'). \
+            assign(fips=lambda x: (x['STATEFP'] + x['COUNTYFP'])) \
+            [['fips', 'geometry']]
+    elif obs_level == 'msa':
+        gdf = gpd.read_file('https://www2.census.gov/geo/tiger/TIGER2020/CBSA/tl_2020_us_cbsa.zip'). \
+            rename(columns={'CBSAFP': 'fips'}) \
+            [['fips', 'geometry']]
+    elif obs_level == 'state':
+        gdf = _state_geo()
 
-def _county_choropleth(df, outcome, outcome_interval, title, annotation, us_map):
-    # zip_url = 'https://www2.census.gov/geo/tiger/TIGER2020/COUNTY/tl_2020_us_county.zip'
-    # filename = 'tl_2020_us_county.shp'
-    # 'https://www.sciencebase.gov/catalog/file/get/4f4e4a2ee4b07f02db615738?f=18%2Fae%2Fb6%2F18aeb60870a3d10d164715ba1da6a5b34497d527'
-
-    # z = ZipFile(io.BytesIO(requests.get(zip_url).content))
-    # z = ZipFile(io.StringIO(requests.get(zip_url).text))
-    # gdf = gpd.read_file(z.open(filename))
-
-    # todo what do we do with this file? It is big and takes a long time to IO
-    # maybe download, extract, read in, and cleanup
-    gpd.read_file('/Users/thowe/Downloads/tl_2020_us_county/tl_2020_us_county.shp').\
-        assign(
-            fips=lambda x: (x['STATEFP'] + x['COUNTYFP']).astype(int)
-        ) \
-        [['fips', 'geometry']].\
+    gdf.\
         merge(df, on='fips', how='right'). \
         pipe(_plotter, outcome, outcome_interval, title, annotation, us_map)
-
-
-def choropleth(df, outcome, obs_level, outcome_interval, title, annotation, state_lst=[], us_map=True, include_ak=False, include_hi=False):
-    # todo: the data should already be subsetted.
-    # todo: can I infer obs_level?
-    if obs_level == 'county':
-        _county_choropleth(df, outcome, outcome_interval, title, annotation, us_map)
-    elif obs_level == 'state':
-        df.query(f'fips in {_state_lst(state_lst, include_ak, include_hi)}', inplace=True)
-        _state_choropleth(df, outcome, outcome_interval, title, annotation, us_map)

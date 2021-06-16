@@ -13,6 +13,7 @@ setup(
         'requests', 'boto3', 'geonamescache', 'joblib', 'matplotlib', 'numpy', 'pandas', 'scikit_learn', 'seaborn',
         'selenium', 'webdriver_manager', 'xlrd'
     ],
+    # descartes, geopandas
     version='2.2.8',
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
