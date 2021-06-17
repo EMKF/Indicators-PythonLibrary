@@ -1,5 +1,4 @@
-import pandas as pd
-from .plotting_aids import time_series
+from scratch.plotting_aids import time_series
 from ..data._bds import bds
 from ..data._bfs import bfs
 from ..data._pep import pep

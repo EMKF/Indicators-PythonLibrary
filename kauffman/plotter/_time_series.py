@@ -1,16 +1,10 @@
-import io
-import os
 import sys
-import boto3
-import joblib
-import requests
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import plotly.express as px
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
+import kauffman.constants as c
 
 
 def _grouper(df, lvalues):  # todo: should I put this inside the class?
@@ -40,9 +34,25 @@ def econ_indexer(self, var):
         return (((df - initial) / initial) + 1) * 100
 
 
-def time_series(df, var_lst=None, strata_dic=None, show=True, save_path=None, title=None, to_index=False,
-         recessions=False, filter=False, start_year=None, end_year=None, day_marker=None):
+def time_series(df, var_lst, time, strata_dic=None, show=True, save_path=None, title=None, to_index=False,
+         recessions=False, filter_lambda=None, day_marker=None):
     """
+    df: pandas df
+    var_lst: str, list or dict representing the outcome variable(s) to plot
+    time: str reprensenting the time variable
+        todo how should this be formatted?
+        think it needs to be a datetime
+
+    filter_lambda: None or int
+        int is smoothing lambda
+        Common lambda values are
+            weekly: 1600
+            monthly: 129600
+            quarterly: 1600
+            yearly: 6.25
+
+
+
     var_lst: list or dict
         If dict, the keys are the column names from the dataframe and the values are corresponding descriptions. If
         a list, then the column names are used as the descriptions. These are the covariates from the dataframe you
@@ -56,39 +66,19 @@ def time_series(df, var_lst=None, strata_dic=None, show=True, save_path=None, ti
         First year of data to use.
     """
 
-    if not var_lst:
-        var_lst = [var for var in df.columns if var not in ['time', 'region']]
 
-    if df.loc[0, 'time'].count('-') == 2:  # if weekly
-        lamb = 1600  # hmmm
-        # lamb = 45697600
-        df_in = df.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
-        offset = {'weeks': 1}
-    elif df.loc[0, 'time'].count('-') == 1:  # if monthly
-        lamb = 129600
-        df_in = df.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
-        offset = {'months': 1}
-    elif 'Q' in df.loc[0, 'time']:  # if quarterly
-        lamb = 1600
-        df_in = df.assign(time=lambda x: pd.to_datetime(x['time'].astype(str)))
-        offset = {'months': 3}
-    else:  # if yearly
-        lamb = 6.25
-        df_in = df.assign(time=lambda x: pd.to_datetime(x['time'].astype(str) + '-07'))
-        offset = {'years': 1}
+    df = df.assign(_time=lambda x: pd.to_datetime(x[time].astype(str)))
 
-    if isinstance(var_lst, list):  # if var_lst is a list and not a string
+    start_year = pd.to_datetime(df['_time'].dt.year.min(), format='%Y')
+    end_year = pd.to_datetime(df['_time'].dt.year.max(), format='%Y')
+
+    if isinstance(var_lst, str):  # if var_lst is a str
+        var_lst = [var_lst]
+        var_label_lst = zip(var_lst, var_lst)
+    elif isinstance(var_lst, list):  # if var_lst is a list
         var_label_lst = zip(var_lst, var_lst)
     else:
         var_label_lst = zip(var_lst.keys(), var_lst.values())
-    if not start_year:  # if start_year is specified
-        start_year = df_in.loc[0, 'time']
-    else:
-        start_year = pd.to_datetime(str(start_year))
-    if not end_year:  # if end_year is specified
-        end_year = df_in.iloc[-1, :]['time']
-    else:
-        end_year = pd.Timestamp.now()
 
     sns.set_style("whitegrid")  # , {'axes.grid': False})
     fig = plt.figure(figsize=(12, 8))
@@ -98,73 +88,59 @@ def time_series(df, var_lst=None, strata_dic=None, show=True, save_path=None, ti
         if strata_dic:
             for strat_var, strat_values_dict in strata_dic.items():
                 for label, values in strat_values_dict.items():
-                    df = df_in. \
+                    df = df. \
                         query('{key} in {value}'.format(key=strat_var, value=values)) \
                         [['time', var[0]]]. \
                         pipe(_grouper, len(values)). \
-                        query('time >= "{}"'.format(start_year)). \
-                        query('time <= "{}"'.format(end_year)). \
                         query('{var} == {var}'.format(var=var[0])). \
                         pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
                     sns.lineplot(data=df, ax=ax, label=label, sort=False)
 
-                    if filter:
-                        cycle, trend = sm.tsa.filters.hpfilter(df, lamb=lamb)
+                    if filter_lambda:
+                        cycle, trend = sm.tsa.filters.hpfilter(df, lamb=filter_lambda)
                         ax.lines[-1].set_linestyle("--")
                         ax.lines[-1]._alpha = .5
                         sns.lineplot(data=trend, ax=ax, sort=False, color=ax.lines[-1].get_color())
 
         else:
-            df = df_in \
-                [['time', var[0]]]. \
-                assign(time=lambda x: pd.to_datetime(x['time'])). \
-                query('time >= "{}"'.format(start_year)). \
-                query('time <= "{}"'.format(end_year)). \
+            df = df \
+                [['_time', var[0]]]. \
                 query('{var} == {var}'.format(var=var[0])). \
-                pipe(lambda x: x.pub.econ_indexer(var[0]) if to_index else x.set_index('time')[var[0]])
+                pipe(lambda x: econ_indexer(var[0]) if to_index else x.set_index('_time')[var[0]])
+
             sns.lineplot(data=df, ax=ax, label=var[1], sort=False)
 
-            if filter:
-                cycle, trend = sm.tsa.filters.hpfilter(df, lamb=lamb)
+            if filter_lambda:
+                cycle, trend = sm.tsa.filters.hpfilter(df, lamb=filter_lambda)
                 ax.lines[-1].set_linestyle("--")
                 ax.lines[-1]._alpha = .5
                 sns.lineplot(data=trend, ax=ax, sort=False, color=ax.lines[-1].get_color())
 
         if recessions:
-            recession_dates = [
-                (pd.to_datetime('1948-11'), pd.to_datetime('1949-10')),
-                (pd.to_datetime('1953-07'), pd.to_datetime('1954-05')),
-                (pd.to_datetime('1957-08'), pd.to_datetime('1958-04')),
-                (pd.to_datetime('1960-04'), pd.to_datetime('1961-02')),
-                (pd.to_datetime('1969-12'), pd.to_datetime('1970-11')),
-                (pd.to_datetime('1973-11'), pd.to_datetime('1975-03')),
-                (pd.to_datetime('1980-01'), pd.to_datetime('1980-07')),
-                (pd.to_datetime('1981-07'), pd.to_datetime('1982-11')),
-                (pd.to_datetime('1990-07'), pd.to_datetime('1991-03')),
-                (pd.to_datetime('2001-03'), pd.to_datetime('2001-11')),
-                (pd.to_datetime('2007-12'), pd.to_datetime('2009-06'))
-            ]
-            for rec in recession_dates:
-                if rec[0] >= start_year and rec[1] <= end_year:
+            for rec in c.recession_dates:
+                if start_year <= rec[0] and rec[1] <= end_year:
                     ax.axvspan(rec[0], rec[1], alpha=0.3, color='gray')
 
-        if day_marker:
-            first = True
-            for df_date in df.index:
-                marker = '{year}-{month_day}'.format(year=df_date.year, month_day=day_marker)
-                if df_date < pd.to_datetime(marker) and df_date + pd.DateOffset(**offset) >= pd.to_datetime(marker):
-                    if first:
-                        ax.axvspan(df_date, df_date + pd.DateOffset(**offset), alpha=0.3, color='firebrick',
-                                   label='Week of {}'.format(day_marker))
-                        first = False
-                    else:
-                        ax.axvspan(df_date, df_date + pd.DateOffset(**offset), alpha=0.3, color='firebrick')
+        # if day_marker:
+        #     first = True
+        #     for df_date in df.index:
+        #         marker = '{year}-{month_day}'.format(year=df_date.year, month_day=day_marker)
+        #         if df_date < pd.to_datetime(marker) and df_date + pd.DateOffset(**offset) >= pd.to_datetime(marker):
+        #             if first:
+        #                 ax.axvspan(df_date, df_date + pd.DateOffset(**offset), alpha=0.3, color='firebrick',
+        #                            label='Week of {}'.format(day_marker))
+        #                 first = False
+        #             else:
+        #                 ax.axvspan(df_date, df_date + pd.DateOffset(**offset), alpha=0.3, color='firebrick')
 
         ax.set_xlabel(None)
         ax.set_ylabel(var[1] if not to_index else 'Index: {}'.format(var[1]))
-        ax.set_xlim([start_year - pd.DateOffset(**offset), end_year + pd.DateOffset(**offset)])
+        # ax.set_xlim([start_year - pd.DateOffset(**offset), end_year + pd.DateOffset(**offset)])
+        # ax.set_xlim([start_year - pd.DateOffset(**offset), end_year + pd.DateOffset(**offset)])
         ax.legend()
 
+
+    # todo: note for recessions being grey shaded areas...somehow combined with below
     if filter:
         plt.figtext(0.01, 0.01,
                     'Note: Dotted lines indicate actual values; solid lines are values that have been smoothed with an HP filter.',

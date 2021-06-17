@@ -9,7 +9,7 @@ from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_cond
     maximum_quartic_variation
 from kauffman.tools.etl import county_msa_cross_walk as cw, read_zip
 
-from kauffman.plotter import choropleth
+from kauffman.plotter import choropleth, time_series
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -105,7 +105,7 @@ def _etl_tests():
     print(df.head())
 
 
-def _plotter():
+def _choropleth_tests():
     ## state
     df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_state.csv').\
         query('time == 2019').\
@@ -143,24 +143,32 @@ def _plotter():
     )
 
     ## msa
-    # df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_msa.csv').\
-    #     query('time == 2019').\
-    #     astype({'fips': 'str'}).\
-    #     query('population > 1_000_000')
-    # choropleth(
-    #     df,
-    #     'population',
-    #     'msa',
-    #     [df.population.min(), df.population.max()],
-    #     'Population 2019',
-    #     'Source: Census',
-    #     us_map=48
-    # )
+    df = pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/pep_msa.csv').\
+        query('time == 2019').\
+        astype({'fips': 'str'}).\
+        query('population > 1_000_000')
+    choropleth(
+        df,
+        'population',
+        'msa',
+        [df.population.min(), df.population.max()],
+        'Population 2019',
+        'Source: Census',
+        us_map=48
+    )
 
+
+def _time_series_tests():
+    df = pep(obs_level='us')
+    print(df.head())
+    time_series(df, 'population', 'time', recessions=True)
 
 
 if __name__ == '__main__':
-     # _data_fetch()
+    # _data_fetch()
     # _distribution_tests()
+
     # _etl_tests()
-    _plotter()
+
+    # _choropleth_tests()
+    _time_series_tests()
