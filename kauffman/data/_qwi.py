@@ -185,7 +185,7 @@ def _annualizer(df, annualize, covars):
 
     return df. \
         assign(
-            row_count=lambda x: x['fips'].groupby([x[var] for var in covars]).transform('count')
+            row_count=lambda x: x['fips'].groupby([x[var] for var in covars], dropna=False).transform('count')
         ). \
         query('row_count == 4'). \
         drop(columns=['row_count']). \
@@ -327,12 +327,12 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         print('Invalid input to obs_level.')
 
     if state_list == 'all':
-        state_list = [c.state_abb_fips_dic[s] for s in c.states]
+        state_list = [c.state_abb_to_fips[s] for s in c.states]
     elif type(state_list) == list:
         if obs_level != 'msa':
-            state_list = [c.state_abb_fips_dic[s] for s in state_list]
+            state_list = [c.state_abb_to_fips[s] for s in state_list]
         else:
-            state_list = [c.state_abb_fips_dic[s] for s in c.states]
+            state_list = [c.state_abb_to_fips[s] for s in c.states]
 
     if indicator_lst == 'all':
         indicator_lst = c.qwi_outcomes

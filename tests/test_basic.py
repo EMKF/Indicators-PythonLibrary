@@ -20,8 +20,9 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
 def _data_fetch():
-    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
-    print(df.head())
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='county', state_list=['AL'], private=True, strata=['firmage'], annualize=True)
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage'], annualize=True)
+    print(df.head(10))
     sys.exit()
 
     df = shed()
@@ -165,7 +166,7 @@ def _time_series_tests():
 
 
 if __name__ == '__main__':
-    # _data_fetch()
+    _data_fetch()
     # _distribution_tests()
 
     # _etl_tests()

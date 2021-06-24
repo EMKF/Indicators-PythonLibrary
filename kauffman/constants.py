@@ -100,6 +100,7 @@ def msa_fips_to_name():
 
 # todo: can I do this with the first of these lines? I don't know what genomaescache has. Given I import it, I might as well use it if I can.
 all_fips_to_name = {
+    **{'01001': 'Autauga County'},
     **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()},
     **msa_fips_to_name(),
     **{k: state_abb_to_name[v] for k, v in state_fips_to_abb.items() if v != 'PR'}
