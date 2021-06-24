@@ -14,7 +14,7 @@ setup(
         'selenium', 'webdriver_manager', 'xlrd'
     ],
     # descartes, geopandas
-    version='2.2.10',
+    version='2.2.11',
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
     long_description=open('README.md', encoding='utf8').read(),
