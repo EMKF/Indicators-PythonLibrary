@@ -1,36 +1,31 @@
+import sys
 import pandas as pd
 from ._pep import pep
 import kauffman.constants as c
-from ..tools._etl import read_zip
-
-
-import pandas as pd
-import kauffman.constants as c
 from kauffman.tools._etl import read_zip
-# from ..eship_data_sources import pep
-import sys
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
 pd.set_option('expand_frame_repr', False)
 pd.set_option('display.max_rows', 30000)
 pd.set_option('max_colwidth', 4000)
-# pd.set_option('display.float_format', lambda x: '%.2f' % x)
+pd.set_option('display.float_format', lambda x: '%.2f' % x)
 pd.options.mode.chained_assignment = None
 
 # issues:
 # steps 1) why are there 260 respondents in 2017 without weight3b?
 #       2) recode variables to 0-1
 
+
 def _col_names_lowercase(df):
     df.columns = df.columns.str.lower()
     return df
 
-def _shed_binary_weighter(df):
-    print(df.columns)
-    # per_country['virus_confirmed'] = per_country.apply(lambda x: x['cases'] if x['type'] == "confirmed" else 0, axis=1)
-    return df
-
+# def _shed_binary_weighter(df):
+#     print(df.columns)
+#     # per_country['virus_confirmed'] = per_country.apply(lambda x: x['cases'] if x['type'] == "confirmed" else 0, axis=1)
+#     return df
+#
 def shed_sample_to_pop_weighter(df):
     pop_2014 = int(pep(obs_level='us').query('time == 2014')['population'])
     df['pop_weight'] = df['weight3'] / df['weight3'].sum() * pop_2014
