@@ -7,7 +7,8 @@ from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
 
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation
-from kauffman.tools.etl import county_msa_cross_walk as cw, read_zip
+from kauffman.tools import mpj_indicators
+# from kauffman.tools import county_msa_cross_walk as cw, read_zip
 
 from kauffman.plotter import choropleth, time_series
 
@@ -101,10 +102,14 @@ def _etl_tests():
     #     pipe(county_msa_cross_walk, 'fips')
     # print(df.head(10))
 
-    url = 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
-    df = read_zip(url, 'public2018.csv')
-    print(df.head())
+    # url = 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
+    # df = read_zip(url, 'public2018.csv')
+    # print(df.head())
 
+    # qwi(['Emp', 'EmpEnd'], obs_level='state', state_list=['AL', 'MO'], annualize=True, strata=['firmage']).to_csv('/Users/thowe/Projects/downwardata/tests/data/qwi_state.csv', index=False)
+    pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/qwi_state.csv').\
+        pipe(mpj_indicators)
+    sys.exit()
 
 def _choropleth_tests():
     ## state
@@ -166,10 +171,10 @@ def _time_series_tests():
 
 
 if __name__ == '__main__':
-    _data_fetch()
+    # _data_fetch()
     # _distribution_tests()
 
-    # _etl_tests()
+    _etl_tests()
 
     # _choropleth_tests()
-    _time_series_tests()
+    # _time_series_tests()

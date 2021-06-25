@@ -1,12 +1,12 @@
 import pandas as pd
 from ._pep import pep
 import kauffman.constants as c
-from ..tools.etl import read_zip
+from ..tools._etl import read_zip
 
 
 import pandas as pd
 import kauffman.constants as c
-from kauffman.tools.etl import read_zip
+from kauffman.tools._etl import read_zip
 # from ..eship_data_sources import pep
 import sys
 
@@ -173,7 +173,7 @@ def shed(series_lst, obs_level='individual'):
                         - How do I concat each of the 3 datasets in _shed_data_create()?
                         - How do I pass inputs through _shed_data_create()?
             2) Aggregate to national, reigonal1, regional2, or state level:
-                - create a function in etl.py that allows users to specify the name of weight variable and observation level
+                - create a function in _etl.py that allows users to specify the name of weight variable and observation level
                     e.g.
                         def survey_aggregate(df, weight_var, obs_level):
                             if obs_level == 'us':

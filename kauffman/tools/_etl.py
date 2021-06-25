@@ -1,17 +1,10 @@
 import io
+import sys
 import boto3
 import requests
+import numpy as np
 import pandas as pd
 from zipfile import ZipFile
-
-
-# def read_zip(zip_url, filename):
-#     """
-#     Reads a csv file from a zip file online. Example: 'public2018.csv' from
-#     'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
-#     """
-#     z = ZipFile(io.BytesIO(requests.get(zip_url).content))
-#     return pd.read_csv(z.open(filename), encoding='cp1252')
 
 
 def file_to_s3(file, s3_bucket, s3_file):
@@ -100,3 +93,44 @@ def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
 
 
 
+def kese_indicators():
+    pass
+def neb_indicators():
+    pass
+
+
+def _mpj_raw_data_merge(df_qwi, df_pep, df_earnbeg_us):
+    return df_qwi. \
+        merge(df_pep[['fips', 'time', 'population']], how='left', on=['fips', 'time']).\
+        merge(df_earnbeg_us, how='left', on='time')
+
+
+def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
+    # todo: start line 111. How to generalize?
+    #   I'm wondering if I should nan things out in a step before this point.
+
+
+    """
+    todo: need some restrictions for variable names in each of the dfs
+    each row needs to be unique category within fips/time
+    """
+
+    return _mpj_raw_data_merge(
+            df_qwi,
+            df_pep,
+            df_earnbeg_us.rename(columns={'EarnBeg': 'EarnBeg_us'})
+        ).\
+        assign(
+            emp_mid=lambda x: (x['Emp'] + x['EmpEnd']) / 2,
+            within_count=lambda x: x[['emp_mid', 'fips', 'time']].groupby(['fips', 'time']).transform('count'),
+            max_count=lambda x: x['within_count'].max(),
+            total_emp=lambda x: np.where(x['within_count'] == x['max_count'], x['emp_mid'].sum(), np.nan)
+        ).\
+        assign(
+            contribution=lambda x: x['emp_mid'] / x['total_emp'],
+            compensation=lambda x: x['EarnBeg'] / x['EarnBeg_us'],
+            constancy=lambda x: (x['EmpS'] / x['EmpTotal']),
+            creation=lambda x: x['FrmJbC'] / x['population'] * 1000,
+        )
+    # todo: make 0's nan?
+    # todo: earnbeg_us renamed or specified or what?

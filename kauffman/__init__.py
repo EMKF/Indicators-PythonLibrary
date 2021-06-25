@@ -1,1 +1,1 @@
-__all__ = ['data', 'tools']
+__all__ = ['data', 'tools', 'plotter']
