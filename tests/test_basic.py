@@ -107,8 +107,25 @@ def _etl_tests():
     # print(df.head())
 
     # qwi(['Emp', 'EmpEnd'], obs_level='state', state_list=['AL', 'MO'], annualize=True, strata=['firmage']).to_csv('/Users/thowe/Projects/downwardata/tests/data/qwi_state.csv', index=False)
-    pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/qwi_state.csv').\
-        pipe(mpj_indicators)
+    # pd.read_csv('/Users/thowe/Projects/downwardata/tests/data/qwi_state.csv').\
+    # df_earnbeg_us = pd.read_csv(f'/Users/thowe/Projects/mpj/data/raw_data/earnbeg_us.csv')
+    # for region in ['us', 'state', 'msa', 'county']:
+    #     df_qwi = pd.read_csv(f'/Users/thowe/Projects/mpj/data/raw_data/qwi_{region}.csv')
+    #     df_pep = pd.read_csv(f'/Users/thowe/Projects/mpj/data/raw_data/pep_{region}.csv')
+    #     mpj_indicators(df_qwi, df_pep, df_earnbeg_us)
+
+    df_earnbeg_us = pd.read_csv(f'/Users/thowe/Projects/mpj/data/raw_data/earnbeg_us.csv')
+    pd.concat(
+            [
+                mpj_indicators(
+                    pd.read_csv(f'/Users/thowe/Projects/mpj/data/raw_data/qwi_{region}.csv'),
+                    pd.read_csv(f'/Users/thowe/Projects/mpj/data/raw_data/pep_{region}.csv'),
+                    df_earnbeg_us
+                )
+                for region in ['us', 'state', 'msa', 'county']
+            ]
+        ).\
+        to_csv('/Users/thowe/Downloads/mpj_scratch.csv', index=False)
     sys.exit()
 
 def _choropleth_tests():

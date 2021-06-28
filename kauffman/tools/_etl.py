@@ -105,16 +105,23 @@ def _mpj_raw_data_merge(df_qwi, df_pep, df_earnbeg_us):
         merge(df_earnbeg_us, how='left', on='time')
 
 
+def _missing_obs(df):
+    df.loc[df['EmpTotal'] == 0, 'constancy'] = np.nan
+    df.loc[df['EarnBeg'] == 0, 'compensation'] = np.nan
+    df.loc[df['emp_mid'] == 0, 'contribution'] = np.nan
+    return df
+
+
 def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
-    # todo: start line 111. How to generalize?
-    #   I'm wondering if I should nan things out in a step before this point.
-
-
     """
-    todo: need some restrictions for variable names in each of the dfs
-    each row needs to be unique category within fips/time
+    todo: description of each of these data sets briefly
     """
+    # todo: need some restrictions for variable names in each of the dfs
+    #   each row needs to be unique category within fips/time
 
+    # todo: I want to drop the variables from pep and earnbeg_us
+    df_qwi.loc[(df_qwi['time'] == 1993) & (df_qwi['firmage'] == 1), 'Emp'] = np.nan
+    df_qwi = df_qwi.loc[~((df_qwi['time'] == 1994) & (df_qwi['firmage'] == 1))]
     return _mpj_raw_data_merge(
             df_qwi,
             df_pep,
@@ -124,13 +131,13 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
             emp_mid=lambda x: (x['Emp'] + x['EmpEnd']) / 2,
             within_count=lambda x: x[['emp_mid', 'fips', 'time']].groupby(['fips', 'time']).transform('count'),
             max_count=lambda x: x['within_count'].max(),
-            total_emp=lambda x: np.where(x['within_count'] == x['max_count'], x['emp_mid'].sum(), np.nan)
+            total_emp=lambda x: x[['emp_mid', 'fips', 'time']].groupby(['fips', 'time']).transform(sum, min_count=int(x['max_count'].iloc[0]))
         ).\
         assign(
             contribution=lambda x: x['emp_mid'] / x['total_emp'],
             compensation=lambda x: x['EarnBeg'] / x['EarnBeg_us'],
             constancy=lambda x: (x['EmpS'] / x['EmpTotal']),
             creation=lambda x: x['FrmJbC'] / x['population'] * 1000,
-        )
-    # todo: make 0's nan?
-    # todo: earnbeg_us renamed or specified or what?
+        ).\
+        pipe(_missing_obs).\
+        drop(['emp_mid', 'within_count', 'max_count', 'total_emp'], 1)
