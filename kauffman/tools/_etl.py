@@ -118,10 +118,8 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
     """
     # todo: need some restrictions for variable names in each of the dfs
     #   each row needs to be unique category within fips/time
-
     # todo: I want to drop the variables from pep and earnbeg_us
-    df_qwi.loc[(df_qwi['time'] == 1993) & (df_qwi['firmage'] == 1), 'Emp'] = np.nan
-    df_qwi = df_qwi.loc[~((df_qwi['time'] == 1994) & (df_qwi['firmage'] == 1))]
+
     return _mpj_raw_data_merge(
             df_qwi,
             df_pep,

@@ -43,16 +43,19 @@ def _build_strata_url(strata):
     url_section = ''
     
     if 'firmage' in strata:
-        for f in range(0,6):
+        for f in range(0, 6):
             url_section = url_section + f'&firmage={f}'
     if 'firmsize' in strata:
-        for f in range(0,6):
+        for f in range(0, 6):
             url_section = url_section + f'&firmsize={f}'
+    if 'industry' in strata:
+        for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
+            url_section = url_section + f'&industry={i}'
     if 'sex' in strata:
         url_section = url_section + '&sex=0&sex=1&sex=2'
-    if 'industry' in strata:
-        for i in [11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
-            url_section = url_section + f'&industry={i}'
+    if 'agegrp' in strata:
+        for age in range(0, 9):
+            url_section = url_section + f'&agegrp=A0{age}'
 
     return url_section
 
@@ -117,11 +120,11 @@ def _us_fetch_data(private, strata):
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
 
     if 'firmage' in strata:
-        for box in range(0, 6):
+        for box in range(1, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
 
     if 'firmsize' in strata:
-        for box in range(6, 12):
+        for box in range(7, 12):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
 
     if 'industry' in strata:
@@ -131,9 +134,11 @@ def _us_fetch_data(private, strata):
 
     # Worker Characteristics
     if 'sex' in strata:
-        # driver.find_element_by_id('dijit_form_CheckBox_12').click()
         driver.find_element_by_id('dijit_form_CheckBox_13').click()
         driver.find_element_by_id('dijit_form_CheckBox_14').click()
+    if 'agegrp' in strata:
+        for box in range(1, 9):
+            driver.find_element_by_xpath(f'//input[@value="A0{box}"]').click()
     driver.find_element_by_id('continue_to_indicators').click()
 
     # Indicators
@@ -161,8 +166,8 @@ def _us_fetch_data(private, strata):
         return pd.read_csv(href)
 
 
-def _cols_to_numeric(df, indicator_lst):
-    df[indicator_lst] = df[indicator_lst].apply(pd.to_numeric, errors='ignore')
+def _cols_to_numeric(df, var_lst):
+    df[var_lst] = df[var_lst].apply(pd.to_numeric, errors='ignore')
     return df
 
 
@@ -206,6 +211,20 @@ def _covar_create_fips_region(df, region):
     return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name))
 
 
+def _obs_filter_strata_totals(df, strata, strata_totals):
+    df = df.astype(dict(zip(strata, ['string'] * len(strata))))
+
+    if not strata_totals:
+        for stratum in strata:
+            if stratum == 'industry':
+                df.query(f'industry != "00"', inplace=True)
+            elif stratum == 'agegrp':
+                df.query(f'agegrp != "A00"', inplace=True)
+            else:
+                df.query(f'{stratum} != "0"', inplace=True)
+    return df
+
+
 def _obs_filter_groupby_msa(df, covars, region):
     if region != 'msa':
         return df
@@ -220,7 +239,7 @@ def _obs_filter_groupby_msa(df, covars, region):
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strata):
+def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strata, strata_totals):
     covars = ['time', 'fips', 'region', 'ownercode'] + strata
 
     if region != 'us':
@@ -237,6 +256,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
     return df. \
         pipe(_covar_create_fips_region, region). \
         pipe(_cols_to_numeric, indicator_lst). \
+        pipe(_obs_filter_strata_totals, strata, strata_totals). \
         pipe(_obs_filter_groupby_msa, covars, region) \
         [covars + indicator_lst].\
         pipe(_annualizer, annualize, covars).\
@@ -244,8 +264,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
         reset_index(drop=True)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', strata=[]):
-    # todo: I don't think MSA and state_list will work, because of the issue of MSAs crossing state lines. Is there a way around this?
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', strata=[], strata_totals=False):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -314,11 +333,13 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     strata: lst, str
         empty: default
-        'firmage': stratify by age
-        'firmsize': stratify by size
-        'sex': stratify by gender
-        'industry': stratify by industry, NAICS 2-digit
+        'firmage': stratify by firm age
+        'firmsize': stratify by firm size
+        'industry': stratify by firm industry, NAICS 2-digit
+        'sex': stratify by worker gender
+        'agegrp': stratify by worker age
     """
+
     if obs_level in ['us', 'state', 'county', 'msa']:
         region_lst = [obs_level]
     elif obs_level == 'all':
@@ -346,10 +367,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     strata = [strata] if type(strata) == str else strata
     private = True if any(x in ['firmage', 'firmsize'] for x in strata) else private
+    strata_totals = False if not strata else strata_totals
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata)
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata, strata_totals)
                 for region in region_lst
             ],
             axis=0
