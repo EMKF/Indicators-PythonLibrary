@@ -95,10 +95,24 @@ def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
 
 def kese_indicators():
     pass
-def neb_indicators():
-    pass
 
 
+def _neb_raw_data_merge(df_bfs, df_pep, df_bds, df_bfs_march):
+    return df_bfs. \
+        merge(df_pep.drop('region', 1), how='left', on=['fips', 'time']).\
+        merge(df_bds.drop('region', 1), how='left', on=['fips', 'time']).\
+        merge(df_bfs_march.drop('region', 1), how='left', on=['fips', 'time'])
+
+def neb_indicators(df_bfs, df_pep, df_bds, df_bfs_march):
+    return _neb_raw_data_merge(df_bfs, df_pep, df_bds, df_bfs_march). \
+        rename(columns={'avg_speed_annual': 'velocity'}). \
+        assign(
+            actualization=lambda x: x['bf'] / x['ba'],
+            bf_per_capita=lambda x: x['bf'] / x['population'] * 100,
+            newness=lambda x: x['bf_march_shift'] / x['firms'],
+        )
+
+# todo: generalize this
 def _mpj_raw_data_merge(df_qwi, df_pep, df_earnbeg_us):
     return df_qwi. \
         merge(df_pep[['fips', 'time', 'population']], how='left', on=['fips', 'time']).\

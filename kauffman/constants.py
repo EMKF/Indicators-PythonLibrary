@@ -107,6 +107,7 @@ all_fips_to_name = {
 }
 all_name_to_fips = dict(map(reversed, all_fips_to_name.items()))
 
+# monitor this link...it might not be updated
 qwi_start_to_end_year = pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
         [['State', 'Start Quarter', 'End Quarter']].\
         assign(
