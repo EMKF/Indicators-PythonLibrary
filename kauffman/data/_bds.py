@@ -22,29 +22,31 @@ def _county_fips(df):
         drop('state', 1)
 
 
-def _bds_data_create(variables, region):
-    url = f'https://api.census.gov/data/timeseries/bds?get={",".join(variables)}&for={region}:*&YEAR=*'
+def _bds_data_create(variables, region, industry_lst):
+    url = f'https://api.census.gov/data/timeseries/bds?get={",".join(variables + ["NAICS"])}&for={region}:*&YEAR=*'
     return pd.DataFrame(requests.get(url).json()).\
         pipe(_make_header).\
-        pipe(lambda x: _county_fips(x) if region == 'county' else x).\
-        rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time'}).\
+        pipe(lambda x: _county_fips(x) if region == 'county' else x). \
+        query(f'NAICS in {industry_lst}').\
+        rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time', 'NAICS': 'naics'}).\
         assign(
             fips=lambda x: '00' if region == 'us' else x['fips'],
-            region=lambda x: x['fips'].map(c.all_fips_to_name)
+            region=lambda x: x['fips'].map(c.all_fips_to_name),
+            industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))
         ). \
         astype({**{var: 'int' for var in variables}, **{'time': 'int'}}).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True) \
-        [['fips', 'region', 'time'] + variables]
+        [['fips', 'region', 'naics', 'industry', 'time'] + variables]
 
 
-def bds(series_lst, obs_level='all'):
+def bds(series_lst, obs_level='all', industry='00'):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
     Keyword arguments:
 
     series_lst-- lst of variables to pull; see https://www.census.gov/content/dam/Census/programs-surveys/business-dynamics-statistics/BDS_Codebook.pdf or https://api.census.gov/data/timeseries/bds/variables.html
-
+        # todo: NAICS is always used
         CBSA: Geography
         COUNTY: Geography
         DENOM: (DHS) denominator
@@ -79,7 +81,6 @@ def bds(series_lst, obs_level='all'):
         JOB_DESTRUCTION_RATE: Rate of jobs lost from contracting and closing establishments during the last 12 months
         JOB_DESTRUCTION_RATE_DEATHS: Rate of jobs lost from closing establishments during the last 12 months
         METRO: Establishments located in Metropolitan or Micropolitan Statistical Area indicator
-        NAICS: 2012 NAICS Code
         NATION: Geography
         NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
         NET_JOB_CREATION_RATE: Rate of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
@@ -91,8 +92,7 @@ def bds(series_lst, obs_level='all'):
         ucgid: Uniform Census Geography Identifier clause
         YEAR: Year
 
-
-            FAGE codes
+        FAGE codes
                 1	Total	0	All firm ages
             10	0 Years	1	Firms less than one year old
             20	1 Year	1	Firms one year old
@@ -116,6 +116,10 @@ def bds(series_lst, obs_level='all'):
             county:
             list of regions according to fips code
 
+    industry
+        00:
+        todo: other codes?
+
     first year available is 1978, last year is 2018
     """
     if type(obs_level) == list:
@@ -126,9 +130,17 @@ def bds(series_lst, obs_level='all'):
         else:
             region_lst = ['us', 'state', 'county']
 
+    if type(industry) == list:
+        industry_lst = industry
+    else:
+        if industry == 'all':
+            industry_lst = list(c.naics_code_to_abb(2).keys())
+        else:
+            industry_lst = [industry]
+
     return pd.concat(
             [
-                _bds_data_create(series_lst, region)
+                _bds_data_create(series_lst, region, industry_lst)
                 for region in region_lst
             ],
             axis=0

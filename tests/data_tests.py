@@ -15,14 +15,8 @@ def acs_test():
 
 
 def bds_test():
-    df = bds(['FIRM', 'FAGE', 'ESTAB', 'EAGE'], obs_level='us').\
-        query('time == 2018').\
-        query('FAGE not in [1, 150]')
-    print(df)
-
-    df[['FIRM', 'FAGE']].plot.bar(x='FAGE', y='FIRM')
-    import matplotlib.pyplot as plt
-    plt.show()
+    bds(['FIRM', 'FAGE'], obs_level='us').\
+        to_csv('/Users/thowe/Projects/data_science/mastering_shiny/indicator_app/bds_us.csv', index=False)
 
 
 def bed_test():
@@ -38,6 +32,9 @@ def bfs_test():
     # df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level='state')
     # df = bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level=['AZ'], annualize=True)
     # df = bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level=['US', 'AK'], march_shift=True)
+
+    print(bfs(['BA_BA'], obs_level='us', industry='all').head(50))
+    sys.exit()
 
     bfs(['BA_BA'], obs_level='us', industry='all').\
         to_csv('/Users/thowe/Projects/data_science/mastering_shiny/indicator_app/ba_us.csv', index=False)
@@ -101,5 +98,7 @@ if __name__ == '__main__':
     # qwi_test()
 
     # mpj_data_fetch()
+
+    # bfs_test()
 
     bds_test()

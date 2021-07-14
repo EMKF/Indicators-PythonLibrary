@@ -22,8 +22,9 @@ def _url(region, series, seasonally_adj, industry):
             adjusted = 'yes'
         else:
             adjusted = 'no'
+    bfs_industry = c.naics_to_bfsnaics[industry]
     return 'https://www.census.gov/econ/currentdata/export/csv?programCode=BFS&timeSlotType=12&startYear=2004&endYear=2021&' + \
-          f'categoryCode={industry}&' + \
+          f'categoryCode={bfs_industry}&' + \
           f'dataTypeCode={series}&' + \
           f'geoLevelCode={region}&' + \
           f'adjusted={adjusted}&' + \
@@ -84,7 +85,6 @@ def _df_series(series_lst, bf_helper_lst, region, seasonally_adj, industry):
 
 
 def _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize, march_shift):
-    # print(region, series_lst, industry_lst); sys.exit()
     if march_shift: annualize = True
 
     bf_helper_lst = []
@@ -95,7 +95,10 @@ def _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize
     return pd.concat(
             [
                 _df_series(series_lst, bf_helper_lst, region, seasonally_adj, industry).\
-                    assign(industry=industry)
+                    assign(
+                        naics=industry,
+                        industry=c.naics_code_to_abb(2)[industry],  # todo: we might want to hard code this dictionary into constants
+                    )
                 for industry in industry_lst
             ]
         ). \
@@ -106,11 +109,11 @@ def _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize
         ). \
         drop('Period', 1). \
         pipe(_annualize, annualize, bf_helper_lst, march_shift) \
-        [['fips', 'region', 'time', 'industry'] + series_lst]. \
+        [['fips', 'region', 'naics', 'industry', 'time'] + series_lst]. \
         reset_index(drop=True)
 
 
-def bfs(series_lst, obs_level='all', industry='Total', seasonally_adj=True, annualize=False, march_shift=False):
+def bfs(series_lst, obs_level='all', industry='00', seasonally_adj=True, annualize=False, march_shift=False):
     """ Create a pandas data frame with results from a BFS query. Column order: fips, region, time, series_lst.
 
 
@@ -136,28 +139,28 @@ def bfs(series_lst, obs_level='all', industry='Total', seasonally_adj=True, annu
     industry
         Variables:
             all: all industries and total
-            Total: Sum across all industries
-            NAICS11: Agriculture
-            NAICS21: Mining
-            NAICS22: Utilities
-            NAICS23: Construction
-            NAICSMNF: Manufacturing
-            NAICS42: Wholesale Trade
-            NAICSRET: Retail Trade
-            NAICSTW: Transportation and Warehousing
-            NAICS51: Information
-            NAICS52: Finance and Insurance
-            NAICS53: Real Estate
-            NAICS54: Professional Services
-            NAICS55: Management of Companies
-            NAICS56: Administrative and Support
-            NAICS61: Educational Services
-            NAICS62: Health Care and Social Assistance
-            NAICS71: Arts and Entertainment
-            NAICS72: Accomodation and Food Services
-            NAICS81: Other Services
-            NONAICS: No NAICS Assigned
-
+            '00': 'TOTAL',
+            # todo: fix the values
+            '11': 'NAICS11',
+            '21': 'NAICS21',
+            '22': 'NAICS22',
+            '23': 'NAICS23',
+            '31-33': 'NAICSMNF',
+            '42': 'NAICS42',
+            '44-45': 'NAICSRET',
+            '48-49': 'NAICSTW',
+            '51': 'NAICS51',
+            '52': 'NAICS52',
+            '53': 'NAICS53',
+            '54': 'NAICS54',
+            '55': 'NAICS55',
+            '56': 'NAICS56',
+            '61': 'NAICS61',
+            '62': 'NAICS62',
+            '71': 'NAICS71',
+            '72': 'NAICS72',
+            '81': 'NAICS81',
+            'ZZ': 'NONAICS'
 
     seasonally_adj-- Option to use the census adjustment for seasonality and smooth the time series. (True or False)
 
@@ -183,9 +186,9 @@ def bfs(series_lst, obs_level='all', industry='Total', seasonally_adj=True, annu
         industry_lst = industry
     else:
         if industry == 'all':
-            industry_lst = c.bfs_industries
+            industry_lst = list(c.naics_code_to_abb(2).keys())
         else:
-            industry_lst = [industry.upper()]
+            industry_lst = [industry]
 
     return pd.concat(
             [

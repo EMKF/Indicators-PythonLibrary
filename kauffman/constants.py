@@ -371,3 +371,36 @@ bfs_industries = [
     'NAICS53', 'NAICS54', 'NAICS55', 'NAICS56', 'NAICS61', 'NAICS62', 'NAICS71',
     'NAICS72', 'NAICS81', 'NAICSMNF', 'NAICSRET', 'NAICSTW', 'NONAICS', 'TOTAL'
 ]
+
+naics_to_bfsnaics = {
+    '00': 'TOTAL',
+    '11': 'NAICS11',
+    '21': 'NAICS21',
+    '22': 'NAICS22',
+    '23': 'NAICS23',
+    '31-33': 'NAICSMNF',
+    '42': 'NAICS42',
+    '44-45': 'NAICSRET',
+    '48-49': 'NAICSTW',
+    '51': 'NAICS51',
+    '52': 'NAICS52',
+    '53': 'NAICS53',
+    '54': 'NAICS54',
+    '55': 'NAICS55',
+    '56': 'NAICS56',
+    '61': 'NAICS61',
+    '62': 'NAICS62',
+    '71': 'NAICS71',
+    '72': 'NAICS72',
+    '81': 'NAICS81',
+    'ZZ': 'NONAICS'
+}
+
+# todo: at some point might want to include 3 and 4-digit naics codes
+def naics_code_to_abb(digits, pub_admin=False):
+    return pd.read_csv('https://www2.census.gov/programs-surveys/bds/technical-documentation/label_naics.csv').\
+        query(f'indlevel == {digits}').\
+        drop('indlevel', 1).\
+        query('name not in ["Public Administration", "Unclassified"]' if not pub_admin else '').\
+        set_index(['naics']).\
+        to_dict()['name']
