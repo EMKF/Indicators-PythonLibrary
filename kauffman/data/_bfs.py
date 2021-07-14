@@ -11,7 +11,10 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _url(region, series, seasonally_adj):
+
+
+# url = f'https://api.census.gov/data/timeseries/eits/bfs?get=data_type_code,seasonally_adj,category_code,cell_value,error_data&for=us:*&time={year}'
+def _url(region, series, seasonally_adj, industry):
     if 'DUR' in series:
         adjusted = 'no'
     else:
@@ -19,7 +22,8 @@ def _url(region, series, seasonally_adj):
             adjusted = 'yes'
         else:
             adjusted = 'no'
-    return 'https://www.census.gov/econ/currentdata/export/csv?programCode=BFS&timeSlotType=12&startYear=2004&endYear=2021&categoryCode=TOTAL&' + \
+    return 'https://www.census.gov/econ/currentdata/export/csv?programCode=BFS&timeSlotType=12&startYear=2004&endYear=2021&' + \
+          f'categoryCode={industry}&' + \
           f'dataTypeCode={series}&' + \
           f'geoLevelCode={region}&' + \
           f'adjusted={adjusted}&' + \
@@ -70,7 +74,17 @@ def _annualize(df, annualize, bf_helper_lst, march_shift):
     return df
 
 
-def _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift):
+def _df_series(series_lst, bf_helper_lst, region, seasonally_adj, industry):
+    df = pd.DataFrame(columns=['Period'])
+    for series in series_lst + bf_helper_lst:
+        df = pd.read_csv(_url(region, series, seasonally_adj, industry), skiprows=7). \
+            rename(columns={'Value': series}). \
+            merge(df, how='outer', on='Period')
+    return df
+
+
+def _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize, march_shift):
+    # print(region, series_lst, industry_lst); sys.exit()
     if march_shift: annualize = True
 
     bf_helper_lst = []
@@ -78,25 +92,25 @@ def _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift)
         if ('BF_DUR4Q' in series_lst) and ('BF_BF4Q' not in series_lst): bf_helper_lst.append('BF_BF4Q')
         if ('BF_DUR8Q' in series_lst) and ('BF_BF8Q' not in series_lst): bf_helper_lst.append('BF_BF8Q')
 
-    df = pd.DataFrame(columns=['Period'])
-    for series in series_lst + bf_helper_lst:
-        df = pd.read_csv(_url(region, series, seasonally_adj), skiprows=7).\
-            rename(columns={'Value': series}).\
-            merge(df, how='outer', on='Period')
-
-    return df. \
+    return pd.concat(
+            [
+                _df_series(series_lst, bf_helper_lst, region, seasonally_adj, industry).\
+                    assign(industry=industry)
+                for industry in industry_lst
+            ]
+        ). \
         assign(
-            time=pd.to_datetime(df['Period'], format='%b-%Y'),
+            time=lambda x: pd.to_datetime(x['Period'], format='%b-%Y'),
             region=c.state_abb_to_name[region],
             fips=lambda x: c.state_abb_to_fips[region],
         ). \
         drop('Period', 1). \
         pipe(_annualize, annualize, bf_helper_lst, march_shift) \
-        [['fips', 'region', 'time'] + series_lst]. \
+        [['fips', 'region', 'time', 'industry'] + series_lst]. \
         reset_index(drop=True)
 
 
-def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march_shift=False):
+def bfs(series_lst, obs_level='all', industry='Total', seasonally_adj=True, annualize=False, march_shift=False):
     """ Create a pandas data frame with results from a BFS query. Column order: fips, region, time, series_lst.
 
 
@@ -119,6 +133,31 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
 
     obs_level-- The level to pull observations for. ('state', 'us', or 'all')
 
+    industry
+        Variables:
+            all: all industries and total
+            Total: Sum across all industries
+            NAICS11: Agriculture
+            NAICS21: Mining
+            NAICS22: Utilities
+            NAICS23: Construction
+            NAICSMNF: Manufacturing
+            NAICS42: Wholesale Trade
+            NAICSRET: Retail Trade
+            NAICSTW: Transportation and Warehousing
+            NAICS51: Information
+            NAICS52: Finance and Insurance
+            NAICS53: Real Estate
+            NAICS54: Professional Services
+            NAICS55: Management of Companies
+            NAICS56: Administrative and Support
+            NAICS61: Educational Services
+            NAICS62: Health Care and Social Assistance
+            NAICS71: Arts and Entertainment
+            NAICS72: Accomodation and Food Services
+            NAICS81: Other Services
+            NONAICS: No NAICS Assigned
+
 
     seasonally_adj-- Option to use the census adjustment for seasonality and smooth the time series. (True or False)
 
@@ -140,9 +179,17 @@ def bfs(series_lst, obs_level='all', seasonally_adj=True, annualize=False, march
         else:
             region_lst = ['US'] + c.states
 
+    if type(industry) == list:
+        industry_lst = industry
+    else:
+        if industry == 'all':
+            industry_lst = c.bfs_industries
+        else:
+            industry_lst = [industry.upper()]
+
     return pd.concat(
             [
-                _bfs_data_create(region, series_lst, seasonally_adj, annualize, march_shift)
+                _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize, march_shift)
                 for region in region_lst
             ],
             axis=0

@@ -364,3 +364,9 @@ recession_dates = pd.read_html('https://www.nber.org/research/data/us-business-c
     ) \
     [['peak_time', 'trough_time']].\
     values
+
+bfs_industries = [
+    'NAICS11', 'NAICS21', 'NAICS22', 'NAICS23', 'NAICS42', 'NAICS51', 'NAICS52',
+    'NAICS53', 'NAICS54', 'NAICS55', 'NAICS56', 'NAICS61', 'NAICS62', 'NAICS71',
+    'NAICS72', 'NAICS81', 'NAICSMNF', 'NAICSRET', 'NAICSTW', 'NONAICS', 'TOTAL'
+]
