@@ -34,10 +34,13 @@ def bed_test():
 
 
 def bfs_test():
-    df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
+    # df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level=['AZ'])
     # df = bfs(['BA_BA', 'BF_SBF8Q'], obs_level='state')
     # df = bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level=['AZ'], annualize=True)
     # df = bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level=['US', 'AK'], march_shift=True)
+
+    bfs(['BA_BA'], obs_level='us', industry='all').\
+        to_csv('/Users/thowe/Projects/data_science/mastering_shiny/indicator_app/ba_us.csv', index=False)
 
 
 def pep_test():
