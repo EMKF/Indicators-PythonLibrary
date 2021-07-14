@@ -30,7 +30,7 @@ def _bds_data_create(variables, region):
         rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time'}).\
         assign(
             fips=lambda x: '00' if region == 'us' else x['fips'],
-            region=lambda x: x['fips'].map(c.all_fips_name_dic)
+            region=lambda x: x['fips'].map(c.all_fips_to_name)
         ). \
         astype({**{var: 'int' for var in variables}, **{'time': 'int'}}).\
         sort_values(['fips', 'time']).\

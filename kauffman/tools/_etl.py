@@ -104,6 +104,7 @@ def _neb_raw_data_merge(df_bfs, df_pep, df_bds, df_bfs_march):
         merge(df_bfs_march.drop('region', 1), how='left', on=['fips', 'time'])
 
 def neb_indicators(df_bfs, df_pep, df_bds, df_bfs_march):
+    # todo: velocity?
     return _neb_raw_data_merge(df_bfs, df_pep, df_bds, df_bfs_march). \
         rename(columns={'avg_speed_annual': 'velocity'}). \
         assign(
@@ -153,3 +154,33 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
         ).\
         pipe(_missing_obs).\
         drop(['emp_mid', 'within_count', 'max_count', 'total_emp'], 1)
+
+
+
+
+# all of the features of a data set
+
+# what is the purpose of the indicators website?
+# What is the purpose of the indicators?
+# What is a good indicator and what is not?
+#   * give base rates for judgements
+#   * not misleading causally when comparing across covariates or time
+#   * could be used as determinants in decision making
+
+# how should we use the indicators website?
+
+
+
+# what do we want it to do?
+#   compare measures of eship
+#       * across regions
+#           * point in time
+#           * multi-time
+#       * across time
+#       * across covariate categories
+#       * across measures
+
+# what do we want it not to do?
+#   load in other data
+#   this shouldn't be a knock-off of BI software
+#   display tablular data

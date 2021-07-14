@@ -15,7 +15,14 @@ def acs_test():
 
 
 def bds_test():
-    df = bds(['FIRM', 'ESTAB'], obs_level='all')
+    df = bds(['FIRM', 'FAGE', 'ESTAB', 'EAGE'], obs_level='us').\
+        query('time == 2018').\
+        query('FAGE not in [1, 150]')
+    print(df)
+
+    df[['FIRM', 'FAGE']].plot.bar(x='FAGE', y='FIRM')
+    import matplotlib.pyplot as plt
+    plt.show()
 
 
 def bed_test():
@@ -89,4 +96,7 @@ def mpj_data_fetch():
 
 if __name__ == '__main__':
     # qwi_test()
-    mpj_data_fetch()
+
+    # mpj_data_fetch()
+
+    bds_test()
