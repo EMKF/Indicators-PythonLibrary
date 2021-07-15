@@ -13,18 +13,36 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _build_region_section(region):
-    if region in ['us', 'state', 'county']:
+def _build_region_section(region, state_lst):
+    state_section = ','.join(state_lst)
+    
+    if region == 'us':
         return f'&for={region}:*'
+    elif region == 'state':
+        return f'&for={region}:{state_section}'
+    elif region == 'county':
+        return f'&for={region}:*&in=state:{state_section}'
     else:
-        return '&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*'
+        msa_list = []
+        for state in state_lst:
+            try:
+                msa_list.extend(c.state_to_msa_fips[state])
+            except:
+                pass
 
+        msa_section = ','.join(msa_list)
 
-def _fetch_data(year, var_set, region):
+        return (
+            '&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:'
+            +  msa_section
+        )
+
+def _fetch_data(year, var_set, region, state_lst):
     var_lst = ','.join(var_set)
     base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}'
-    url = base_url + _build_region_section(region)
+    url = base_url + _build_region_section(region, state_lst)
     r = requests.get(url)
+    
     return pd.DataFrame(r.json())
 
 
@@ -47,10 +65,10 @@ def _covar_create_fips_region(df, region):
     return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name)).drop(columns=region)
 
 
-def _acs_data_create(series_lst, region):
+def _acs_data_create(series_lst, region, state_lst):
     return pd.concat(
         [
-            _fetch_data(year, series_lst, region). \
+            _fetch_data(year, series_lst, region, state_lst). \
                 pipe(_make_header). \
                 rename(columns=c.acs_code_to_var). \
                 rename(columns={'metropolitan statistical area/micropolitan statistical area':'msa'}).\
@@ -63,7 +81,7 @@ def _acs_data_create(series_lst, region):
     )
 
 
-def acs(series_lst='all', obs_level='all'):
+def acs(series_lst='all', obs_level='all', state_lst = 'all'):
     """
         https://api.census.gov/data/2019/acs/acs1/variables.html
 
@@ -108,15 +126,18 @@ def acs(series_lst='all', obs_level='all'):
         else:
             region_lst = ['us', 'state', 'msa', 'county']
 
+    if state_lst == 'all':
+        state_lst = [c.state_abb_to_fips[s] for s in c.states]
+    elif type(state_lst) == list:
+        if obs_level != 'msa':
+            state_lst = [c.state_abb_to_fips[s] for s in state_lst]
+        else:
+            state_lst = [c.state_abb_to_fips[s] for s in c.states]
+
     return pd.concat(
             [
-                _acs_data_create(series_lst, region)
+                _acs_data_create(series_lst, region, state_lst)
                 for region in region_lst
             ],
             axis=0
         )
-    
-
-# TODO:
-    # Figure out how to handle region column at the end (look at qwi)
-    # Update docstring
