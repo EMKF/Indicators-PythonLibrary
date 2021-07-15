@@ -65,6 +65,10 @@ def _covar_create_fips_region(df, region):
     return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name)).drop(columns=region)
 
 
+def index_to_front(df):
+    index_cols = ['fips', 'region', 'year']
+    return df[index_cols + [col for col in df.columns if col not in index_cols]]
+
 def _acs_data_create(series_lst, region, state_lst):
     return pd.concat(
         [
@@ -73,8 +77,8 @@ def _acs_data_create(series_lst, region, state_lst):
                 rename(columns=c.acs_code_to_var). \
                 rename(columns={'metropolitan statistical area/micropolitan statistical area':'msa'}).\
                 pipe(_covar_create_fips_region, region). \
-                reset_index(drop=True). \
-                assign(year=year)
+                assign(year=year). \
+                pipe(index_to_front)
             for year in range(2005, 2019 + 1)
         ],
         axis=0
@@ -133,6 +137,8 @@ def acs(series_lst='all', obs_level='all', state_lst = 'all'):
             state_lst = [c.state_abb_to_fips[s] for s in state_lst]
         else:
             state_lst = [c.state_abb_to_fips[s] for s in c.states]
+    else:
+        state_lst = [c.state_abb_to_fips[state_lst]]
 
     return pd.concat(
             [
@@ -140,4 +146,4 @@ def acs(series_lst='all', obs_level='all', state_lst = 'all'):
                 for region in region_lst
             ],
             axis=0
-        )
+        ).reset_index(drop=True)
