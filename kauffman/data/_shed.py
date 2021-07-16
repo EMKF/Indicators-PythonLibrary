@@ -18,14 +18,16 @@ def _col_names_lowercase(df):
 
 
 def shed_sample_to_pop_weighter(df, year):
-    if year == 2014:
-        pop_2014 = int(pep(obs_level='us').query('time == 2014')['population'])
-        df['pop_weight'] = df['weight3'] / df['weight3'].sum() * pop_2014
+    year_to_weight = {2013:'weight', 2014:'weight3'}
+    if year in [2013, 2014]:
+        weight = year_to_weight[year]
+        pop = int(pep(obs_level='us').query(f'time == {year}')['population'])
+        df['pop_weight'] = df[weight] / df[weight].sum() * pop
     return df
 
 
-def assign_index(df, year):
-    if year == 2014:
+def format_index(df, year):
+    if year in range(2013, 2015):
         df['ppstaten_adj'] = df['ppstaten'].map(c.state_shed_codes_to_abb)
     elif year in range(2015, 2018):
         df['ppstaten_adj'] = df['ppstaten'].apply(lambda x: x.upper())
@@ -40,12 +42,10 @@ def assign_index(df, year):
 
 
 def _fetch_shed_data(series_lst, year, weight_name):
-    print("FETCHING KATIE'S VERSION OF DATA")
-
     return read_zip(c.shed_dic[year]['zip_url'], c.shed_dic[year]['filename']). \
         pipe(_col_names_lowercase). \
         pipe(shed_sample_to_pop_weighter, year). \
-        pipe(assign_index, year). \
+        pipe(format_index, year). \
         rename(
             columns={
                 "caseid": "id",
@@ -58,12 +58,13 @@ def _fetch_shed_data(series_lst, year, weight_name):
                 }
         ). \
         dropna(subset=['pop_weight']) \
-        [['pop_weight', 'fips', 'region', 'time'] + series_lst]
+        [['fips', 'region', 'time', 'pop_weight'] + series_lst]
 
 
 def _shed_data_create(series_lst):
     return pd.concat(
         [
+            _fetch_shed_data(series_lst, 2013, 'pop_weight'),
             _fetch_shed_data(series_lst, 2014, 'pop_weight'),
             _fetch_shed_data(series_lst, 2015, "weight3b"),
             _fetch_shed_data(series_lst, 2016, "weight3b"),
@@ -120,4 +121,4 @@ def shed(series_lst, obs_level='individual'):
     #         obs_level = 'us'
 
     # return _shed_data_create(obs_level, series_lst, strata)
-    return _shed_data_create(obs_level, series_lst)
+    return _shed_data_create(series_lst)
