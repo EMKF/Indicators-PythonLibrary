@@ -12,6 +12,13 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 def acs_test():
     df = acs(['B24092_004E', 'B24092_013E'])
+    df = acs(series_lst=['B24081_001E'], obs_level='msa', state_lst='all')
+    df = acs(series_lst='all', obs_level=['state', 'county'])
+    df = acs(obs_level='county', state_lst=['CO'])
+    df = acs(obs_level='state', state_lst=['CO', 'UT'])
+    df = acs(obs_level='msa', state_lst=['HI', 'VT'])
+    df = acs(obs_level='msa')
+    df = acs(obs_level='us')   
 
 
 def bds_test():
