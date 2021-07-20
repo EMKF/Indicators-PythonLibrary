@@ -1,5 +1,4 @@
 import pandas as pd
-from ._pep import pep
 import kauffman.constants as c
 from kauffman.tools._etl import read_zip
 
@@ -17,34 +16,32 @@ def _col_names_lowercase(df):
     return df
 
 
-def shed_sample_to_pop_weighter(df, year):
-    year_to_weight = {2013:'weight', 2014:'weight3'}
+def sample_to_pop_weight(df, year):
     if year in [2013, 2014]:
-        weight = year_to_weight[year]
-        pop = int(pep(obs_level='us').query(f'time == {year}')['population'])
+        weight = c.shed_dic[year]['survey_weight_name']
+        pop = c.shed_dic[year]['pop']
         df['pop_weight'] = df[weight] / df[weight].sum() * pop
     return df
 
 
 def format_index(df, year):
     if year in range(2013, 2015):
-        df['ppstaten_adj'] = df['ppstaten'].map(c.state_shed_codes_to_abb)
-    elif year in range(2015, 2018):
-        df['ppstaten_adj'] = df['ppstaten'].apply(lambda x: x.upper())
-    elif year in range(2018, 2021):
-        df['ppstaten_adj'] = df['ppstaten']
+        df['ppstaten'] = df['ppstaten'].map(c.state_shed_codes_to_abb)
 
     return df.assign(
         time=year,
-        region=lambda x: x['ppstaten_adj'].map(c.state_abb_to_name),
-        fips=lambda x: x['ppstaten_adj'].map(c.state_abb_to_fips)
+        ppstaten=lambda x: x['ppstaten'].apply(lambda x: x.upper()),
+        region=lambda x: x['ppstaten'].map(c.state_abb_to_name),
+        fips=lambda x: x['ppstaten'].map(c.state_abb_to_fips)
         )
 
 
-def _fetch_shed_data(series_lst, year, weight_name):
+def _fetch_shed_data(series_lst, year):
+    weight_name = c.shed_dic[year]['survey_weight_name']
+
     return read_zip(c.shed_dic[year]['zip_url'], c.shed_dic[year]['filename']). \
         pipe(_col_names_lowercase). \
-        pipe(shed_sample_to_pop_weighter, year). \
+        pipe(sample_to_pop_weight, year). \
         pipe(format_index, year). \
         rename(
             columns={
@@ -54,6 +51,7 @@ def _fetch_shed_data(series_lst, year, weight_name):
                 "ppage": "age",
                 "ppgender": "gender",
                 "b2": "man_financially",
+                'xyear':'year',
                 weight_name : "pop_weight"
                 }
         ). \
@@ -64,14 +62,8 @@ def _fetch_shed_data(series_lst, year, weight_name):
 def _shed_data_create(series_lst):
     return pd.concat(
         [
-            _fetch_shed_data(series_lst, 2013, 'pop_weight'),
-            _fetch_shed_data(series_lst, 2014, 'pop_weight'),
-            _fetch_shed_data(series_lst, 2015, "weight3b"),
-            _fetch_shed_data(series_lst, 2016, "weight3b"),
-            _fetch_shed_data(series_lst, 2017, "weight3b"),
-            _fetch_shed_data(series_lst, 2018, "weight2b"),
-            _fetch_shed_data(series_lst, 2019, "weight_pop"),
-            _fetch_shed_data(series_lst, 2020, "weight_pop"),
+            _fetch_shed_data(series_lst, year)
+            for year in range(2013, 2021)
         ]
     ).reset_index(drop=True)
     
@@ -111,7 +103,7 @@ def shed(series_lst, obs_level='individual'):
             are managing financially these days?'
 
     Returns
-    -------
+    ------- 
     DataFrame
         Output of SHED query.
     """

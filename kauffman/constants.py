@@ -287,28 +287,34 @@ shed_dic = {
         'filename': 'SHED_public_use_data_2013.csv',
         'col_name_dic': {
             'v1_2013': 'v1_final',  # todo: at some point in the future there might be variables to rename...use as rename(c.shed_dic[year]['col_name_dic'])
-        }
+        },
+        'pop': 236011131, # March CPS est. for noninst. civilian adults
+        'survey_weight_name': 'weight'
     },
     2014: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2014_(CSV).zip',
         'filename': 'SHED_public_use_data_2014_update (occupation industry).csv',
         'col_name_dic': {
             'v1_2014': 'v1_final',
-        }
+        },
+        'pop': 238363771, # March CPS est. for noninstitutionalized civilian adults
+        'survey_weight_name': 'weight3'
     },
     2015: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2015_(CSV).zip',
         'filename': 'SHED 2015 public use.csv',
         'col_name_dic': {
             'v1_2014': 'v1_final',
-        }
+        },
+        'survey_weight_name': 'weight3b'
     },
     2016: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2016_(CSV).zip',
         'filename': 'SHED_2016_Public_Data.csv',
         'col_name_dic': {
             'v1_2014': 'v1_final',
-        }
+        },
+        'survey_weight_name': 'weight3b'
     },
     2017: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2017_(CSV).zip',
@@ -318,7 +324,8 @@ shed_dic = {
             'v2_2014': 'v2_final',
             'v3_2014': 'v3_final',
             'v4_2014': 'v4_final',
-        }
+        },
+        'survey_weight_name': 'weight3b'
     },
     2018: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip',
@@ -328,7 +335,8 @@ shed_dic = {
             'v2_2014': 'v2_final',
             'v3_2014': 'v3_final',
             'v4_2014': 'v4_final',
-        }
+        },
+        'survey_weight_name': 'weight2b'
     },
     2019: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2019_(CSV).zip',
@@ -338,7 +346,8 @@ shed_dic = {
             'v2_2014': 'v2_final',
             'v3_2014': 'v3_final',
             'v4_2014': 'v4_final',
-        }
+        },
+        'survey_weight_name': 'weight_pop'
     },
     2020: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2020_(CSV).zip',
@@ -348,7 +357,8 @@ shed_dic = {
             'v2_2014': 'v2_final',
             'v3_2014': 'v3_final',
             'v4_2014': 'v4_final',
-        }
+        },
+        'survey_weight_name': 'weight_pop'
     },
 }
 
