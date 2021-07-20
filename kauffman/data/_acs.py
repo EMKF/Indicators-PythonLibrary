@@ -1,5 +1,3 @@
-import sys
-import joblib
 import requests
 import pandas as pd
 from kauffman import constants as c
@@ -116,6 +114,18 @@ def acs(series_lst='all', obs_level='all', state_lst = 'all'):
         'B24092_016E': 'state_government_f',
         'B24092_017E': 'federal_government_f',
         'B24092_018E': 'self_employed_not_inc_f'
+
+    obs_level: str or list
+        'state': resident population of state from 2005 through 2019
+        'msa': resident population of msa from 2005 through 2019
+        'county': resident population of county from 2005 through 2019
+        'us': resident population in the United States from 2005 through 2019
+        'all': default, returns data on all of the above observation levels
+
+    state_lst = str or list
+        'all': default, includes all US states and D.C.
+        otherwise: a state or list of states, identified using postal code abbreviations
+
     """
     # Handle series_lst
     if series_lst == 'all':
@@ -137,8 +147,6 @@ def acs(series_lst='all', obs_level='all', state_lst = 'all'):
             state_lst = [c.state_abb_to_fips[s] for s in state_lst]
         else:
             state_lst = [c.state_abb_to_fips[s] for s in c.states]
-    else:
-        state_lst = [c.state_abb_to_fips[state_lst]]
 
     return pd.concat(
             [
