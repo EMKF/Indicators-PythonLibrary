@@ -15,7 +15,10 @@ def acs_test():
 
 
 def bds_test():
-    bds(['FIRM', 'FAGE'], obs_level='us').\
+    print(bds(['FIRM', 'FAGE'], obs_level='us', industry='11'))
+    sys.exit()
+
+    bds(['FIRM', 'FAGE'], obs_level='us', industry='all').\
         to_csv('/Users/thowe/Projects/data_science/mastering_shiny/indicator_app/bds_us.csv', index=False)
 
 
@@ -33,25 +36,31 @@ def bfs_test():
     # df = bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level=['AZ'], annualize=True)
     # df = bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level=['US', 'AK'], march_shift=True)
 
-    print(bfs(['BA_BA'], obs_level='us', industry='all').head(50))
-    sys.exit()
+    # print(bfs(['BA_BA'], obs_level='us', industry='all').head(50))
+    # sys.exit()
 
     bfs(['BA_BA'], obs_level='us', industry='all').\
-        to_csv('/Users/thowe/Projects/data_science/mastering_shiny/indicator_app/ba_us.csv', index=False)
+        to_csv('/Users/thowe/Projects/data_science/mastering_shiny/indicator_app/bfs_us.csv', index=False)
 
 
 def pep_test():
-    df = pep(obs_level='us')
+    pep(obs_level='us').\
+        to_csv('/Users/thowe/Projects/indicator_shiny_app/pep_us.csv', index=False)
+
     # df = pep(obs_level='state')
     # df = pep(obs_level='msa')
     # df = pep(obs_level='county')
 
 
 def qwi_test():
+    # strata, msa
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['06'], private=True, strata=['firmage'], annualize=True)
+    print(df)
+
     # strata, state
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['firmsize', 'industry'], annualize=True)
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['firmage', 'industry'], annualize=True)
-    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['sex', 'agegrp'], annualize=True)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['sex', 'agegrp'], annualize=True)
 
     # strata, us
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmsize', 'industry'], annualize=True)
@@ -67,6 +76,9 @@ def qwi_test():
     # df = qwi(obs_level='state')
     # df = qwi(obs_level='msa')
     # df = qwi(obs_level='county')
+
+    # qwi(['Emp'], obs_level='us', strata=['firmage', 'industry']). \
+    #     to_csv('/Users/thowe/Projects/indicator_shiny_app/qwi_us.csv', index=False)
 
 
 def shed_test():
@@ -100,5 +112,6 @@ if __name__ == '__main__':
     # mpj_data_fetch()
 
     # bfs_test()
-
-    bds_test()
+    # bds_test()
+    # pep_test()
+    qwi_test()
