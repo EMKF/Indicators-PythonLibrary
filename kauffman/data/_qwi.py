@@ -90,18 +90,7 @@ def _fetch_from_url(url):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_lst, strata):
-    return pd.concat(
-        [
-            _fetch_from_url(
-                _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata),
-            )
-            for syq in _state_year_lst(state_lst)
-        ]
-    )
-
-
-def _us_fetch_data(private, strata):
+def _qwi_ui_fetch_data(private, strata, region='us'):
     pause1 = 1
     pause2 = 3
 
@@ -112,6 +101,13 @@ def _us_fetch_data(private, strata):
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
+    if region == 'LA':
+        driver.find_elements_by_link_text('California')[0].click()
+        time.sleep(pause2)
+        driver.find_element_by_xpath('//*[@title="Click to select Micro/Metropolitan Areas"]').click()
+        time.sleep(pause2)
+        driver.find_element_by_xpath('//*[@title="Click to select 06 California"]').click()
+        driver.find_element_by_xpath('//*[@title="Click to select 0631080 Los Angeles-Long Beach-Anaheim, CA"]').click()
     time.sleep(pause1)
     driver.find_element_by_id('continue_with_selection_label').click()
 
@@ -166,6 +162,37 @@ def _us_fetch_data(private, strata):
         return pd.read_csv(href)
 
 
+def _us_fetch_data(private, strata):
+    return _qwi_ui_fetch_data(private, strata)
+
+
+def _LA_fetch_data(strata):
+    df = _qwi_ui_fetch_data(True, strata, region='LA'). \
+            assign(
+                time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
+                HirAEndRepl=np.nan,
+                HirAEndReplr=np.nan,
+                state='06'
+            ). \
+            rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
+    df['metropolitan statistical area/micropolitan statistical area'] = '31080'
+    return df
+
+
+def _county_msa_state_fetch_data(obs_level, state_lst, strata):
+    df = pd.concat(
+        [
+            _fetch_from_url(_build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata))
+            for syq in _state_year_lst(state_lst)
+        ]
+    )
+
+    if ('06' in state_lst) and obs_level == 'msa':
+        df = df.append(_LA_fetch_data(strata))
+
+    return df
+
+
 def _cols_to_numeric(df, var_lst):
     df[var_lst] = df[var_lst].apply(pd.to_numeric, errors='ignore')
     return df
@@ -213,7 +240,6 @@ def _covar_create_fips_region(df, region):
 
 def _obs_filter_strata_totals(df, strata, strata_totals):
     df = df.astype(dict(zip(strata, ['string'] * len(strata))))
-
     if not strata_totals:
         for stratum in strata:
             if stratum == 'industry':
@@ -242,9 +268,7 @@ def _obs_filter_groupby_msa(df, covars, region):
 def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strata, strata_totals):
     covars = ['time', 'fips', 'region', 'ownercode'] + strata
 
-    if region != 'us':
-        df = _county_msa_state_fetch_data(region, state_lst, strata)
-    else:  # region == 'us'
+    if region == 'us':
         df = _us_fetch_data(private, strata). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
@@ -252,9 +276,14 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
                 HirAEndReplr=np.nan
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
+    else:
+        df = _county_msa_state_fetch_data(region, state_lst, strata)
+
+    # print(df.head())
+    # print(df.tail())
 
     return df. \
-        pipe(_covar_create_fips_region, region). \
+        pipe(_covar_create_fips_region, region).\
         pipe(_cols_to_numeric, indicator_lst). \
         pipe(_obs_filter_strata_totals, strata, strata_totals). \
         pipe(_obs_filter_groupby_msa, covars, region) \
@@ -347,6 +376,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     else:
         print('Invalid input to obs_level.')
 
+    state_list = [c.state_abb_to_fips[s] for s in state_list]
     if state_list == 'all':
         state_list = [c.state_abb_to_fips[s] for s in c.states]
     elif type(state_list) == list:
@@ -376,3 +406,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
             ],
             axis=0
         )
+
+
+if __name__ == '__main__':
+    df = _qwi_data_create(c.qwi_outcomes, 'msa', ['06'], True, False, ['firmsize', 'industry'], False)
+    print(df.head(100))
+    print(df.tail(100))
+    # _county_msa_state_fetch_data('msa', ['06'], strata=['firmsize', 'industry'])
+    # _LA_fetch_data(['firmsize', 'industry'])
