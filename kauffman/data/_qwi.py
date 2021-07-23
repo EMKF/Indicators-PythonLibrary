@@ -1,10 +1,3 @@
-"""
-https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
-"""
-
-# import ssl
-# ssl._create_default_https_context = ssl._create_unverified_context  # what is this? I forgot
-
 import os
 import sys
 import time
@@ -13,6 +6,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 from kauffman import constants as c
+from ..tools._etl import state_msa_cross_walk
 from webdriver_manager.chrome import ChromeDriverManager
 
 from selenium import webdriver
@@ -20,6 +14,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+"""
+https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
+"""
 
 
 pd.set_option('max_columns', 1000)
@@ -32,9 +30,10 @@ pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 def _state_year_lst(state_lst):
     out_lst = []
+    df = c.qwi_start_to_end_year()
     for state in state_lst:
-        start_year = int(c.qwi_start_to_end_year[state]['start_year'])
-        end_year = int(c.qwi_start_to_end_year[state]['end_year'])
+        start_year = int(df[state]['start_year'])
+        end_year = int(df[state]['end_year'])
         out_lst += list(product([state], range(start_year, end_year + 1)))
     return out_lst
 
@@ -379,11 +378,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     state_list = [c.state_abb_to_fips[s] for s in state_list]
     if state_list == 'all':
         state_list = [c.state_abb_to_fips[s] for s in c.states]
-    elif type(state_list) == list:
-        if obs_level != 'msa':
-            state_list = [c.state_abb_to_fips[s] for s in state_list]
-        else:
-            state_list = [c.state_abb_to_fips[s] for s in c.states]
+    elif isinstance(state_list, list) and obs_level == 'msa':
+        state_list = state_msa_cross_walk(state_list, 'metro')['fips_state'].unique().tolist()
 
     if indicator_lst == 'all':
         indicator_lst = c.qwi_outcomes

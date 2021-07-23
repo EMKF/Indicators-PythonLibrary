@@ -44,10 +44,14 @@ def pep_test():
 
 
 def qwi_test():
+    # strata, msa
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, strata=['firmage'], annualize=True)
+    print(df.head(1000))
+
     # strata, state
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['firmsize', 'industry'], annualize=True)
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['firmage', 'industry'], annualize=True)
-    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['sex', 'agegrp'], annualize=True)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['sex', 'agegrp'], annualize=True)
 
     # strata, us
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmsize', 'industry'], annualize=True)
@@ -94,4 +98,5 @@ if __name__ == '__main__':
     # qwi_test()
     # mpj_data_fetch()
 
-    bfs_test()
+    # bfs_test()
+    qwi_test()
