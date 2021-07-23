@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 import kauffman.constants as c
 from kauffman.data import qwi
-from kauffman.tools import mpj_indicators, county_msa_cross_walk, read_zip
+from kauffman.tools import mpj_indicators, county_msa_cross_walk, read_zip, state_msa_cross_walk
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -12,10 +12,15 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def cw():
+def county_msa_cw():
     df = qwi(['Emp'], obs_level='county', state_list=['MO'], annualize=False).\
         pipe(county_msa_cross_walk, 'fips')
     print(df.head(10))
+
+
+def state_msa_cw():
+    df = state_msa_cross_walk(['29'])
+    print(df)
 
 
 def zip():
@@ -42,4 +47,6 @@ def mpj_industry():
 
 
 if __name__ == '__main__':
-    mpj_industry()
+    # mpj_industry()
+    # county_msa_cw()
+    state_msa_cw()

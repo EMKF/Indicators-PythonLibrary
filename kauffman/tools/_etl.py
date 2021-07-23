@@ -92,6 +92,50 @@ def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
 # todo: I can't just groupby and sum wrt cw(), since there might be missing county values
 
 
+def state_msa_cross_walk(state_lst, area_type='metro'):
+    """
+    state_lst: list of states
+
+    area_type: str
+        metro: default, metro areas
+        micro: all micro areas
+        all: all micro and metro areas
+
+    output: dataframe with county and msa fips
+    """
+    if area_type == 'metro':
+        area_type = 'Metropolitan Statistical Area'
+    elif area_type == 'micro':
+        area_type = 'Micropolitan Statistical Area'
+
+    df_cw = pd.read_excel(
+            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+            header=2,
+            skipfooter=4,
+            usecols=[0, 3, 4, 9, 10],
+            converters={
+                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
+                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
+            }
+        ).\
+        rename(
+            columns={
+                'FIPS State Code': 'fips_state',
+                'FIPS County Code': 'county_fips',
+                'Metropolitan/Micropolitan Statistical Area': 'area',
+                'CBSA Code': 'fips_msa'
+            }
+        ).\
+        pipe(lambda x: x if area_type == 'all' else x.query(f'area == "{area_type}"'))
+
+    return df_cw.\
+        query(f'fips_state in {state_lst}').\
+        drop_duplicates('fips_msa') \
+        [['fips_msa']].\
+        merge(df_cw, how='left', on='fips_msa').\
+        assign(fips_county=lambda x: x['fips_state'] + x['county_fips']).\
+        drop(['CBSA Title', 'area', 'county_fips'], 1)
+
 
 def kese_indicators():
     pass
