@@ -108,7 +108,8 @@ all_fips_to_name = {
 all_name_to_fips = dict(map(reversed, all_fips_to_name.items()))
 
 # monitor this link...it might not be updated
-qwi_start_to_end_year = pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
+def qwi_start_to_end_year():
+    return pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
         [['State', 'Start Quarter', 'End Quarter']].\
         assign(
             start_year=lambda x: x['Start Quarter'].str.split().str[0],
@@ -280,8 +281,26 @@ acs_code_to_var = {
 
 
 # todo: new constants to vet
+shed_outcomes = [
+    'work_status', 'man_financially', 'rainy_day_saving', 'emergency_covered', 'applied_credit',
+    'has_bank_account', 'rent', 'better_off_financially', 'tot_income', 'income_variance',
+    'own_business_retirement', 'schedule_variance', 'num_jobs', 'self_emp_income', 'code name',
+    'age', 'race_ethnicity', 'gender', 'highest_educ', 'occupation'
+]
 
 shed_dic = {
+    'survey_to_col_name_const': {
+        "caseid": "id",
+        "ppagecat": "agegroup",
+        "ppgender": "gender",
+        "ppcm0160": "occupation",
+        "ppethm": "race_ethnicity",
+        "ppeducat": "education",
+        "b2": "man_financially",
+        "ppwork": "work_status",
+        "ppcm0062": "num_jobs",
+        "i9": "income_variance"
+    },
     2013: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_data_2013_(CSV).zip',
         'filename': 'SHED_public_use_data_2013.csv',
