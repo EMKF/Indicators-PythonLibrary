@@ -284,8 +284,7 @@ acs_code_to_var = {
 shed_outcomes = [
     'work_status', 'man_financially', 'rainy_day_saving', 'emergency_covered', 'applied_credit',
     'has_bank_account', 'rent', 'better_off_financially', 'tot_income', 'income_variance',
-    'own_business_retirement', 'schedule_variance', 'num_jobs', 'self_emp_income', 'code name',
-    'age', 'race_ethnicity', 'gender', 'highest_educ', 'occupation'
+    'own_business_retirement', 'schedule_variance', 'num_jobs', 'self_emp_income'
 ]
 
 shed_dic = {

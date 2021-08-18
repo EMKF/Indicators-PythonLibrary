@@ -37,18 +37,19 @@ def format_index(df, year):
         )
 
 
-def _aggregate_data(df, obs_level):
+def _aggregate_data(df, obs_level, strata):
     if obs_level == 'individual':
         return df
     # TODO: Add code here
     elif obs_level == 'us':
         # are all variables able to be aggregated???
-        return df
+        return df.groupby(strata).apply(lambda x: (x*x.pop_weight).sum())
+
 
 def select_cols(df, strata, series_lst):
     return df[
-        [var for var in df.columns if var in strata]
-        + [var for var in df.columns if var in series_lst]
+        [var for var in strata if var in df.columns]
+        + [var for var in series_lst if var in df.columns]
     ]
 
 
@@ -66,7 +67,7 @@ def _fetch_shed_data(series_lst, year, obs_level, strata):
             }
         ). \
         dropna(subset=['pop_weight']). \
-        pipe(_aggregate_data, obs_level).\
+        pipe(_aggregate_data, obs_level, strata).\
         pipe(select_cols, strata, series_lst)
 
 
