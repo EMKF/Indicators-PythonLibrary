@@ -37,15 +37,6 @@ def format_index(df, year):
         )
 
 
-def _aggregate_data(df, obs_level, strata):
-    if obs_level == 'individual':
-        return df
-    # TODO: Add code here
-    elif obs_level == 'us':
-        # are all variables able to be aggregated???
-        return df.groupby(strata).apply(lambda x: (x*x.pop_weight).sum())
-
-
 def select_cols(df, strata, series_lst):
     return df[
         [var for var in strata if var in df.columns]
@@ -53,7 +44,7 @@ def select_cols(df, strata, series_lst):
     ]
 
 
-def _fetch_shed_data(series_lst, year, obs_level, strata):
+def _fetch_shed_data(series_lst, year, strata):
     weight_name = c.shed_dic[year]['survey_weight_name']
 
     return read_zip(c.shed_dic[year]['zip_url'], c.shed_dic[year]['filename']). \
@@ -67,32 +58,25 @@ def _fetch_shed_data(series_lst, year, obs_level, strata):
             }
         ). \
         dropna(subset=['pop_weight']). \
-        pipe(_aggregate_data, obs_level, strata).\
         pipe(select_cols, strata, series_lst)
 
 
-def _shed_data_create(series_lst, obs_level, strata):
+def _shed_data_create(series_lst, strata):
     return pd.concat(
         [
-            _fetch_shed_data(series_lst, year, obs_level, strata)
+            _fetch_shed_data(series_lst, year, strata)
             for year in range(2013, 2021)
         ]
     ).reset_index(drop=True)
     
 
-def shed(series_lst='all', obs_level='individual', strata=[]):
-# def shed(series_lst, obs_level='individual', strata=[]):
-# def shed(obs_level='individual', demographic_lst, series_lst):  
+def shed(series_lst='all', strata=[]):
     """
     Create a pandas data frame with results from a SHED query. Column order: fips, 
     region, time, strata, series_lst.
 
     Parameters
     ----------
-    obs_level: str
-        individual: respondent
-        us: aggregated to national level using population weights
-
     series_lst: list
         Below is a list of variables that this code fetches and their corresponding 
         question in the original survey. Bullet points give the variable name from the 
@@ -183,4 +167,4 @@ def shed(series_lst='all', obs_level='individual', strata=[]):
     series_lst = c.shed_outcomes if series_lst == 'all' else series_lst
     strata = ['fips', 'region', 'time'] + strata
 
-    return _shed_data_create(series_lst, obs_level, strata)
+    return _shed_data_create(series_lst, strata)
