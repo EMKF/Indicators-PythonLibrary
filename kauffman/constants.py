@@ -125,58 +125,24 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 def filenamer(path):
     return os.path.join(ROOT_DIR, path)
 
-msa_to_state_fips = {
-    '12060': ['13'],
-    '12420': ['48'],
-    '12580': ['24'],
-    '13820': ['01'],
-    '15380': ['36'],
-    '17460': ['39'],
-    '18140': ['39'],
-    '19100': ['48'],
-    '19740': ['08'],
-    '19820': ['26'],
-    '25540': ['09'],
-    '26420': ['48'],
-    '26900': ['18'],
-    '27260': ['12'],
-    '29820': ['32'],
-    '31080': ['06'],
-    '33100': ['12'],
-    '33340': ['55'],
-    '34980': ['47'],
-    '35380': ['22'],
-    '36420': ['40'],
-    '36740': ['12'],
-    '38060': ['04'],
-    '38300': ['42'],
-    '39580': ['37'],
-    '40060': ['51'],
-    '40140': ['06'],
-    '40900': ['06'],
-    '41620': ['49'],
-    '41700': ['48'],
-    '41740': ['06'],
-    '41860': ['06'],
-    '41940': ['06'],
-    '42660': ['53'],
-    '45300': ['12'],
-    '47900': ['11', '24', '54', '51'],
-    '47260': ['37', '51'],
-    '41180': ['17', '29'],
-    '38900': ['41', '53'],
-    '35620': ['34', '36', '42'],
-    '14460': ['25', '33'],
-    '16740': ['37', '45'],
-    '16980': ['17', '18', '55'],
-    '17140': ['18', '21', '39'],
-    '28140': ['20', '29'],
-    '31140': ['18', '21'],
-    '32820': ['05', '28', '47'],
-    '33460': ['27', '55'],
-    '37980': ['24', '34', '10', '42'],
-    '39300': ['25', '44'],
-}
+
+def fetch_msa_to_state_dic():
+    df = pd. \
+        read_excel(
+            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+            skiprows=2, skipfooter=4,
+            dtype = {'CBSA Code':'str', 'FIPS State Code':'str'}
+        ). \
+        rename(columns={"CBSA Code":"fips", "FIPS State Code":"state_fips"}). \
+        drop_duplicates(['fips', 'state_fips']) \
+        [['fips', 'state_fips']]
+
+    df2 = df.pivot(values='state_fips', columns='fips')
+    names = df2.columns
+    values = [list(df2[col].dropna().values) for col in df2]
+    return dict(zip(names, values))
+
+msa_to_state_fips = fetch_msa_to_state_dic()
 
 state_to_msa_fips = {}
 for k, v in msa_to_state_fips.items():
