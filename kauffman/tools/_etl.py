@@ -179,11 +179,16 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
     #   each row needs to be unique category within fips/time
     # todo: I want to drop the variables from pep and earnbeg_us
 
+    print(df_qwi.head())
+    print(df_pep.head())
+    # sys.exit()
+
     return _mpj_raw_data_merge(
             df_qwi,
             df_pep,
             df_earnbeg_us.rename(columns={'EarnBeg': 'EarnBeg_us'})
         ).\
+        pipe(lambda x: print(x.head())).\
         assign(
             emp_mid=lambda x: (x['Emp'] + x['EmpEnd']) / 2,
             within_count=lambda x: x[['emp_mid', 'fips', 'time']].groupby(['fips', 'time']).transform('count'),
