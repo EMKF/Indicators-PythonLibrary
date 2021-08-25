@@ -89,7 +89,7 @@ def _fetch_from_url(url):
     return df
 
 
-def _qwi_ui_fetch_data(private, strata, region='us'):
+def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
     pause1 = 1
     pause2 = 3
 
@@ -114,26 +114,37 @@ def _qwi_ui_fetch_data(private, strata, region='us'):
     if private:
         driver.find_element_by_id('dijit_form_RadioButton_4').click()
 
-    if 'firmage' in strata:
+    if 'firmage' in firm_char:
         for box in range(1, 6):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
 
-    if 'firmsize' in strata:
+    if 'firmsize' in firm_char:
         for box in range(7, 12):
             driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
 
-    if 'industry' in strata:
+    if 'industry' in firm_char:
         elems = driver.find_elements_by_xpath("//a[@href]")[12]
         driver.execute_script("arguments[0].click();", elems)
     driver.find_element_by_id('continue_to_worker_char').click()
 
     # Worker Characteristics
-    if 'sex' in strata:
+    if 'sex' in worker_char:
         driver.find_element_by_id('dijit_form_CheckBox_13').click()
         driver.find_element_by_id('dijit_form_CheckBox_14').click()
-    if 'agegrp' in strata:
+    if 'agegrp' in worker_char:
         for box in range(1, 9):
             driver.find_element_by_xpath(f'//input[@value="A0{box}"]').click()
+    if 'education' in worker_char:
+        driver.find_element_by_id('worker_char_switch').click()
+        driver.find_element_by_id('dijit_MenuItem_2').click()
+        for box in range(1, 6):
+            driver.find_element_by_xpath(f'//input[@value="E{box}"]').click()
+    if 'race' in worker_char:
+        driver.find_element_by_id('worker_char_switch').click()
+        driver.find_element_by_id('dijit_MenuItem_3').click()
+        for box in range(1, 8):
+            for element in driver.find_elements_by_xpath(f'//input[@value="A{box}"]'):
+                element.click()
     driver.find_element_by_id('continue_to_indicators').click()
 
     # Indicators
@@ -161,8 +172,8 @@ def _qwi_ui_fetch_data(private, strata, region='us'):
         return pd.read_csv(href)
 
 
-def _us_fetch_data(private, strata):
-    return _qwi_ui_fetch_data(private, strata)
+def _us_fetch_data(private, firm_char, worker_char):
+    return _qwi_ui_fetch_data(private, firm_char, worker_char)
 
 
 def _LA_fetch_data(strata):
@@ -213,7 +224,6 @@ def _annualizer(df, annualize, covars):
             assign(
                 time=lambda x: x['time'].str[:4].astype(int),
             )
-
     return df. \
         assign(
             row_count=lambda x: x['fips'].groupby([x[var] for var in covars], dropna=False).transform('count')
@@ -222,8 +232,15 @@ def _annualizer(df, annualize, covars):
         drop(columns=['row_count']). \
         groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\
         reset_index(drop=False)
-    # groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\  # this line is so we get a nan if a value is missing
+    # pipe(lambda x: print(x.head())). \
+        # groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\  # this line is so we get a nan if a value is missing
 
+
+def _covar_create_race_ethnicity(df, covars):
+    if 'race_ethnicity' not in covars:
+        return df
+    else:
+        return df.assign(race_ethnicity=lambda x: x['race'] + x['ethnicity'])
 
 def _covar_create_fips_region(df, region):
     if region == 'state':
@@ -237,14 +254,20 @@ def _covar_create_fips_region(df, region):
     return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name))
 
 
-def _obs_filter_strata_totals(df, strata, strata_totals):
+def _obs_filter_strata_totals(df, firm_char, worker_char, strata_totals):
+    strata = firm_char + worker_char
     df = df.astype(dict(zip(strata, ['string'] * len(strata))))
+
     if not strata_totals:
         for stratum in strata:
             if stratum == 'industry':
                 df.query(f'industry != "00"', inplace=True)
             elif stratum == 'agegrp':
                 df.query(f'agegrp != "A00"', inplace=True)
+            elif stratum == 'education':
+                df.query(f'education != "E0"', inplace=True)
+            elif stratum == 'race':
+                df.query(f'(race != "A0") and (ethnicity != "A0")', inplace=True)
             else:
                 df.query(f'{stratum} != "0"', inplace=True)
     return df
@@ -264,11 +287,14 @@ def _obs_filter_groupby_msa(df, covars, region):
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strata, strata_totals):
-    covars = ['time', 'fips', 'region', 'ownercode'] + strata
+def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals):
+    covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
+
+    if 'race_ethnicity' in worker_char:
+        worker_char = ['race']
 
     if region == 'us':
-        df = _us_fetch_data(private, strata). \
+        df = _us_fetch_data(private, firm_char, worker_char). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 HirAEndRepl=np.nan,
@@ -276,15 +302,13 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        df = _county_msa_state_fetch_data(region, state_lst, strata)
-
-    # print(df.head())
-    # print(df.tail())
+        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char)
 
     return df. \
+        pipe(_covar_create_race_ethnicity, covars).\
         pipe(_covar_create_fips_region, region).\
         pipe(_cols_to_numeric, indicator_lst). \
-        pipe(_obs_filter_strata_totals, strata, strata_totals). \
+        pipe(_obs_filter_strata_totals, firm_char, worker_char, strata_totals). \
         pipe(_obs_filter_groupby_msa, covars, region) \
         [covars + indicator_lst].\
         pipe(_annualizer, annualize, covars).\
@@ -292,7 +316,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, strat
         reset_index(drop=True)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', strata=[], strata_totals=False):
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -359,13 +383,21 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         'January': annualize using Q1 as beginning of year
         'March': annualize using Q2 as beginning of year
 
-    strata: lst, str
+    firm_char: lst, str
         empty: default
         'firmage': stratify by firm age
         'firmsize': stratify by firm size
         'industry': stratify by firm industry, NAICS 2-digit
-        'sex': stratify by worker gender
+
+    worker_char: lst, str
+        'sex': stratify by worker sex
         'agegrp': stratify by worker age
+
+        # 'sex': stratify by worker sex
+        'education': stratify by worker education
+    # todo: need to make it so these can be crossed
+
+        'race_ethnicity': worker race
     """
 
     if obs_level in ['us', 'state', 'county', 'msa']:
@@ -375,11 +407,13 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     else:
         print('Invalid input to obs_level.')
 
-    state_list = [c.state_abb_to_fips[s] for s in state_list]
+    # todo: is this done correctly?
     if state_list == 'all':
         state_list = [c.state_abb_to_fips[s] for s in c.states]
     elif isinstance(state_list, list) and obs_level == 'msa':
         state_list = state_msa_cross_walk(state_list, 'metro')['fips_state'].unique().tolist()
+    else:
+        state_list = [c.state_abb_to_fips[s] for s in state_list]
 
     if indicator_lst == 'all':
         indicator_lst = c.qwi_outcomes
@@ -391,13 +425,16 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     #     raise Exception(f'{indicator_lst} is not compatible with annualize==True')
 
 
-    strata = [strata] if type(strata) == str else strata
-    private = True if any(x in ['firmage', 'firmsize'] for x in strata) else private
-    strata_totals = False if not strata else strata_totals
+    firm_char = [firm_char] if type(firm_char) == str else firm_char
+    private = True if any(x in ['firmage', 'firmsize'] for x in firm_char) else private
+
+    worker_char = [worker_char] if type(worker_char) == str else worker_char
+
+    strata_totals = False if not (firm_char or worker_char) else strata_totals
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, state_list, private, annualize, strata, strata_totals)
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals)
                 for region in region_lst
             ],
             axis=0
@@ -405,7 +442,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
 
 if __name__ == '__main__':
-    df = _qwi_data_create(c.qwi_outcomes, 'msa', ['06'], True, False, ['firmsize', 'industry'], False)
+    # indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals
+    df = _qwi_data_create(c.qwi_outcomes, 'us', [], False, False, [], ['edgrp'], False)
+    # df = _qwi_data_create(c.qwi_outcomes, 'msa', ['06'], True, False, ['firmsize', 'industry'], False)
     print(df.head(100))
     print(df.tail(100))
     # _county_msa_state_fetch_data('msa', ['06'], strata=['firmsize', 'industry'])
