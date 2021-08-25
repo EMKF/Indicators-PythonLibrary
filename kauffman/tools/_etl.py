@@ -181,5 +181,5 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
             constancy=lambda x: (x['EmpS'] / x['EmpTotal']),
             creation=lambda x: x['FrmJbC'] / x['population'] * 1000,
         ).\
-        pipe(_missing_obs).\
-        drop(['emp_mid', 'within_count', 'max_count', 'total_emp'], 1)
+        pipe(_missing_obs). \
+        drop(['ownercode', 'emp_mid', 'within_count', 'max_count', 'total_emp', 'Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC', 'population', 'EarnBeg_us'], 1)

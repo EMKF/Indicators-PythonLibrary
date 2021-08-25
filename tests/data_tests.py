@@ -45,8 +45,8 @@ def pep_test():
 
 def qwi_test():
     # strata, msa
-    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, strata=['firmage'], annualize=True)
-    print(df.head(1000))
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, strata=['firmage'], annualize=True)
+    # print(df.head(1000))
 
     # strata, state
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['firmsize', 'industry'], annualize=True)
@@ -54,7 +54,15 @@ def qwi_test():
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['MO'], private=True, strata=['sex', 'agegrp'], annualize=True)
 
     # strata, us
-    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmsize', 'industry'], annualize=True)
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=[], worker_char=['race'], annualize=True)
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=[], worker_char=['education'], annualize=True)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=False, firm_char=[], worker_char=['edgrp'], annualize=True)
+
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmsize'], worker_char=['race'], annualize=True)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmsize'], worker_char=['sex'], annualize=True)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmsize'], worker_char=['agegrp'], annualize=True)
+    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmsize'], worker_char=['education'], annualize=True)
+
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['firmage', 'industry'], annualize=True)
     # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, strata=['sex', 'agegrp'], annualize=True)
 
@@ -85,18 +93,21 @@ def mpj_data_fetch():
     #     to_csv(c.filenamer('../tests/data/earnbeg_us.csv'), index=False)
 
     # for region in ['us', 'state', 'msa', 'county']:
-    for region in ['us', 'state']:
-        qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level=region, private=True, strata=['firmage', 'industry'], annualize=True).\
-            to_csv(c.filenamer(f'../tests/data/qwi_{region}.csv'), index=False)
+    # for region in ['us', 'state']:
+    #     qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level=region, private=True, strata=['firmage', 'industry'], annualize=True).\
+    #         to_csv(c.filenamer(f'../tests/data/qwi_{region}.csv'), index=False)
+    #
+    #     pep(region).\
+    #         rename(columns={'POP': 'population'}). \
+    #         to_csv(c.filenamer(f'../tests/data/pep_{region}.csv'), index=False)
 
-        pep(region).\
-            rename(columns={'POP': 'population'}). \
-            to_csv(c.filenamer(f'../tests/data/pep_{region}.csv'), index=False)
+    # todo: labels for the different categories. Do this in the etl part
+    for covar in ['race_ethnicity', 'sex', 'agegrp', 'education']:
+        qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmsize'], worker_char=[covar], annualize=True).\
+            to_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv'), index=False)
 
 
 if __name__ == '__main__':
-    # qwi_test()
-    # mpj_data_fetch()
-
     # bfs_test()
-    qwi_test()
+    # qwi_test()
+    mpj_data_fetch()
