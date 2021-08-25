@@ -1,5 +1,3 @@
-import sys
-import joblib
 import requests
 import pandas as pd
 from kauffman import constants as c
@@ -13,10 +11,36 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _fetch_data(year, var_set):
+def _build_region_section(region, state_lst):
+    state_section = ','.join(state_lst)
+    
+    if region == 'us':
+        return f'&for={region}:*'
+    elif region == 'state':
+        return f'&for={region}:{state_section}'
+    elif region == 'county':
+        return f'&for={region}:*&in=state:{state_section}'
+    else:
+        msa_list = []
+        for state in state_lst:
+            try:
+                msa_list.extend(c.state_to_msa_fips[state])
+            except:
+                pass
+
+        msa_section = ','.join(msa_list)
+
+        return (
+            '&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:'
+            +  msa_section
+        )
+
+def _fetch_data(year, var_set, region, state_lst):
     var_lst = ','.join(var_set)
-    url = 'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}&for=us:*'.format(var_lst=var_lst, year=year)
+    base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}'
+    url = base_url + _build_region_section(region, state_lst)
     r = requests.get(url)
+    
     return pd.DataFrame(r.json())
 
 
@@ -26,22 +50,40 @@ def _make_header(df):
     return df.iloc[1:, :]
 
 
-def _acs_data_create(series_lst):
+def _covar_create_fips_region(df, region):
+    if region == 'state':
+        df['fips'] = df['state'].astype(str)
+    elif region == 'county':
+        df['fips'] = df['state'].astype(str) + df['county'].astype(str)
+        df = df.drop(columns='state')
+    elif region == 'msa':
+        df['fips'] = df['msa'].astype(str)
+    else:
+        df = df.assign(fips='00')
+    return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name)).drop(columns=region)
+
+
+def index_to_front(df):
+    index_cols = ['fips', 'region', 'year']
+    return df[index_cols + [col for col in df.columns if col not in index_cols]]
+
+def _acs_data_create(series_lst, region, state_lst):
     return pd.concat(
         [
-            _fetch_data(year, series_lst). \
+            _fetch_data(year, series_lst, region, state_lst). \
                 pipe(_make_header). \
-                rename(columns=c.acs_outcomes). \
-                drop('us', 1). \
-                reset_index(drop=True). \
-                assign(year=year)
+                rename(columns=c.acs_code_to_var). \
+                rename(columns={'metropolitan statistical area/micropolitan statistical area':'msa'}).\
+                pipe(_covar_create_fips_region, region). \
+                assign(year=year). \
+                pipe(index_to_front)
             for year in range(2005, 2019 + 1)
         ],
         axis=0
     )
 
 
-def acs(series_lst):
+def acs(series_lst='all', obs_level='all', state_lst = 'all'):
     """
         https://api.census.gov/data/2019/acs/acs1/variables.html
 
@@ -72,5 +114,44 @@ def acs(series_lst):
         'B24092_016E': 'state_government_f',
         'B24092_017E': 'federal_government_f',
         'B24092_018E': 'self_employed_not_inc_f'
+
+    obs_level: str or list
+        'state': resident population of state from 2005 through 2019
+        'msa': resident population of msa from 2005 through 2019
+        'county': resident population of county from 2005 through 2019
+        'us': resident population in the United States from 2005 through 2019
+        'all': default, returns data on all of the above observation levels
+
+    state_lst = str or list
+        'all': default, includes all US states and D.C.
+        otherwise: a state or list of states, identified using postal code abbreviations
+
     """
-    return _acs_data_create(series_lst)
+    # Handle series_lst
+    if series_lst == 'all':
+        series_lst = [k for k,v in c.acs_code_to_var.items()]
+
+    # Create region_lst
+    if type(obs_level) == list:
+        region_lst = obs_level
+    else:
+        if obs_level in ['us', 'state', 'msa', 'county']:
+            region_lst = [obs_level]
+        else:
+            region_lst = ['us', 'state', 'msa', 'county']
+
+    if state_lst == 'all':
+        state_lst = [c.state_abb_to_fips[s] for s in c.states]
+    elif type(state_lst) == list:
+        if obs_level != 'msa':
+            state_lst = [c.state_abb_to_fips[s] for s in state_lst]
+        else:
+            state_lst = [c.state_abb_to_fips[s] for s in c.states]
+
+    return pd.concat(
+            [
+                _acs_data_create(series_lst, region, state_lst)
+                for region in region_lst
+            ],
+            axis=0
+        ).reset_index(drop=True)

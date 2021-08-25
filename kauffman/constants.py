@@ -123,58 +123,30 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 def filenamer(path):
     return os.path.join(ROOT_DIR, path)
 
-msa_to_state_fips = {
-    '12060': ['13'],
-    '12420': ['48'],
-    '12580': ['24'],
-    '13820': ['01'],
-    '15380': ['36'],
-    '17460': ['39'],
-    '18140': ['39'],
-    '19100': ['48'],
-    '19740': ['08'],
-    '19820': ['26'],
-    '25540': ['09'],
-    '26420': ['48'],
-    '26900': ['18'],
-    '27260': ['12'],
-    '29820': ['32'],
-    '31080': ['06'],
-    '33100': ['12'],
-    '33340': ['55'],
-    '34980': ['47'],
-    '35380': ['22'],
-    '36420': ['40'],
-    '36740': ['12'],
-    '38060': ['04'],
-    '38300': ['42'],
-    '39580': ['37'],
-    '40060': ['51'],
-    '40140': ['06'],
-    '40900': ['06'],
-    '41620': ['49'],
-    '41700': ['48'],
-    '41740': ['06'],
-    '41860': ['06'],
-    '41940': ['06'],
-    '42660': ['53'],
-    '45300': ['12'],
-    '47900': ['11', '24', '54', '51'],
-    '47260': ['37', '51'],
-    '41180': ['17', '29'],
-    '38900': ['41', '53'],
-    '35620': ['34', '36', '42'],
-    '14460': ['25', '33'],
-    '16740': ['37', '45'],
-    '16980': ['17', '18', '55'],
-    '17140': ['18', '21', '39'],
-    '28140': ['20', '29'],
-    '31140': ['18', '21'],
-    '32820': ['05', '28', '47'],
-    '33460': ['27', '55'],
-    '37980': ['24', '34', '10', '42'],
-    '39300': ['25', '44'],
-}
+
+def fetch_msa_to_state_dic():
+    df = pd. \
+        read_excel(
+            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+            skiprows=2, skipfooter=4,
+            dtype = {'CBSA Code':'str', 'FIPS State Code':'str'}
+        ). \
+        rename(columns={"CBSA Code":"fips", "FIPS State Code":"state_fips"}). \
+        drop_duplicates(['fips', 'state_fips']) \
+        [['fips', 'state_fips']]
+
+    df2 = df.pivot(values='state_fips', columns='fips')
+    names = df2.columns
+    values = [list(df2[col].dropna().values) for col in df2]
+    return dict(zip(names, values))
+
+msa_to_state_fips = fetch_msa_to_state_dic()
+
+state_to_msa_fips = {}
+for k, v in msa_to_state_fips.items():
+    for x in v:
+        state_to_msa_fips.setdefault(x,[]).append(k)
+
 # msa_fips_state_fips_dic = {
 #     '12060': '13', '12420': '48', '12580': '24', '13820': '01', '14460': '33', '15380': '36', '16740': '37', '16980': '55',
 #     '17140': '18', '17460': '39', '18140': '39', '19100': '48', '19740': '08', '19820': '26', '25540': '09', '26420': '48',
@@ -273,75 +245,150 @@ acs_code_to_var = {
 
 
 # todo: new constants to vet
+shed_outcomes = [
+    'work_status', 'man_financially', 'rainy_day_saving', 'emergency_covered', 'applied_credit',
+    'has_bank_account', 'rent', 'better_off_financially', 'tot_income', 'income_variance',
+    'own_business_retirement', 'schedule_variance', 'num_jobs', 'self_emp_income'
+]
 
 shed_dic = {
+    'survey_to_col_name_const': {
+        "caseid": "id",
+        "ppagecat": "agegroup",
+        "ppgender": "gender",
+        "ppcm0160": "occupation",
+        "ppethm": "race_ethnicity",
+        "ppeducat": "education",
+        "b2": "man_financially",
+        "ppwork": "work_status",
+        "ppcm0062": "num_jobs",
+        "i9": "income_variance"
+    },
     2013: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_data_2013_(CSV).zip',
         'filename': 'SHED_public_use_data_2013.csv',
-        'col_name_dic': {
-            'v1_2013': 'v1_final',  # todo: at some point in the future there might be variables to rename...use as rename(c.shed_dic[year]['col_name_dic'])
-        }
+        'survey_to_col_name': {
+            'e1b': 'rainy_day_saving',
+            'e1a': 'emergency_covered',
+            's12': 'applied_credit',
+            's1a': 'has_bank_account',
+            "r3a": "rent",
+            'i4': 'tot_income'
+        },
+        'pop': 236011131, # March CPS est. for noninst. civilian adults
+        'survey_weight_name': 'weight'
     },
     2014: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2014_(CSV).zip',
         'filename': 'SHED_public_use_data_2014_update (occupation industry).csv',
-        'col_name_dic': {
-            'v1_2014': 'v1_final',
-        }
+        'survey_to_col_name': {
+            'e1b': 'rainy_day_saving',
+            'e1a': 'emergency_covered',
+            'a0': 'applied_credit',
+            'd7': 'has_bank_account',
+            "r3": "rent",
+            'b3': 'better_off_financially',
+            'k2_g': 'own_business_retirement'
+        },
+        'pop': 238363771, # March CPS est. for noninstitutionalized civilian adults
+        'survey_weight_name': 'weight3'
     },
     2015: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2015_(CSV).zip',
         'filename': 'SHED 2015 public use.csv',
-        'col_name_dic': {
-            'v1_2014': 'v1_final',
-        }
+        'survey_to_col_name': {
+            'ef1': 'rainy_day_saving',
+            'ef2': 'emergency_covered',
+            'a0': 'applied_credit',
+            'bk1': 'has_bank_account',
+            "r3": "rent",
+            'b3': 'better_off_financially',
+            'i4a': 'tot_income',
+            'k2_f': 'own_business_retirement',
+            'i0_b': 'self_emp_income'
+        },
+        'survey_weight_name': 'weight3b'
     },
     2016: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2016_(CSV).zip',
         'filename': 'SHED_2016_Public_Data.csv',
-        'col_name_dic': {
-            'v1_2014': 'v1_final',
-        }
+        'survey_to_col_name': {
+            'ef1': 'rainy_day_saving',
+            'ef2': 'emergency_covered',
+            'a0': 'applied_credit',
+            'bk1': 'has_bank_account',
+            "r3": "rent",
+            'b3': 'better_off_financially',
+            'i4a': 'tot_income',
+            'k2_f': 'own_business_retirement',
+            'd3a': 'schedule_variance',
+            'i0_b': 'self_emp_income'
+        },
+        'survey_weight_name': 'weight3b'
     },
     2017: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2017_(CSV).zip',
         'filename': 'SHED_2017_Public_Use.csv',
-        'col_name_dic': {
-            'v1_2014': 'v1_final',
-            'v2_2014': 'v2_final',
-            'v3_2014': 'v3_final',
-            'v4_2014': 'v4_final',
-        }
+        'survey_to_col_name': {
+            'ef1': 'rainy_day_saving',
+            'ef2': 'emergency_covered',
+            'a0': 'applied_credit',
+            'bk1': 'has_bank_account',
+            "r3": "rent",
+            'b3': 'better_off_financially',
+            'i40': 'tot_income',
+            'k2_f': 'own_business_retirement',
+            'd30': 'schedule_variance',
+            'i0_b': 'self_emp_income'
+        },
+        'survey_weight_name': 'weight3b'
     },
     2018: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip',
         'filename': 'public2018.csv',
-        'col_name_dic': {
-            'v1_2014': 'v1_final',
-            'v2_2014': 'v2_final',
-            'v3_2014': 'v3_final',
-            'v4_2014': 'v4_final',
-        }
+        'survey_to_col_name': {
+            'ef1': 'rainy_day_saving',
+            'ef2': 'emergency_covered',
+            'a0': 'applied_credit',
+            'bk1': 'has_bank_account',
+            "r3": "rent",
+            'b3': 'better_off_financially',
+            'i40': 'tot_income',
+            'k2_f': 'own_business_retirement',
+            'd30': 'schedule_variance',
+            'i0_b': 'self_emp_income'
+        },
+        'survey_weight_name': 'weight2b'
     },
     2019: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2019_(CSV).zip',
         'filename': 'public2019.csv',
-        'col_name_dic': {
-            'v1_2014': 'v1_final',
-            'v2_2014': 'v2_final',
-            'v3_2014': 'v3_final',
-            'v4_2014': 'v4_final',
-        }
+        'survey_to_col_name': {
+            'ef1': 'rainy_day_saving',
+            'ef2': 'emergency_covered',
+            'a0': 'applied_credit',
+            'bk1': 'has_bank_account',
+            "r3": "rent",
+            'b3': 'better_off_financially',
+            'i40': 'tot_income',
+            'd30': 'schedule_variance'
+        },
+        'survey_weight_name': 'weight_pop'
     },
     2020: {
         'zip_url': 'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2020_(CSV).zip',
         'filename': 'public2020.csv',
-        'col_name_dic': {
-            'v1_2014': 'v1_final',
-            'v2_2014': 'v2_final',
-            'v3_2014': 'v3_final',
-            'v4_2014': 'v4_final',
-        }
+        'survey_to_col_name': {
+            'ef1': 'rainy_day_saving',
+            'ef2': 'emergency_covered',
+            'a0': 'applied_credit',
+            'bk1': 'has_bank_account',
+            "r3": "rent",
+            'b3': 'better_off_financially',
+            'i40': 'tot_income',
+            'd30': 'schedule_variance'
+        },
+        'survey_weight_name': 'weight_pop'
     },
 }
 
