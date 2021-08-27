@@ -4,7 +4,7 @@ import boto3
 import requests
 import numpy as np
 import pandas as pd
-from kauffman.tools import constants as c
+from kauffman import constants as c
 from zipfile import ZipFile
 
 
@@ -214,17 +214,20 @@ def clean_shed(df):
                 apply(lambda y: 1 if y in ['Working self-employed', '2'] else 0)
         ).\
         drop(columns=['work_status', 'rent', 'tot_income']).\
-        apply(lambda x: x.replace(c.shed_response_to_code)).\
-        apply(pd.to_numeric, errors='ignore')
+        apply(lambda x: x.replace(c.shed_response_to_code))
 
 def prep_for_aggregation(df):
-    # Make options consistent (bin all missing var)
+    # Make options consistent (bin all missing var)  
     for x in [-1, -2, -9, np.NaN]:
         df = df.replace(x, 'missing')
 
     # Get dummies
-    df = pd.get_dummies(df, columns=c.shed_outcomes)
-    return df
+    df = df.astype(str).apply(
+            lambda x: x.apply(lambda y: y.replace('.0', ''))
+        ) # to prep for get_dummies
+    cols = [o for o in c.shed_outcomes if o not in ['rent', 'work_status', 'tot_income']]
+    df = pd.get_dummies(df, columns=cols)
+    return df.apply(pd.to_numeric, errors='ignore')
 
 def aggregate_shed(shed_df, strata):
     return shed_df.\
