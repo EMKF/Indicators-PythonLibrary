@@ -223,17 +223,27 @@ def prep_for_aggregation(df):
 
     # Get dummies
     df = df.astype(str).apply(
-            lambda x: x.apply(lambda y: y.replace('.0', ''))
-        ) # to prep for get_dummies
-    cols = [o for o in c.shed_outcomes if o not in ['rent', 'work_status', 'tot_income']]
+            lambda x: x.apply(lambda y: y.replace('.0', '')) 
+            if x.name != 'pop_weight' else x
+        ) # to prep for being names for dummies
+    cols = [o for o in c.shed_outcomes if o not in ['rent', 'work_status', 'tot_income']] \
+        + ['self_employed']
     df = pd.get_dummies(df, columns=cols)
     return df.apply(pd.to_numeric, errors='ignore')
 
-def aggregate_shed(shed_df, strata):
-    return shed_df.\
-        pipe(clean_shed).\
-        groupby(strata).sum()
+def aggregate_shed(shed_df, strata = []):
+    strata = ['time'] + strata
 
+    return shed_df.\
+        drop(columns=['fips', 'region']).\
+        pipe(clean_shed).\
+        pipe(prep_for_aggregation).\
+        groupby(strata).\
+            apply(lambda x: x.apply(
+                lambda y: y*x.pop_weight).sum()
+            ).\
+        drop(columns=['pop_weight', 'time']).\
+        reset_index()
 
 
 # all of the features of a data set

@@ -41,6 +41,7 @@ def select_cols(df, strata, series_lst):
     return df[
         [var for var in strata if var in df.columns]
         + [var for var in series_lst if var in df.columns]
+        + ['pop_weight']
     ]
 
 
