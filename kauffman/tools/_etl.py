@@ -207,11 +207,10 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
 
 
 def clean_shed(df):   
-    return df.\
-        assign(
-            self_employed = lambda x: x.work_status.\
-                astype(str).str.replace(' - ', ' ').\
-                apply(lambda y: 1 if y in ['Working self-employed', '2'] else 0)
+    return df.assign(
+        self_employed = lambda x: x.work_status.\
+            astype(str).str.replace(' - ', ' ').\
+            apply(lambda y: 1 if y in ['Working self-employed', '2'] else 0)
         ).\
         drop(columns=['work_status', 'rent', 'tot_income']).\
         apply(lambda x: x.replace(c.shed_response_to_code))
