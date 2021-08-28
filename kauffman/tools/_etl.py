@@ -226,8 +226,7 @@ def prep_for_aggregation(df):
             lambda x: x.apply(lambda y: y.replace('.0', '')) 
             if x.name != 'pop_weight' else x
         ) # to prep for being names for dummies
-    cols = [o for o in c.shed_outcomes if o not in ['rent', 'work_status', 'tot_income']] \
-        + ['self_employed']
+    cols = [o for o in c.shed_outcomes if o not in ['rent', 'work_status', 'tot_income']]
     df = pd.get_dummies(df, columns=cols)
     return df.apply(pd.to_numeric, errors='ignore')
 
