@@ -121,7 +121,7 @@ def mpj_data_fetch():
 
     # todo: labels for the different categories. Do this in the etl part
     for covar in ['race_ethnicity', 'sex', 'agegrp', 'education']:
-        qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmsize'], worker_char=[covar], annualize=True).\
+        qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmage'], worker_char=[covar], annualize=True).\
             to_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv'), index=False)
 
 

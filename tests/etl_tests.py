@@ -51,14 +51,14 @@ def mpj_covar():
         df_temp = mpj_indicators(
             pd.read_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv')).assign(fips=0),
             pd.read_csv(c.filenamer(f'../tests/data/pep_us.csv')),
-            df_earnbeg_us
+            df_earnbeg_us,
+            contribution_by='firmage',
+            constancy_mult=100
         )
         df_temp[covar] = df_temp[covar].map(c.mpj_covar_mapping(covar))
-        df_temp['firmsize'] = df_temp['firmsize'].map(c.mpj_covar_mapping('firmsize'))
+        df_temp['firmage'] = df_temp['firmage'].map(c.mpj_covar_mapping('firmage'))
         df_temp.to_csv(c.filenamer(f'/Users/thowe/downloads/mpj_{covar}.csv'), index=False)
-# todo: check these are correct
-#     do these even make sense? like sex.
-#     are the values correct?
+
 
 if __name__ == '__main__':
     # mpj_industry()

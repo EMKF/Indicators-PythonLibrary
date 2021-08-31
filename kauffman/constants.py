@@ -214,7 +214,7 @@ qwi_outcomes = [
 qwi_averaged_outcomes = ['EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS']
 
 def mpj_covar_mapping(covar):
-    if covar == 'firmsize':
+    if covar == 'firmage':
         return {
             1: '0-1 years',
             2: '2-3 years',
@@ -227,7 +227,7 @@ def mpj_covar_mapping(covar):
             1: 'Male',
             2: 'Female'
         }
-    elif covar == 'age':
+    elif covar == 'agegrp':
         return {
             'A01': '14-18',
             'A02': '19-21',
