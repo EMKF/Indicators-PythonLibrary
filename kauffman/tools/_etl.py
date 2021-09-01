@@ -5,6 +5,7 @@ import requests
 import numpy as np
 import pandas as pd
 from zipfile import ZipFile
+import kauffman.constants as c
 
 
 def file_to_s3(file, s3_bucket, s3_file):
@@ -135,3 +136,19 @@ def state_msa_cross_walk(state_lst, area_type='metro'):
         merge(df_cw, how='left', on='fips_msa').\
         assign(fips_county=lambda x: x['fips_state'] + x['county_fips']).\
         drop(['CBSA Title', 'area', 'county_fips'], 1)
+
+
+def _hispanic_create(df, covars):
+    return df.groupby(covars + ['ethnicity']).sum(). \
+        reset_index(drop=False). \
+        query('ethnicity == "A2"'). \
+        assign(race_ethnicity='Hispanic')
+
+
+def race_ethnicity_categories_create(df, covars):
+    return df.\
+        query('ethnicity != "A2"').\
+        assign(race_ethnicity=lambda x: x['race'].map(c.mpj_covar_mapping('race'))).\
+        append(_hispanic_create(df, covars)). \
+        drop(['race', 'ethnicity'], 1).\
+        sort_values(covars + ['race_ethnicity'])

@@ -236,12 +236,6 @@ def _annualizer(df, annualize, covars):
         # groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\  # this line is so we get a nan if a value is missing
 
 
-def _covar_create_race_ethnicity(df, covars):
-    if 'race_ethnicity' not in covars:
-        return df
-    else:
-        return df.assign(race_ethnicity=lambda x: x['race'] + x['ethnicity'])
-
 def _covar_create_fips_region(df, region):
     if region == 'state':
         df['fips'] = df['state'].astype(str)
@@ -290,9 +284,6 @@ def _obs_filter_groupby_msa(df, covars, region):
 def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals):
     covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
 
-    if 'race_ethnicity' in worker_char:
-        worker_char = ['race']
-
     if region == 'us':
         df = _us_fetch_data(private, firm_char, worker_char). \
             assign(
@@ -305,7 +296,6 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
         df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char)
 
     return df. \
-        pipe(_covar_create_race_ethnicity, covars).\
         pipe(_covar_create_fips_region, region).\
         pipe(_cols_to_numeric, indicator_lst). \
         pipe(_obs_filter_strata_totals, firm_char, worker_char, strata_totals). \
@@ -321,6 +311,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
     Census's API in the case of state, MSA, or county (https://api.census.gov/data/timeseries/qwi/sa/examples.html).
+    FTP: https://lehd.ces.census.gov/data/qwi/R2021Q1/us/
 
     obs_level: str
         'state': resident population of state from 1990 through 2019
@@ -397,7 +388,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         'education': stratify by worker education
     # todo: need to make it so these can be crossed
 
-        'race_ethnicity': worker race
+        'race': worker race
+        'ethnicity': workr ethnicity
     """
 
     if obs_level in ['us', 'state', 'county', 'msa']:

@@ -120,9 +120,11 @@ def mpj_data_fetch():
     #         to_csv(c.filenamer(f'../tests/data/pep_{region}.csv'), index=False)
 
     # todo: labels for the different categories. Do this in the etl part
-    for covar in ['race_ethnicity', 'sex', 'agegrp', 'education']:
-        qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmage'], worker_char=[covar], annualize=True).\
-            to_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv'), index=False)
+    # for covar in ['sex', 'agegrp', 'education']:
+    #     qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmage'], worker_char=[covar], annualize=True).\
+    #         to_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv'), index=False)
+    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmage'], worker_char=['race', 'ethnicity'], annualize=True).\
+        to_csv(c.filenamer(f'../tests/data/qwi_us_race_ethnicity.csv'), index=False)
 
 
 if __name__ == '__main__':

@@ -246,7 +246,16 @@ def mpj_covar_mapping(covar):
             'E4': "Bachelor's degree or advanced degree",
             'E5': 'Not available',
         }
-    else:
+    elif covar == 'race':
+        return {
+            'A1': 'White',
+            'A2': 'Black',
+            'A3': 'American Indian',
+            'A4': 'Asian',
+            'A5': 'Pacific Islander',
+            'A7': 'Two or more race groups'
+        }
+    elif covar == 'race_ethnicity':
         return {
             'A1A1': 'White, not Hispanic',
             'A1A2': 'White, Hispanic',

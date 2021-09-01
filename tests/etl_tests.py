@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 import kauffman.constants as c
 from kauffman.data import qwi
-from kauffman.tools import mpj_indicators, county_msa_cross_walk, read_zip, state_msa_cross_walk
+from kauffman.tools import mpj_indicators, county_msa_cross_walk, read_zip, state_msa_cross_walk, race_ethnicity_categories_create
 
 pd.set_option('max_columns', 1000)
 pd.set_option('max_info_columns', 1000)
@@ -47,17 +47,31 @@ def mpj_industry():
 
 def mpj_covar():
     df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
-    for covar in ['sex', 'agegrp', 'education', 'race_ethnicity']:
+    for covar in ['race_ethnicity', 'sex', 'agegrp', 'education']:
+        df_qwi = pd.read_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv')).\
+            assign(fips=0).\
+            pipe(lambda x: race_ethnicity_categories_create(x, ['time', 'fips', 'region', 'ownercode', 'firmage']) if covar == 'race_ethnicity' else x)
+        df_pep = pd.read_csv(c.filenamer(f'../tests/data/pep_us.csv'))
+
         df_temp = mpj_indicators(
-            pd.read_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv')).assign(fips=0),
-            pd.read_csv(c.filenamer(f'../tests/data/pep_us.csv')),
+            df_qwi,
+            df_pep,
             df_earnbeg_us,
             contribution_by='firmage',
             constancy_mult=100
         )
-        df_temp[covar] = df_temp[covar].map(c.mpj_covar_mapping(covar))
+
+        if covar != 'race_ethnicity':
+            df_temp[covar] = df_temp[covar].map(c.mpj_covar_mapping(covar))
         df_temp['firmage'] = df_temp['firmage'].map(c.mpj_covar_mapping('firmage'))
         df_temp.to_csv(c.filenamer(f'/Users/thowe/downloads/mpj_{covar}.csv'), index=False)
+
+
+def race_eth():
+    df_temp = pd.read_csv(c.filenamer(f'../tests/data/qwi_us_race_ethnicity.csv')).assign(fips=0)
+    covars = ['time', 'fips', 'region', 'ownercode', 'firmage']
+    df_temp = race_ethnicity_categories_create(df_temp, covars)
+    print(df_temp.head(20))
 
 
 if __name__ == '__main__':
@@ -66,3 +80,5 @@ if __name__ == '__main__':
 
     # county_msa_cw()
     # state_msa_cw()
+
+    # race_eth()
