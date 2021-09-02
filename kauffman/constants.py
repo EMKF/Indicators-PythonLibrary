@@ -427,6 +427,16 @@ shed_response_to_code = {
     'Four or more': 4
 }
 
+shed_var_to_unavailability = {
+    'better_off_financially': [2013],
+    'tot_income': [2014],
+    'income_variance': [2014],
+    'own_business_retirement': [2013, 2019, 2020],
+    'schedule_variance': [2013, 2014, 2015],
+    'num_jobs': [2013, 2014, 2015],
+    'self_emp_income': [2013, 2014, 2019, 2020]
+}
+
 state_shed_codes_to_abb = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT",
                             21: "NY", 22: "NJ", 23: "PA", 31: "OH", 32: "IN", 33: "IL", 34: "MI", 35: "WI",
                             41: "MN", 42: "IA", 43: "MO", 44: "ND", 45: "SD", 46: "NE", 47: "KS",

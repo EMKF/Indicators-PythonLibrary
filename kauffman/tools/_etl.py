@@ -206,42 +206,55 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
         drop(['emp_mid', 'within_count', 'max_count', 'total_emp'], 1)
 
 
-def clean_shed(df):   
-    return df.assign(
-        self_employed = lambda x: x.work_status.\
-            astype(str).str.replace(' - ', ' ').\
-            apply(lambda y: 1 if y in ['Working self-employed', '2'] else 0)
+def shed_denote_missing_var(df):
+    for var in c.shed_var_to_unavailability:
+        years_unavailable = c.shed_var_to_unavailability[var]
+        cols = [col for col in df if col.startswith(var)]
+        for year in years_unavailable:
+            for col in cols:
+                df.loc[df.time == year, col] = np.NaN
+    return df
+
+def shed_prep(df):
+    """
+    Preps individual-level SHED data for aggregation. Specifically:
+    * Replaces work_status variable with the binary self_employed variable
+    * Drops variables that can't be aggregated
+    * Converts all responses to numeric values, formatted as int type
+    * Makes dummies for all columns (except self_employed)
+    * Inserts missing values for variable+year combos where data is unavailable
+    """
+    cols = list(set(c.shed_outcomes) - {'rent', 'work_status', 'tot_income'})
+
+    return df.\
+        assign(
+            self_employed = lambda x: x.work_status.\
+                astype(str).str.replace(' - ', ' ').\
+                apply(lambda y: 1 if y in ['Working self-employed', '2'] else 0)
         ).\
         drop(columns=['work_status', 'rent', 'tot_income']).\
-        apply(lambda x: x.replace(c.shed_response_to_code))
+        replace(c.shed_response_to_code).\
+        apply(lambda x: x.astype(pd.Int64Dtype(), errors='ignore')).\
+        replace([-1, -2, -9, pd.NA], 'missing').\
+        pipe(pd.get_dummies, columns=cols).\
+        apply(pd.to_numeric, errors='ignore')
 
-def prep_for_aggregation(df):
-    # Make options consistent (bin all missing var)  
-    for x in [-1, -2, -9, np.NaN]:
-        df = df.replace(x, 'missing')
-
-    # Get dummies
-    df = df.astype(str).apply(
-            lambda x: x.apply(lambda y: y.replace('.0', '')) 
-            if x.name != 'pop_weight' else x
-        ) # to prep for being names for dummies
-    cols = [o for o in c.shed_outcomes if o not in ['rent', 'work_status', 'tot_income']]
-    df = pd.get_dummies(df, columns=cols)
-    return df.apply(pd.to_numeric, errors='ignore')
-
-def aggregate_shed(shed_df, strata = []):
+def shed_aggregate(shed_df, strata = []):
+    """
+    Aggregates individual-level SHED data to US-level data.
+    """
     strata = ['time'] + strata
 
     return shed_df.\
         drop(columns=['fips', 'region']).\
-        pipe(clean_shed).\
-        pipe(prep_for_aggregation).\
+        pipe(shed_prep).\
         groupby(strata).\
             apply(lambda x: x.apply(
                 lambda y: y*x.pop_weight).sum()
             ).\
-        drop(columns=['pop_weight', 'time']).\
-        reset_index()
+        drop(columns=['pop_weight'] + strata).\
+        reset_index().\
+        pipe(shed_denote_missing_var)
 
 
 # all of the features of a data set

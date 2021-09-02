@@ -81,8 +81,9 @@ def shed(series_lst='all', strata=[]):
     series_lst: list
         Below is a list of variables that this code fetches and their corresponding 
         question in the original survey. Bullet points give the variable name from the 
-        original code. More complete documentation may be found in SHED Codebooks at the
-        following link: https://www.federalreserve.gov/consumerscommunities/shed_data.htm
+        original survey. More complete documentation may be found in SHED Codebooks at 
+        the following link: 
+        https://www.federalreserve.gov/consumerscommunities/shed_data.htm
 
         Variables: Survey labels
         --------
