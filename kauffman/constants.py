@@ -392,50 +392,6 @@ shed_dic = {
     },
 }
 
-shed_response_to_code = {
-    'Refused': -1,
-    'Yes': 1,
-    'No': 0,
-    'Not In Universe (not asked)': -9,
-    'Not asked': -2,
-
-    'Finding it difficult to get by': 1,
-    'Just getting by': 2,
-    'Doing okay': 3,
-    'Living comfortably': 4,
-
-    'Much better off': 5,
-    'Somewhat better off': 4,
-    'About the same': 3,
-    'Somewhat worse off':2,
-    'Much worse off': 1,
-
-    'Roughly the same amount each month': 1,
-    'Roughly the same most months, but some unusually high or low months during the year': 2,
-    'Occasionally varies from month to month': 2,
-    'Varies quite often from month to month': 3,
-    'Often varies quite a bit from one month to the next': 3,
-
-    'Normally work the same hours': 1,
-    'Schedule varies, primarily at my request': 2,
-    'Schedule varies, primarily based on my employer’s needs': 3,
-    'Schedule varies, primarily based on my employerâ€™s needs': 3,
-
-    'One': 1,
-    'Two': 2,
-    'Three': 3,
-    'Four or more': 4
-}
-
-shed_var_to_unavailability = {
-    'better_off_financially': [2013],
-    'tot_income': [2014],
-    'income_variance': [2014],
-    'own_business_retirement': [2013, 2019, 2020],
-    'schedule_variance': [2013, 2014, 2015],
-    'num_jobs': [2013, 2014, 2015],
-    'self_emp_income': [2013, 2014, 2019, 2020]
-}
 
 state_shed_codes_to_abb = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT",
                             21: "NY", 22: "NJ", 23: "PA", 31: "OH", 32: "IN", 33: "IL", 34: "MI", 35: "WI",
