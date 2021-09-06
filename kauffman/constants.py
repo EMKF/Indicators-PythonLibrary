@@ -213,6 +213,64 @@ qwi_outcomes = [
 
 qwi_averaged_outcomes = ['EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS']
 
+def mpj_covar_mapping(covar):
+    if covar == 'firmage':
+        return {
+            1: '0-1 years',
+            2: '2-3 years',
+            3: '4-5 years',
+            4: '6-10 years',
+            5: '11+ years'
+        }
+    elif covar == 'sex':
+        return {
+            1: 'Male',
+            2: 'Female'
+        }
+    elif covar == 'agegrp':
+        return {
+            'A01': '14-18',
+            'A02': '19-21',
+            'A03': '22-24',
+            'A04': '25-34',
+            'A05': '35-44',
+            'A06': '45-54',
+            'A07': '55-64',
+            'A08': '65-99',
+        }
+    elif covar == 'education':
+        return {
+            'E1': 'Less than high school',
+            'E2': 'High school or equivalent, no college',
+            'E3': 'Some college or Associate degree',
+            'E4': "Bachelor's degree or advanced degree",
+            'E5': 'Not available',
+        }
+    elif covar == 'race':
+        return {
+            'A1': 'White',
+            'A2': 'Black',
+            'A3': 'American Indian',
+            'A4': 'Asian',
+            'A5': 'Pacific Islander',
+            'A7': 'Two or more race groups'
+        }
+    elif covar == 'race_ethnicity':
+        return {
+            'A1A1': 'White, not Hispanic',
+            'A1A2': 'White, Hispanic',
+            'A2A1': 'Black, not Hispanic',
+            'A2A2': 'Black, Hispanic',
+            'A3A1': 'American Indian, not Hispanic',
+            'A3A2': 'American Indian, Hispanic',
+            'A4A1': 'Asian, not Hispanic',
+            'A4A2': 'Asian, Hispanic',
+            'A5A1': 'Pacific Islander, not Hispanic',
+            'A5A2': 'Pacific Islander, Hispanic',
+            'A7A1': 'Two or more Race Groups, not Hispanic',
+            'A7A2': 'Two or more Race Groups, Hispanic',
+        }
+
 acs_code_to_var = {
     'B24081_001E': 'total',
     'B24081_002E': 'private',
