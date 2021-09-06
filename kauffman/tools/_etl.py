@@ -207,10 +207,16 @@ def mpj_indicators(df_qwi, df_pep, df_earnbeg_us):
         drop(['emp_mid', 'within_count', 'max_count', 'total_emp'], 1)
 
 
-def aggregate(df, weight_var, var_list = [], strata = []):
-    df[var_list] = df[var_list]*df[weight_var]
-
+def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):
+    strata = [strata] if type(strata) == str else strata
+    if var_list == 'all':
+        var_list = [x for x in df.columns if x not in strata]
+    if weight_var == None:
+        weight_var = 'weight'
+        df['weight'] = 1
+    
     return df[strata + var_list].\
+        apply(lambda x: x*df[weight_var] if x.name in var_list else x).\
         groupby(strata).sum().\
         reset_index()
 
