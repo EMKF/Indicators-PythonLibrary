@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 from kauffman import constants as c
-from ..tools._etl import state_msa_cross_walk
+from kauffman.tools._etl import state_msa_cross_walk
 from webdriver_manager.chrome import ChromeDriverManager
 
 from selenium import webdriver
@@ -38,31 +38,31 @@ def _state_year_lst(state_lst):
     return out_lst
 
 
-def _build_strata_url(strata):
+def _build_strata_url(firm_char, worker_char):
     url_section = ''
     
-    if 'firmage' in strata:
+    if 'firmage' in (firm_char + worker_char):
         for f in range(0, 6):
             url_section = url_section + f'&firmage={f}'
-    if 'firmsize' in strata:
+    if 'firmsize' in (firm_char + worker_char):
         for f in range(0, 6):
             url_section = url_section + f'&firmsize={f}'
-    if 'industry' in strata:
+    if 'industry' in (firm_char + worker_char):
         for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
             url_section = url_section + f'&industry={i}'
-    if 'sex' in strata:
+    if 'sex' in (firm_char + worker_char):
         url_section = url_section + '&sex=0&sex=1&sex=2'
-    if 'agegrp' in strata:
+    if 'agegrp' in (firm_char + worker_char):
         for age in range(0, 9):
             url_section = url_section + f'&agegrp=A0{age}'
 
     return url_section
 
 
-def _build_url(fips, year, region, bds_key, firm_strat):
+def _build_url(fips, year, region, bds_key, firm_char, worker_char):
     base_url = 'https://api.census.gov/data/timeseries/qwi/sa?'
     var_lst = ','.join(c.qwi_outcomes)
-    strata_section = _build_strata_url(firm_strat)
+    strata_section = _build_strata_url(firm_char, worker_char)
 
     if region == 'msa':
         for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
@@ -176,8 +176,8 @@ def _us_fetch_data(private, firm_char, worker_char):
     return _qwi_ui_fetch_data(private, firm_char, worker_char)
 
 
-def _LA_fetch_data(strata):
-    df = _qwi_ui_fetch_data(True, strata, region='LA'). \
+def _LA_fetch_data(firm_char, worker_char):
+    df = _qwi_ui_fetch_data(True, firm_char, worker_char, region='LA'). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 HirAEndRepl=np.nan,
@@ -189,16 +189,16 @@ def _LA_fetch_data(strata):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_lst, strata):
+def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char):
     df = pd.concat(
         [
-            _fetch_from_url(_build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), strata))
+            _fetch_from_url(_build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), firm_char, worker_char))
             for syq in _state_year_lst(state_lst)
         ]
     )
 
     if ('06' in state_lst) and obs_level == 'msa':
-        df = df.append(_LA_fetch_data(strata))
+        df = df.append(_LA_fetch_data(firm_char, worker_char))
 
     return df
 
