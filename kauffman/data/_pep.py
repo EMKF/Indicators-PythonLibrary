@@ -138,6 +138,23 @@ def _county_2010_2019():
         reset_index(drop=True)
 
 
+def _county_2020():
+    return pd.read_csv(
+        'https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020.csv',
+        encoding='cp1252',
+        dtype={'STATE':str, 'COUNTY':str}
+        ).\
+        query('COUNTY != "000"').\
+        assign(
+            fips=lambda x: x['STATE'] + x['COUNTY'],
+            time=2020
+        ).\
+        rename(columns={'POPESTIMATE2020': 'population', 'CTYNAME': 'region'})\
+        [['fips', 'region', 'time', 'population']].\
+        sort_values(['fips', 'time']).\
+        reset_index(drop=True)
+        
+
 ## 1900 - 2000 code
 def _format(df, astype_arg=None, query_arg=None, format_pop=True):
     df = df.astype(astype_arg) if astype_arg else df
@@ -247,6 +264,15 @@ def _state_2010_2019():
         ) \
         [['fips', 'region', 'time', 'POP']]
 
+def _state_2020():
+    return pd.read_csv('https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/state/totals/nst-est2020.csv', dtype={'STATE':str}).\
+        query('STATE != "00"').\
+        assign(time=2020).\
+        rename(columns={'POPESTIMATE2020': 'population', 'STATE': 'fips', 'NAME':'region'})\
+        [['fips', 'region', 'time', 'population']].\
+        sort_values(['fips', 'time']).\
+        reset_index(drop=True)
+
 
 def _us_1900_1999():
     return pd.read_csv(
@@ -296,12 +322,21 @@ def _us_2010_2019():
         ) \
         [['fips', 'region', 'time', 'POP']]
 
+def _us_2020():
+    return pd.read_csv('https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/national/totals/nst-est2020.csv', dtype={'STATE':str}).\
+        query('NAME == "United States"').\
+        assign(time=2020).\
+        rename(columns={'POPESTIMATE2020': 'population', 'STATE': 'fips', 'NAME':'region'})\
+        [['fips', 'region', 'time', 'population']].\
+        sort_values(['fips', 'time']).\
+        reset_index(drop=True)
+
 
 def _pep_data_create(region):
     if region == 'county':
         df = pd.concat(
             [
-                f() for f in [_county_1980_1989, _county_1990_1999, _county_2000_2009, _county_2010_2019]
+                f() for f in [_county_1980_1989, _county_1990_1999, _county_2000_2009, _county_2010_2019, _county_2020]
             ],
             axis=0
         ).\
@@ -313,13 +348,14 @@ def _pep_data_create(region):
     elif region == 'state':
         df = pd.concat(
                 [_state_1900_1989(year) for year in range(1900,1981,10)] + 
-                [f() for f in [_state_1990_1999, _state_2000_2009, _state_2010_2019]],
+                [f() for f in [_state_1990_1999, _state_2000_2009, 
+                _state_2010_2019, _state_2020]],
                 axis=0
             )
     else:
         df = pd.concat(
             [
-                f() for f in [_us_1900_1999, _us_2000_2009, _us_2010_2019]
+                f() for f in [_us_1900_1999, _us_2000_2009, _us_2010_2019, _us_2020]
             ],
             sort=True,
             axis=0
