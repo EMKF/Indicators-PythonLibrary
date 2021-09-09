@@ -43,27 +43,46 @@ def _build_strata_url(firm_char, worker_char):
     
     if 'firmage' in firm_char:
         for f in range(0, 6):
-            url_section = url_section + f'&firmage={f}'
+            url_section += f'&firmage={f}'
     if 'firmsize' in firm_char:
         for f in range(0, 6):
-            url_section = url_section + f'&firmsize={f}'
+            url_section += f'&firmsize={f}'
     if 'industry' in firm_char:
         for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
-            url_section = url_section + f'&industry={i}'
+            url_section += f'&industry={i}'
     if 'sex' in worker_char:
-        url_section = url_section + '&sex=0&sex=1&sex=2'
+        url_section += '&sex=0&sex=1&sex=2'
     if 'agegrp' in worker_char:
         for age in range(0, 9):
-            url_section = url_section + f'&agegrp=A0{age}'
+            url_section += f'&agegrp=A0{age}'
+    if 'education' in worker_char:
+        for i in range(0,6):
+            url_section += f'&education=E{i}'
+    if 'race' in worker_char:
+        for i in range(0,8):
+            url_section += f'&race=A{i}'
+    if 'ethnicity' in worker_char:
+        for i in range(0,3):
+            url_section += f'ethnicity=A{i}'
 
     return url_section
 
 
+def database_name(worker_char):
+    if 'education' in worker_char:
+        return 'se'
+    elif 'race' in worker_char or 'ethnicity' in worker_char:
+        return 'rh'
+    else:
+        return 'sa'
+
+
 def _build_url(fips, year, region, bds_key, firm_char, worker_char, private):
-    base_url = 'https://api.census.gov/data/timeseries/qwi/sa?'
+    base_url = 'https://api.census.gov/data/timeseries/qwi/'
     var_lst = ','.join(c.qwi_outcomes)
     strata_section = _build_strata_url(firm_char, worker_char)
     private = 'A05' if private == True else 'A00'
+    database = database_name(worker_char)
 
     if region == 'msa':
         for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
@@ -71,8 +90,8 @@ def _build_url(fips, year, region, bds_key, firm_char, worker_char, private):
         for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
-    return '{0}get={1}&{2}&time={3}&ownercode={4}{5}&key={6}'. \
-        format(base_url, var_lst, for_region, year, private, strata_section, bds_key)
+    return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}{6}&key={7}'. \
+        format(base_url, database, var_lst, for_region, year, private, strata_section, bds_key)
 
 
 def _build_df_header(df):
@@ -429,7 +448,10 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     worker_char = [worker_char] if type(worker_char) == str else worker_char
 
-    if set(worker_char) == {'agegrp', 'education'}:
+    if set(worker_char) not in [
+        {'sex', 'agegrp'}, {'sex', 'education'}, {'education'}, {'ethnicity', 'race'}, 
+        {'sex'}, {'agegrp'}, {'race'}, {'ethnicity'}
+    ]:
         raise Exception('Invalid input to worker_char. See documentation for valid groups.')
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
