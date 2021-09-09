@@ -41,28 +41,29 @@ def _state_year_lst(state_lst):
 def _build_strata_url(firm_char, worker_char):
     url_section = ''
     
-    if 'firmage' in (firm_char + worker_char):
+    if 'firmage' in firm_char:
         for f in range(0, 6):
             url_section = url_section + f'&firmage={f}'
-    if 'firmsize' in (firm_char + worker_char):
+    if 'firmsize' in firm_char:
         for f in range(0, 6):
             url_section = url_section + f'&firmsize={f}'
-    if 'industry' in (firm_char + worker_char):
+    if 'industry' in firm_char:
         for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
             url_section = url_section + f'&industry={i}'
-    if 'sex' in (firm_char + worker_char):
+    if 'sex' in worker_char:
         url_section = url_section + '&sex=0&sex=1&sex=2'
-    if 'agegrp' in (firm_char + worker_char):
+    if 'agegrp' in worker_char:
         for age in range(0, 9):
             url_section = url_section + f'&agegrp=A0{age}'
 
     return url_section
 
 
-def _build_url(fips, year, region, bds_key, firm_char, worker_char):
+def _build_url(fips, year, region, bds_key, firm_char, worker_char, private):
     base_url = 'https://api.census.gov/data/timeseries/qwi/sa?'
     var_lst = ','.join(c.qwi_outcomes)
     strata_section = _build_strata_url(firm_char, worker_char)
+    private = 'A05' if private == True else 'A00'
 
     if region == 'msa':
         for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
@@ -70,8 +71,8 @@ def _build_url(fips, year, region, bds_key, firm_char, worker_char):
         for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
-    return '{0}get={1}&{2}&time={3}&ownercode=A05{4}&key={5}'. \
-        format(base_url, var_lst, for_region, year, strata_section, bds_key)
+    return '{0}get={1}&{2}&time={3}&ownercode={4}{5}&key={6}'. \
+        format(base_url, var_lst, for_region, year, private, strata_section, bds_key)
 
 
 def _build_df_header(df):
@@ -189,10 +190,13 @@ def _LA_fetch_data(firm_char, worker_char):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char):
+def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private):
     df = pd.concat(
         [
-            _fetch_from_url(_build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'), firm_char, worker_char))
+            _fetch_from_url(
+                _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'),
+                firm_char, worker_char, private)
+            )
             for syq in _state_year_lst(state_lst)
         ]
     )
@@ -293,7 +297,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char)
+        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private)
 
     return df. \
         pipe(_covar_create_fips_region, region).\
@@ -384,7 +388,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         'sex': stratify by worker sex
         'agegrp': stratify by worker age
 
-        # 'sex': stratify by worker sex
+        'sex': stratify by worker sex
         'education': stratify by worker education
     # todo: need to make it so these can be crossed
 
@@ -419,8 +423,14 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     firm_char = [firm_char] if type(firm_char) == str else firm_char
     private = True if any(x in ['firmage', 'firmsize'] for x in firm_char) else private
+    if obs_level in ['us', 'all'] and private == False:
+        private = True
+        print("Warning: US-level data is only available when private=True. Variable 'private' has been set to True.")
 
     worker_char = [worker_char] if type(worker_char) == str else worker_char
+
+    if set(worker_char) == {'agegrp', 'education'}:
+        raise Exception('Invalid input to worker_char. See documentation for valid groups.')
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
 
