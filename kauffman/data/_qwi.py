@@ -209,12 +209,11 @@ def _LA_fetch_data(firm_char, worker_char):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private):
+def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key):
     df = pd.concat(
         [
             _fetch_from_url(
-                _build_url(syq[0], syq[1], obs_level, os.getenv('BDS_KEY'),
-                firm_char, worker_char, private)
+                _build_url(syq[0], syq[1], obs_level, key, firm_char, worker_char, private)
             )
             for syq in _state_year_lst(state_lst)
         ]
@@ -304,7 +303,7 @@ def _obs_filter_groupby_msa(df, covars, region):
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals):
+def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key):
     covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
 
     if region == 'us':
@@ -316,7 +315,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private)
+        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private, key)
 
     return df. \
         pipe(_covar_create_fips_region, region).\
@@ -329,7 +328,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
         reset_index(drop=True)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False):
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("BDS_KEY")):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -413,6 +412,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
         'race': worker race
         'ethnicity': workr ethnicity
+
+    key: str
+        Your Census Data API Key.
     """
 
     if obs_level in ['us', 'state', 'county', 'msa']:
@@ -458,7 +460,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals)
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals, key)
                 for region in region_lst
             ],
             axis=0
