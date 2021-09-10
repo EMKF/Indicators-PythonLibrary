@@ -63,7 +63,7 @@ def _build_strata_url(firm_char, worker_char):
             url_section += f'&race=A{i}'
     if 'ethnicity' in worker_char:
         for i in range(0,3):
-            url_section += f'ethnicity=A{i}'
+            url_section += f'&ethnicity=A{i}'
 
     return url_section
 
@@ -452,7 +452,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         {'sex', 'agegrp'}, {'sex', 'education'}, {'education'}, {'ethnicity', 'race'}, 
         {'sex'}, {'agegrp'}, {'race'}, {'ethnicity'}
     ]:
-        raise Exception('Invalid input to worker_char. See documentation for valid groups.')
+        raise Exception('Invalid input to worker_char. See function documentation for valid groups.')
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
 
