@@ -427,10 +427,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     # todo: is this done correctly?
     if state_list == 'all':
         state_list = [c.state_abb_to_fips[s] for s in c.states]
-    elif isinstance(state_list, list) and obs_level == 'msa':
-        state_list = state_msa_cross_walk(state_list, 'metro')['fips_state'].unique().tolist()
     else:
         state_list = [c.state_abb_to_fips[s] for s in state_list]
+        if isinstance(state_list, list) and obs_level == 'msa':
+            state_list = state_msa_cross_walk(state_list, 'metro')['fips_state'].unique().tolist()
+    
 
     if indicator_lst == 'all':
         indicator_lst = c.qwi_outcomes
@@ -452,7 +453,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     if set(worker_char) not in [
         {'sex', 'agegrp'}, {'sex', 'education'}, {'education'}, {'ethnicity', 'race'}, 
-        {'sex'}, {'agegrp'}, {'race'}, {'ethnicity'}
+        {'sex'}, {'agegrp'}, {'race'}, {'ethnicity'}, set()
     ]:
         raise Exception('Invalid input to worker_char. See function documentation for valid groups.')
 
