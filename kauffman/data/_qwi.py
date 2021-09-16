@@ -28,44 +28,31 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _state_year_lst(state_lst):
+def _url_groups(state_lst, firm_char):
     out_lst = []
-    df = c.qwi_start_to_end_year()
+    d = c.qwi_start_to_end_year()
+
+    firmages = [x for x in range(0, 6)] if 'firmage' in firm_char else [0]
+    firmsizes = [x for x in range(0, 6)] if 'firmsize' in firm_char else [0]
+    industries = (
+        ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]
+        if 'industry' in firm_char
+        else ['00']
+    )
+
     for state in state_lst:
-        start_year = int(df[state]['start_year'])
-        end_year = int(df[state]['end_year'])
-        out_lst += list(product([state], range(start_year, end_year + 1)))
+        start_year = int(d[state]['start_year'])
+        end_year = int(d[state]['end_year'])
+        years = [x for x in range(start_year, end_year + 1)]
+        out_lst += list(product([state], years, firmages, firmsizes, industries))
     return out_lst
 
 
-def _build_strata_url(firm_char, worker_char):
-    url_section = ''
-    
-    if 'firmage' in firm_char:
-        for f in range(0, 6):
-            url_section += f'&firmage={f}'
-    if 'firmsize' in firm_char:
-        for f in range(0, 6):
-            url_section += f'&firmsize={f}'
-    if 'industry' in firm_char:
-        for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
-            url_section += f'&industry={i}'
-    if 'sex' in worker_char:
-        url_section += '&sex=0&sex=1&sex=2'
-    if 'agegrp' in worker_char:
-        for age in range(0, 9):
-            url_section += f'&agegrp=A0{age}'
-    if 'education' in worker_char:
-        for i in range(0,6):
-            url_section += f'&education=E{i}'
-    if 'race' in worker_char:
-        for i in range(0,8):
-            url_section += f'&race=A{i}'
-    if 'ethnicity' in worker_char:
-        for i in range(0,3):
-            url_section += f'&ethnicity=A{i}'
+def _build_strata_url(firmsize, firmage, industry):
+    strata_names = ['firmsize', 'firmage', 'industry']
+    strata_values = [firmsize, firmage, industry]
 
-    return url_section
+    return '&'.join([f'{n}={v}' for n,v in zip(strata_names, strata_values)])
 
 
 def database_name(worker_char):
@@ -77,10 +64,10 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, region, bds_key, firm_char, worker_char, private):
+def _build_url(fips, year, firmsize, firmage, industry, region, worker_char, private, bds_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
-    var_lst = ','.join(c.qwi_outcomes)
-    strata_section = _build_strata_url(firm_char, worker_char)
+    var_lst = ','.join(c.qwi_outcomes + worker_char)
+    strata_section = _build_strata_url(firmsize, firmage, industry)
     private = 'A05' if private == True else 'A00'
     database = database_name(worker_char)
 
@@ -90,8 +77,11 @@ def _build_url(fips, year, region, bds_key, firm_char, worker_char, private):
         for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
-    return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}{6}&key={7}'. \
-        format(base_url, database, var_lst, for_region, year, private, strata_section, bds_key)
+    return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}&{6}&key={7}'. \
+        format(
+            base_url, database, var_lst, for_region, year, private,
+            strata_section, bds_key
+        )
 
 
 def _build_df_header(df):
@@ -213,9 +203,9 @@ def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, p
     df = pd.concat(
         [
             _fetch_from_url(
-                _build_url(syq[0], syq[1], obs_level, key, firm_char, worker_char, private)
+                _build_url(g[0], g[1], g[2], g[3], g[4], obs_level, worker_char, private, key)
             )
-            for syq in _state_year_lst(state_lst)
+            for g in _url_groups(state_lst, firm_char)
         ]
     )
 
@@ -468,11 +458,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         )
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals
-    df = _qwi_data_create(c.qwi_outcomes, 'us', [], False, False, [], ['edgrp'], False)
+    # df = _qwi_data_create(c.qwi_outcomes, 'us', [], False, False, [], ['edgrp'], False)
     # df = _qwi_data_create(c.qwi_outcomes, 'msa', ['06'], True, False, ['firmsize', 'industry'], False)
-    print(df.head(100))
-    print(df.tail(100))
+    # print(df.head(100))
+    # print(df.tail(100))
     # _county_msa_state_fetch_data('msa', ['06'], strata=['firmsize', 'industry'])
     # _LA_fetch_data(['firmsize', 'industry'])
