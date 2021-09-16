@@ -39,7 +39,7 @@ def _missing_obs(df):
 def _total_emp_create(df, contribution_by):
     covars = ['fips', 'time']
     if contribution_by:
-        covars = ['fips', 'time'] + [contribution_by]
+        covars = ['fips', 'time'] + contribution_by.split('_')
 
     return df.\
         assign(

@@ -31,19 +31,49 @@ def zip():
 
 def mpj_industry():
     df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
-    pd.concat(
-            [
-                mpj_indicators(
-                    pd.read_csv(c.filenamer(f'../tests/data/qwi_{region}.csv')),
-                    pd.read_csv(c.filenamer(f'../tests/data/pep_{region}.csv')),
-                    df_earnbeg_us
-                )
-                for region in ['us', 'state']
-                # for region in ['us', 'state', 'msa', 'county']
-            ]
-        ).\
-        to_csv(c.filenamer(f'../tests/data/mpj_industry.csv'), index=False)
+    for covar in ['sex', 'agegrp', 'education', 'race_ethnicity', 'industry']:
+        df_temp = mpj_indicators(
+            pd.read_csv(c.filenamer(f'../tests/data/qwi_us_{covar}_overall.csv')),
+            pd.read_csv(c.filenamer(f'../tests/data/pep_us.csv')),
+            df_earnbeg_us,
+            contribution_by=None,
+            constancy_mult=100
+        )
+        print(df_temp.head(10))
+        if covar not in ['race_ethnicity', 'industry']:
+            df_temp[covar] = df_temp[covar].map(c.mpj_covar_mapping(covar))
+        elif covar == 'industry':
+            df_temp[covar] = df_temp[covar].map(c.naics_code_to_abb(2))
 
+        df_temp.to_csv(f'/Users/thowe/Downloads/mpj_us_{covar}_overall.csv', index=False)
+
+
+    # df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
+    # mpj_indicators(
+    #         pd.read_csv(c.filenamer(f'../tests/data/qwi_us_industry.csv')),
+    #         pd.read_csv(c.filenamer(f'../tests/data/pep_us.csv')),
+    #         df_earnbeg_us,
+    #         contribution_by='firmage',
+    #         constancy_mult=100
+    #     ). \
+    #     assign(firmage=lambda x: x['firmage'].map(c.mpj_covar_mapping('firmage'))).\
+    #     assign(industry=lambda x: x['industry'].map(c.naics_code_to_abb(2))).\
+    #     to_csv('/Users/thowe/Downloads/mpj_us_industry.csv', index=False)
+
+    # df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
+    # pd.concat(
+    #         [
+    #             mpj_indicators(
+    #                 pd.read_csv(c.filenamer(f'../tests/data/qwi_{region}.csv')),
+    #                 pd.read_csv(c.filenamer(f'../tests/data/pep_{region}.csv')),
+    #                 df_earnbeg_us
+    #             )
+    #             for region in ['us', 'state']
+    #             # for region in ['us', 'state', 'msa', 'county']
+    #         ]
+    #     ).\
+    #     to_csv(c.filenamer(f'../tests/data/mpj_industry.csv'), index=False)
+    #
 
 def mpj_covar():
     df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
@@ -75,8 +105,8 @@ def race_eth():
 
 
 if __name__ == '__main__':
-    # mpj_industry()
-    mpj_covar()
+    mpj_industry()
+    # mpj_covar()
 
     # county_msa_cw()
     # state_msa_cw()
