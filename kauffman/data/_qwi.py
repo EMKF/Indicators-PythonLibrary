@@ -401,7 +401,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     # todo: need to make it so these can be crossed
 
         'race': worker race
-        'ethnicity': workr ethnicity
+        'ethnicity': worker ethnicity
 
     key: str
         Your Census Data API Key.
@@ -446,6 +446,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         {'sex'}, {'agegrp'}, {'race'}, {'ethnicity'}, set()
     ]:
         raise Exception('Invalid input to worker_char. See function documentation for valid groups.')
+
+    if 'firmage' in firm_char and 'firmsize' in firm_char:
+        raise Exception('Invalid input to firm_char. Can only specify one of firmage or firmsize.')
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
 
