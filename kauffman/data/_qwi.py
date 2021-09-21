@@ -28,17 +28,19 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _url_groups(state_lst, firm_char):
+def _url_groups(state_lst, firm_char, private):
     out_lst = []
     d = c.qwi_start_to_end_year()
 
     firmages = [x for x in range(0, 6)] if 'firmage' in firm_char else [0]
     firmsizes = [x for x in range(0, 6)] if 'firmsize' in firm_char else [0]
-    industries = (
-        ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]
-        if 'industry' in firm_char
-        else ['00']
-    )
+    
+    if 'industry' in firm_char:
+        industries = ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]
+        if private:
+            industries.remove(92)
+    else:
+        industries = ['00']
 
     for state in state_lst:
         start_year = int(d[state]['start_year'])
@@ -46,13 +48,6 @@ def _url_groups(state_lst, firm_char):
         years = [x for x in range(start_year, end_year + 1)]
         out_lst += list(product([state], years, firmages, firmsizes, industries))
     return out_lst
-
-
-def _build_strata_url(firmsize, firmage, industry):
-    strata_names = ['firmsize', 'firmage', 'industry']
-    strata_values = [firmsize, firmage, industry]
-
-    return '&'.join([f'{n}={v}' for n,v in zip(strata_names, strata_values)])
 
 
 def database_name(worker_char):
@@ -64,10 +59,10 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, firmsize, firmage, industry, region, worker_char, private, bds_key):
+def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, private, bds_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
     var_lst = ','.join(c.qwi_outcomes + worker_char)
-    strata_section = _build_strata_url(firmsize, firmage, industry)
+    firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
     private = 'A05' if private == True else 'A00'
     database = database_name(worker_char)
 
@@ -78,10 +73,7 @@ def _build_url(fips, year, firmsize, firmage, industry, region, worker_char, pri
     else:
         for_region = f'for=state:{fips}'
     return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}&{6}&key={7}'. \
-        format(
-            base_url, database, var_lst, for_region, year, private,
-            strata_section, bds_key
-        )
+        format(base_url, database, var_lst, for_region, year, private, firm_char_section, bds_key)
 
 
 def _build_df_header(df):
@@ -205,7 +197,7 @@ def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, p
             _fetch_from_url(
                 _build_url(g[0], g[1], g[2], g[3], g[4], obs_level, worker_char, private, key)
             )
-            for g in _url_groups(state_lst, firm_char)
+            for g in _url_groups(state_lst, firm_char, private)
         ]
     )
 
