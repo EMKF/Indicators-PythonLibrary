@@ -81,12 +81,16 @@ def _build_df_header(df):
     return df[1:]
 
 
-def _fetch_from_url(url):
-    r = requests.get(url)
+def _fetch_from_url(url, session):
     try:
-        df = pd.DataFrame(r.json()).pipe(_build_df_header)
-    except:
-        print('Fail', r, url)
+        r = session.get(url)
+        try:
+            df = pd.DataFrame(r.json()).pipe(_build_df_header)
+        except:
+            print('Fail', r, url)
+            df = pd.DataFrame()
+    except Exception as e:
+        print(e)
         df = pd.DataFrame()
     return df
 
@@ -192,10 +196,13 @@ def _LA_fetch_data(firm_char, worker_char):
 
 
 def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key):
+    s = requests.Session()
+
     df = pd.concat(
         [
             _fetch_from_url(
-                _build_url(g[0], g[1], g[2], g[3], g[4], obs_level, worker_char, private, key)
+                _build_url(g[0], g[1], g[2], g[3], g[4], obs_level, worker_char, private, key),
+                s
             )
             for g in _url_groups(state_lst, firm_char, private)
         ]
@@ -203,6 +210,8 @@ def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, p
 
     if ('06' in state_lst) and obs_level == 'msa':
         df = df.append(_LA_fetch_data(firm_char, worker_char))
+
+    s.close()
 
     return df
 
