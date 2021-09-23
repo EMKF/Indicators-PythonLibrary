@@ -31,20 +31,25 @@ def zip():
 
 def mpj_industry():
     df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
-    for covar in ['sex', 'agegrp', 'education', 'race_ethnicity', 'industry']:
+    for covar in ['race_hispanic']:
+    # for covar in ['sex', 'agegrp', 'education', 'race_hispanic', 'industry']:
         df_temp = mpj_indicators(
             pd.read_csv(c.filenamer(f'../tests/data/qwi_us_{covar}_overall.csv')),
+            # pd.read_csv(c.filenamer(f'../tests/data/qwi_us_{covar}.csv')),
             pd.read_csv(c.filenamer(f'../tests/data/pep_us.csv')),
             df_earnbeg_us,
             contribution_by=None,
             constancy_mult=100
         )
         print(df_temp.head(10))
-        if covar not in ['race_ethnicity', 'industry']:
+        if covar not in ['race_hispanic', 'industry']:
             df_temp[covar] = df_temp[covar].map(c.mpj_covar_mapping(covar))
         elif covar == 'industry':
             df_temp[covar] = df_temp[covar].map(c.naics_code_to_abb(2))
+        # elif covar == 'race_ethnicity':
 
+
+        # df_temp.to_csv(f'/Users/thowe/Downloads/mpj_us_{covar}.csv', index=False)
         df_temp.to_csv(f'/Users/thowe/Downloads/mpj_us_{covar}_overall.csv', index=False)
 
 
@@ -100,8 +105,13 @@ def mpj_covar():
 def race_eth():
     df_temp = pd.read_csv(c.filenamer(f'../tests/data/qwi_us_race_ethnicity.csv')).assign(fips=0)
     covars = ['time', 'fips', 'region', 'ownercode', 'firmage']
-    df_temp = race_ethnicity_categories_create(df_temp, covars)
-    print(df_temp.head(20))
+    race_ethnicity_categories_create(df_temp, covars).\
+        to_csv(c.filenamer(f'../tests/data/qwi_us_race_hispanic.csv'), index=False)
+
+    df_temp = pd.read_csv(c.filenamer(f'../tests/data/qwi_us_race_ethnicity_overall.csv')).assign(fips=0)
+    covars = ['time', 'fips', 'region', 'ownercode']
+    race_ethnicity_categories_create(df_temp, covars).\
+        to_csv(c.filenamer(f'../tests/data/qwi_us_race_hispanic_overall.csv'), index=False)
 
 
 if __name__ == '__main__':
