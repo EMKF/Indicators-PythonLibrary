@@ -76,16 +76,11 @@ def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, pri
         format(base_url, database, var_lst, for_region, year, private, firm_char_section, bds_key)
 
 
-def _build_df_header(df):
-    df.columns = df.iloc[0]
-    return df[1:]
-
-
 def _fetch_from_url(url, session):
     try:
         r = session.get(url)
         try:
-            df = pd.DataFrame(r.json()).pipe(_build_df_header)
+            df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
         except:
             print('Fail', r, url)
             df = pd.DataFrame()
