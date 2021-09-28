@@ -36,7 +36,7 @@ def _url_groups(state_lst, firm_char, private):
     firmsizes = [x for x in range(0, 6)] if 'firmsize' in firm_char else [0]
     
     if 'industry' in firm_char:
-        industries = ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]
+        industries = ['00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81', '92']
         if private:
             industries.remove(92)
     else:
