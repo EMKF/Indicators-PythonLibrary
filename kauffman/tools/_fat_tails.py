@@ -1,20 +1,8 @@
 # import kauffman
 import numpy as np
-import seaborn as sns  # todo: will need to add sklearn to (or maybe just this module) to setup.py
+import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression  # todo: will need to add sklearn to (or maybe just this module) to setup.py\
-
-
-# import bfs_distributions.kauffman_tools.public_data_helpers
-
-# def ts_plot(df):
-#     df. \
-#         astype({'time': 'str'}).\
-#         pub.plot(
-#             {'BA_BA': 'Firms'},
-#             to_index=False,
-#             show=True
-#         )
+from sklearn.linear_model import LinearRegression
 
 
 def _alpha_model_fit(df):
@@ -127,3 +115,20 @@ def sigma_calc(df_ba):
     sigma = (df_ba['BA_BA'].max() - df_ba['BA_BA'].mean()) / df_ba['BA_BA'].std()
     print(f'Number of standard deviations: {sigma}')  # close to 6...It's a six sigma event!
 
+
+def M(data, n, bootstrap_n):
+    df_n = np.empty(0)
+    for _ in range(bootstrap_n):
+        df_n = np.append(df_n, data.sample(n=n, replace=True).sum())
+    return np.mean(np.abs(df_n - np.mean(df_n)))
+
+
+def kappa(data, n, n0=1, bootstrap_n=1_000_000):
+    m_n = M(data, n, bootstrap_n)
+    m_n0 = M(data, n0, bootstrap_n)
+
+    return 2 - (np.log(n) - np.log(n0)) / np.log(m_n / m_n0)
+
+
+def n_v(k_1, n_g):
+    return n_g ** (-1 / (k_1 - 1))
