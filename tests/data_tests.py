@@ -127,16 +127,18 @@ def mpj_data_fetch():
 
 
     # qwi by industry brief
-    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['firmage', 'industry'], annualize=True).\
-    #     to_csv(c.filenamer(f'../tests/data/qwi_us_industry.csv'), index=False)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['NE', 'IA', 'MO', 'KS'], private=True, firm_char=['firmage', 'industry'], annualize=True).\
+    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='state', state_list=['NE', 'IA', 'MO', 'KS'], private=True, firm_char=['industry'], annualize=True).\
+        query('industry != "92"').\
+        to_csv(c.filenamer(f'../tests/data/qwi_heartland_industry.csv'), index=False)
 
-    for covar in ['sex', 'agegrp', 'education']:
-        qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=[], worker_char=[covar], annualize=True).\
-            to_csv(c.filenamer(f'../tests/data/qwi_us_{covar}_overall.csv'), index=False)
-    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=[], worker_char=['race', 'ethnicity'], annualize=True).\
-        to_csv(c.filenamer(f'../tests/data/qwi_us_race_ethnicity_overall.csv'), index=False)
-    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['industry'], annualize=True).\
-        to_csv(c.filenamer(f'../tests/data/qwi_us_industry_overall.csv'), index=False)
+    # for covar in ['sex', 'agegrp', 'education']:
+    #     qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=[], worker_char=[covar], annualize=True).\
+    #         to_csv(c.filenamer(f'../tests/data/qwi_us_{covar}_overall.csv'), index=False)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=[], worker_char=['race', 'ethnicity'], annualize=True).\
+    #     to_csv(c.filenamer(f'../tests/data/qwi_us_race_ethnicity_overall.csv'), index=False)
+    # qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='us', private=True, firm_char=['industry'], annualize=True).\
+    #     to_csv(c.filenamer(f'../tests/data/qwi_us_industry_overall.csv'), index=False)
 
 
 

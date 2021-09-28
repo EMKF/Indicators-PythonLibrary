@@ -29,6 +29,20 @@ def zip():
     print(df.head())
 
 
+def mpj_heartland():
+    df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
+    df_temp = mpj_indicators(
+        pd.read_csv(c.filenamer(f'../tests/data/qwi_heartland_industry.csv')),
+        pd.read_csv(c.filenamer(f'../tests/data/pep_state.csv')),
+        df_earnbeg_us,
+        contribution_by=None,
+        constancy_mult=100
+    ).\
+        astype({'industry': 'str'})
+    df_temp['industry'] = df_temp['industry'].map(c.naics_code_to_abb(2))
+    df_temp.to_csv(f'/Users/thowe/Downloads/mpj_heartland_industry.csv', index=False)
+
+
 def mpj_industry():
     df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
     for covar in ['race_hispanic']:
@@ -51,7 +65,6 @@ def mpj_industry():
 
         # df_temp.to_csv(f'/Users/thowe/Downloads/mpj_us_{covar}.csv', index=False)
         df_temp.to_csv(f'/Users/thowe/Downloads/mpj_us_{covar}_overall.csv', index=False)
-
 
     # df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
     # mpj_indicators(
@@ -115,7 +128,8 @@ def race_eth():
 
 
 if __name__ == '__main__':
-    mpj_industry()
+    mpj_heartland()
+    # mpj_industry()
     # mpj_covar()
 
     # county_msa_cw()

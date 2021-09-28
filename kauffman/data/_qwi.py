@@ -48,7 +48,8 @@ def _build_strata_url(firm_char, worker_char):
         for f in range(0, 6):
             url_section += f'&firmsize={f}'
     if 'industry' in firm_char:
-        for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
+        # for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
+        for i in ['00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81']:
             url_section += f'&industry={i}'
     if 'sex' in worker_char:
         url_section += '&sex=0&sex=1&sex=2'
@@ -221,7 +222,6 @@ def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, p
 
     if ('06' in state_lst) and obs_level == 'msa':
         df = df.append(_LA_fetch_data(firm_char, worker_char))
-
     return df
 
 

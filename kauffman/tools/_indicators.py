@@ -48,6 +48,7 @@ def _total_emp_create(df, contribution_by):
             total_emp=lambda x: x[['emp_mid'] + covars].groupby(covars).transform(sum, min_count=int(x['max_count'].iloc[0]))
         )
 
+
 def mpj_indicators(df_qwi, df_pep, df_earnbeg_us, contribution_by=None, constancy_mult=1):
     """
     todo: description of each of these data sets briefly
