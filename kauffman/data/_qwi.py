@@ -28,45 +28,26 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _state_year_lst(state_lst):
+def _url_groups(state_lst, firm_char, private):
     out_lst = []
-    df = c.qwi_start_to_end_year()
-    for state in state_lst:
-        start_year = int(df[state]['start_year'])
-        end_year = int(df[state]['end_year'])
-        out_lst += list(product([state], range(start_year, end_year + 1)))
-    return out_lst
+    d = c.qwi_start_to_end_year()
 
+    firmages = [x for x in range(0, 6)] if 'firmage' in firm_char else [0]
+    firmsizes = [x for x in range(0, 6)] if 'firmsize' in firm_char else [0]
 
-def _build_strata_url(firm_char, worker_char):
-    url_section = ''
-    
-    if 'firmage' in firm_char:
-        for f in range(0, 6):
-            url_section += f'&firmage={f}'
-    if 'firmsize' in firm_char:
-        for f in range(0, 6):
-            url_section += f'&firmsize={f}'
     if 'industry' in firm_char:
-        # for i in ['00', 11, 21, 22, 23, 42, 51, 52, 53, 54, 55, 56, 61, 62, 71, 72, 81, 92]:
-        for i in ['00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81']:
-            url_section += f'&industry={i}'
-    if 'sex' in worker_char:
-        url_section += '&sex=0&sex=1&sex=2'
-    if 'agegrp' in worker_char:
-        for age in range(0, 9):
-            url_section += f'&agegrp=A0{age}'
-    if 'education' in worker_char:
-        for i in range(0,6):
-            url_section += f'&education=E{i}'
-    if 'race' in worker_char:
-        for i in range(0,8):
-            url_section += f'&race=A{i}'
-    if 'ethnicity' in worker_char:
-        for i in range(0,3):
-            url_section += f'&ethnicity=A{i}'
+        industries = ['00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81', '92']
+        if private:
+            industries.remove(92)
+    else:
+        industries = ['00']
 
-    return url_section
+    for state in state_lst:
+        start_year = int(d[state]['start_year'])
+        end_year = int(d[state]['end_year'])
+        years = [x for x in range(start_year, end_year + 1)]
+        out_lst += list(product([state], years, firmages, firmsizes, industries))
+    return out_lst
 
 
 def database_name(worker_char):
@@ -78,10 +59,10 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, region, bds_key, firm_char, worker_char, private):
+def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, private, bds_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
-    var_lst = ','.join(c.qwi_outcomes)
-    strata_section = _build_strata_url(firm_char, worker_char)
+    var_lst = ','.join(c.qwi_outcomes + worker_char)
+    firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
     private = 'A05' if private == True else 'A00'
     database = database_name(worker_char)
 
@@ -91,21 +72,20 @@ def _build_url(fips, year, region, bds_key, firm_char, worker_char, private):
         for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
-    return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}{6}&key={7}'. \
-        format(base_url, database, var_lst, for_region, year, private, strata_section, bds_key)
+    return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}&{6}&key={7}'. \
+        format(base_url, database, var_lst, for_region, year, private, firm_char_section, bds_key)
 
 
-def _build_df_header(df):
-    df.columns = df.iloc[0]
-    return df[1:]
-
-
-def _fetch_from_url(url):
-    r = requests.get(url)
+def _fetch_from_url(url, session):
     try:
-        df = pd.DataFrame(r.json()).pipe(_build_df_header)
-    except:
-        print('Fail', r, url)
+        r = session.get(url)
+        try:
+            df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
+        except:
+            print('Fail', r, url)
+            df = pd.DataFrame()
+    except Exception as e:
+        print(e)
         df = pd.DataFrame()
     return df
 
@@ -211,17 +191,23 @@ def _LA_fetch_data(firm_char, worker_char):
 
 
 def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key):
+    s = requests.Session()
+
     df = pd.concat(
         [
             _fetch_from_url(
-                _build_url(syq[0], syq[1], obs_level, key, firm_char, worker_char, private)
+                _build_url(g[0], g[1], g[2], g[3], g[4], obs_level, worker_char, private, key),
+                s
             )
-            for syq in _state_year_lst(state_lst)
+            for g in _url_groups(state_lst, firm_char, private)
         ]
     )
 
     if ('06' in state_lst) and obs_level == 'msa':
         df = df.append(_LA_fetch_data(firm_char, worker_char))
+
+    s.close()
+
     return df
 
 
@@ -411,7 +397,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     # todo: need to make it so these can be crossed
 
         'race': worker race
-        'ethnicity': workr ethnicity
+        'ethnicity': worker ethnicity
 
     key: str
         Your Census Data API Key.
@@ -456,6 +442,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         {'sex'}, {'agegrp'}, {'race'}, {'ethnicity'}, set()
     ]:
         raise Exception('Invalid input to worker_char. See function documentation for valid groups.')
+
+    if 'firmage' in firm_char and 'firmsize' in firm_char:
+        raise Exception('Invalid input to firm_char. Can only specify one of firmage or firmsize.')
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
 
