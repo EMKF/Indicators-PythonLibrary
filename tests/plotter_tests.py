@@ -64,15 +64,46 @@ def _time_series_tests():
     # time_series(df, 'population', 'time', recessions=True)
 
     industries = ['Health Care and Social Assistance', 'Retail Trade', 'Construction', 'Professional, Scientific, and Technical Services', 'Administrative and Support and Waste Management and Remediation Services']
-    df = pd.read_csv(f'/Users/thowe/Downloads/mpj_heartland_industry.csv').\
-        query(f'industry in {industries}')
+    df = pd.read_csv(f'/Users/thowe/Downloads/mpj_heartland_industry.csv')  #.\
+        # query(f'industry in {industries}')
 
     for state in ['Missouri', 'Kansas', 'Nebraska', 'Iowa']:
         df_temp = df.query(f'region == "{state}"')
+
+        ind_dict = {
+            'Agriculture, Forestry, Fishing and Hunting': ['black', 'solid'],
+            'Mining, Quarrying, and Oil and Gas Extraction': ['lightgray', 'solid'],
+            'Utilities': ['red', 'solid'],
+            'Construction': ['orange', 'solid'],
+            'Manufacturing': ['green', 'solid'],
+            'Wholesale Trade': ['blue', 'solid'],
+            'Retail Trade': ['violet', 'solid'],
+            'Information': ['black', 'dotted'],
+            'Finance and Insurance': ['lightgray', 'dotted'],
+            'Real Estate and Rental and Leasing': ['red', 'dotted'],
+            'Professional, Scientific, and Technical Services': ['orange', 'dotted'],
+            'Management of Companies and Enterprises': ['green', 'dotted'],
+            'Administrative and Support and Waste Management and Remediation Services': ['blue', 'dotted'],
+            'Educational Services': ['violet', 'dotted'],
+            'Health Care and Social Assistance': ['black', 'dashed'],
+            'Arts, Entertainment, and Recreation': ['lightgray', 'dashed'],
+            'Accommodation and Food Services': ['red', 'dashed'],
+            'Other Services (except Public Administration)': ['orange', 'dashed']
+         }
+
+        sns.set_style("whitegrid")
+        sns.color_palette('Paired')
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot(1, 1, 1)
-        ax.set_ylim([0, .2])
-        sns.lineplot(x='time', y='contribution', data=df_temp, hue='industry', ax=ax)
+        ax.set_ylim([0, .23])
+        for k, v in ind_dict.items():
+            df_temp_ind = df_temp.query(f'industry == "{k}"')
+            ax.plot(df_temp_ind['time'], df_temp_ind['contribution'], color=v[0], linestyle=v[1], label=k)
+            # sns.lineplot(x='time', y='contribution', data=df_temp.query(f'industry == "{k}"'), color=v[0], style=v[1], ax=ax, label=k)
+        # sns.lineplot(x='time', y='contribution', data=df_temp, hue='industry', markers='industry', ax=ax, palette='tab10')
+        # sns.lineplot(x='time', y='contribution', data=df_temp, size='industry', markers='industry', ax=ax, palette='tab10')
+
+        plt.legend(loc='upper left')
         plt.title(f'{state}')
         plt.savefig(f'/Users/thowe/Downloads/mpj_industry_{state}.png')
         plt.show()
