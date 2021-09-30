@@ -29,7 +29,7 @@ def zip():
     print(df.head())
 
 
-def mpj_heartland():
+def mpj_heartland_state():
     df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
     df_temp = mpj_indicators(
         pd.read_csv(c.filenamer(f'../tests/data/qwi_heartland_industry.csv')),
@@ -41,6 +41,19 @@ def mpj_heartland():
         astype({'industry': 'str'})
     df_temp['industry'] = df_temp['industry'].map(c.naics_code_to_abb(2))
     df_temp.to_csv(f'/Users/thowe/Downloads/mpj_heartland_industry.csv', index=False)
+
+
+def mpj_heartland_metro_micro():
+    df_earnbeg_us = pd.read_csv(c.filenamer('../tests/data/earnbeg_us.csv'))
+    df_temp = mpj_indicators(
+        pd.read_csv(c.filenamer(f'../tests/data/qwi_heartland_firmage.csv')),
+        pd.read_csv(c.filenamer(f'../tests/data/pep_msa.csv')),
+        df_earnbeg_us,
+        contribution_by=None,
+        constancy_mult=100
+    )
+    df_temp['firmage'] = df_temp['firmage'].map(c.mpj_covar_mapping('firmage'))
+    df_temp.to_csv(f'/Users/thowe/Downloads/mpj_heartland.csv', index=False)
 
 
 def mpj_industry():
@@ -128,7 +141,7 @@ def race_eth():
 
 
 if __name__ == '__main__':
-    mpj_heartland()
+    mpj_heartland_metro_micro()
     # mpj_industry()
     # mpj_covar()
 

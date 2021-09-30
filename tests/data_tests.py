@@ -48,8 +48,10 @@ def bfs_test():
 
 
 def pep_test():
-    pep(obs_level='us').\
-        to_csv('/Users/thowe/Projects/indicator_shiny_app/pep_us.csv', index=False)
+    # pep(obs_level='us').\
+    #     to_csv('/Users/thowe/Projects/indicator_shiny_app/pep_us.csv', index=False)
+    pep(obs_level='msa').\
+        to_csv(c.filenamer(f'../tests/data/pep_msa.csv'), index=False)
 
     # df = pep(obs_level='state')
     # df = pep(obs_level='msa')
@@ -141,8 +143,18 @@ def mpj_data_fetch():
     #     to_csv(c.filenamer(f'../tests/data/qwi_us_industry_overall.csv'), index=False)
 
 
+def qwi_msa_fetch():
+    heartland_regions = ['28140', '41180', '36540', '19780', '48620', '44180', '27900', '26980', '16300', '19340', '30700', '45820', '27620',
+                         '17860', '43580', '47940', '20220', '31740', '29940', '41460', '41140', '16020']
+
+    qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['NE', 'IA', 'MO', 'KS'], private=True, firm_char=['firmage'], annualize=True).\
+        query(f'fips in {heartland_regions}'). \
+        to_csv(c.filenamer(f'../tests/data/qwi_heartland_firmage.csv'), index=False)
+
 
 if __name__ == '__main__':
     # bfs_test()
     # qwi_test()
-    mpj_data_fetch()
+    # mpj_data_fetch()
+    # qwi_msa_fetch()
+    pep_test()

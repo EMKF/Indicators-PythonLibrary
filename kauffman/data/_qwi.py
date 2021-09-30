@@ -59,7 +59,7 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, private, bds_key):
+def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, private, census_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
     var_lst = ','.join(c.qwi_outcomes + worker_char)
     firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
@@ -73,7 +73,7 @@ def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, pri
     else:
         for_region = f'for=state:{fips}'
     return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}&{6}&key={7}'. \
-        format(base_url, database, var_lst, for_region, year, private, firm_char_section, bds_key)
+        format(base_url, database, var_lst, for_region, year, private, firm_char_section, census_key)
 
 
 def _fetch_from_url(url, session):
@@ -289,8 +289,29 @@ def _obs_filter_groupby_msa(df, covars, region):
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key):
+def _state_overlap(x, state_lst0):
+    if list(set(x.split(', ')[1].split('-')) & set(state_lst0)):
+        return 1
+    else:
+        return 0
+
+
+def _obs_filter_msa_state_lst(df, state_lst, state_lst0):
+    if sorted(state_lst) == sorted(state_lst0):
+        return df
+    else:
+        return df.\
+            assign(_keep=lambda x: x['region'].apply(lambda y: _state_overlap(y, [c.state_fips_to_abb[fips] for fips in state_lst0]))).\
+            query('_keep == 1').\
+            drop('_keep', 1)
+
+
+def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key, state_lst0=None):
     covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
+
+    if (len(state_lst) < 51) and (region == 'msa'):
+        state_lst0 = state_lst
+        state_lst = state_msa_cross_walk(state_lst, 'metro')['fips_state'].unique().tolist()
 
     if region == 'us':
         df = _us_fetch_data(private, firm_char, worker_char). \
@@ -307,14 +328,15 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
         pipe(_covar_create_fips_region, region).\
         pipe(_cols_to_numeric, indicator_lst). \
         pipe(_obs_filter_strata_totals, firm_char, worker_char, strata_totals). \
-        pipe(_obs_filter_groupby_msa, covars, region) \
+        pipe(_obs_filter_groupby_msa, covars, region). \
+        pipe(_obs_filter_msa_state_lst, state_lst, state_lst0) \
         [covars + indicator_lst].\
         pipe(_annualizer, annualize, covars).\
         sort_values(covars).\
         reset_index(drop=True)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("BDS_KEY")):
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY")):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -410,14 +432,10 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     else:
         print('Invalid input to obs_level.')
 
-    # todo: is this done correctly?
     if state_list == 'all':
         state_list = [c.state_abb_to_fips[s] for s in c.states]
     else:
         state_list = [c.state_abb_to_fips[s] for s in state_list]
-        if isinstance(state_list, list) and obs_level == 'msa':
-            state_list = state_msa_cross_walk(state_list, 'metro')['fips_state'].unique().tolist()
-    
 
     if indicator_lst == 'all':
         indicator_lst = c.qwi_outcomes
@@ -455,13 +473,3 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
             ],
             axis=0
         )
-
-
-if __name__ == '__main__':
-    # indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals
-    df = _qwi_data_create(c.qwi_outcomes, 'us', [], False, False, [], ['edgrp'], False)
-    # df = _qwi_data_create(c.qwi_outcomes, 'msa', ['06'], True, False, ['firmsize', 'industry'], False)
-    print(df.head(100))
-    print(df.tail(100))
-    # _county_msa_state_fetch_data('msa', ['06'], strata=['firmsize', 'industry'])
-    # _LA_fetch_data(['firmsize', 'industry'])

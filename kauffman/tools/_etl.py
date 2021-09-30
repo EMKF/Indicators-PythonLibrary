@@ -106,6 +106,7 @@ def state_msa_cross_walk(state_lst, area_type='metro'):
 
     output: dataframe with county and msa fips
     """
+
     if area_type == 'metro':
         area_type = 'Metropolitan Statistical Area'
     elif area_type == 'micro':
@@ -130,7 +131,6 @@ def state_msa_cross_walk(state_lst, area_type='metro'):
             }
         ).\
         pipe(lambda x: x if area_type == 'all' else x.query(f'area == "{area_type}"'))
-
     return df_cw.\
         query(f'fips_state in {state_lst}').\
         drop_duplicates('fips_msa') \
