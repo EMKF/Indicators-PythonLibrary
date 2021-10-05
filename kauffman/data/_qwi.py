@@ -193,7 +193,7 @@ def _LA_fetch_data(firm_char, worker_char):
 
 def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key):
     s = requests.Session()
-    parallel = Parallel(n_jobs=45, backend='threading')
+    parallel = Parallel(n_jobs=30, backend='threading')
 
     with parallel:
         df = pd.concat(
