@@ -8,7 +8,7 @@ from itertools import product
 from kauffman import constants as c
 from kauffman.tools._etl import state_msa_cross_walk
 from webdriver_manager.chrome import ChromeDriverManager
-import multiprocessing as mp
+from joblib import Parallel, delayed
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -77,8 +77,7 @@ def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, pri
         format(base_url, database, var_lst, for_region, year, private, firm_char_section, bds_key)
 
 
-def _fetch_from_url(args):
-    url, session = args[0], args[1]
+def _fetch_from_url(url, session):
     try:
         r = session.get(url)
         try:
@@ -194,19 +193,16 @@ def _LA_fetch_data(firm_char, worker_char):
 
 def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key):
     s = requests.Session()
-    pool = mp.Pool()
+    parallel = Parallel(n_jobs=45, backend='threading')
 
-    inputs = [
-        (
-            _build_url(g[0], g[1], g[2], g[3], g[4], obs_level, worker_char, private, key), 
-            s
-        ) 
-        for g in _url_groups(state_lst, firm_char, private)
-    ]
+    with parallel:
+        df = pd.concat(
+            parallel(
+                delayed(_fetch_from_url)(_build_url(*g, obs_level, worker_char, private, key), s)
+                for g in _url_groups(state_lst, firm_char, private)
+            )
+        )
 
-    df = pd.concat(pool.map(_fetch_from_url, inputs))
-
-    pool.close()
     s.close()
     
     if ('06' in state_lst) and obs_level == 'msa':
