@@ -438,7 +438,6 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
 
         'sex': stratify by worker sex
         'education': stratify by worker education
-    # todo: need to make it so these can be crossed
 
         'race': worker race
         'ethnicity': worker ethnicity
@@ -454,6 +453,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
     else:
         print('Invalid input to obs_level.')
 
+    # todo: should I allow for state_list and fips_list together?
+    #     I think we want some logic that makes only one of state_list and fips_list nonempty, and change the default parameter values to empty lists
     if state_list == 'all':
         state_list = [c.state_abb_to_fips[s] for s in c.states]
     else:
@@ -487,9 +488,6 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
         raise Exception('Invalid input to firm_char. Can only specify one of firmage or firmsize.')
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
-
-
-    # todo: should I allow for state_list and fips_list together?
 
     return pd.concat(
             [
