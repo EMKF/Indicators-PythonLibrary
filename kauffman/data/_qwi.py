@@ -191,9 +191,9 @@ def _LA_fetch_data(firm_char, worker_char):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key):
+def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key, n_threads):
     s = requests.Session()
-    parallel = Parallel(n_jobs=30, backend='threading')
+    parallel = Parallel(n_jobs=n_threads, backend='threading')
 
     with parallel:
         df = pd.concat(
@@ -289,7 +289,7 @@ def _obs_filter_groupby_msa(df, covars, region):
         reset_index(drop=False)
 
 
-def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key):
+def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key, n_threads):
     covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
 
     if region == 'us':
@@ -301,7 +301,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private, key)
+        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private, key, n_threads)
 
     return df. \
         pipe(_covar_create_fips_region, region).\
@@ -314,7 +314,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
         reset_index(drop=True)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("BDS_KEY")):
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -450,7 +450,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals, key)
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads)
                 for region in region_lst
             ],
             axis=0
