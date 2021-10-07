@@ -8,6 +8,7 @@ from itertools import product
 from kauffman import constants as c
 from kauffman.tools._etl import state_msa_cross_walk
 from webdriver_manager.chrome import ChromeDriverManager
+from joblib import Parallel, delayed
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -38,7 +39,7 @@ def _url_groups(state_lst, firm_char, private):
     if 'industry' in firm_char:
         industries = ['00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81', '92']
         if private:
-            industries.remove(92)
+            industries.remove('92')
     else:
         industries = ['00']
 
@@ -190,23 +191,22 @@ def _LA_fetch_data(firm_char, worker_char):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key):
+def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key, n_threads):
     s = requests.Session()
+    parallel = Parallel(n_jobs=n_threads, backend='threading')
 
-    df = pd.concat(
-        [
-            _fetch_from_url(
-                _build_url(g[0], g[1], g[2], g[3], g[4], obs_level, worker_char, private, key),
-                s
+    with parallel:
+        df = pd.concat(
+            parallel(
+                delayed(_fetch_from_url)(_build_url(*g, obs_level, worker_char, private, key), s)
+                for g in _url_groups(state_lst, firm_char, private)
             )
-            for g in _url_groups(state_lst, firm_char, private)
-        ]
-    )
-
-    if ('06' in state_lst) and obs_level == 'msa':
-        df = df.append(_LA_fetch_data(firm_char, worker_char))
+        )
 
     s.close()
+    
+    if ('06' in state_lst) and obs_level == 'msa':
+        df = df.append(_LA_fetch_data(firm_char, worker_char))
 
     return df
 
@@ -306,7 +306,7 @@ def _obs_filter_msa_state_lst(df, state_lst, state_lst0):
             drop('_keep', 1)
 
 
-def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key, state_lst0=None):
+def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key, n_threads, state_lst0=None):
     covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
 
     if (len(state_lst) < 51) and (region == 'msa'):
@@ -322,7 +322,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private, key)
+        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private, key, n_threads)
 
     return df. \
         pipe(_covar_create_fips_region, region).\
@@ -336,7 +336,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
         reset_index(drop=True)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY")):
+def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -468,7 +468,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals, key)
+                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads)
                 for region in region_lst
             ],
             axis=0
