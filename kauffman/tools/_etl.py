@@ -171,12 +171,13 @@ def fips_state_cross_walk(fips_lst, region):
                 'CBSA Code': 'fips_msa'
             }
         ). \
+        assign(fips_county = lambda x: x['fips_state'] + x['fips_county']).\
         astype({'fips_msa': 'str'})
 
     return df_cw.\
         query(f'fips_{region} in {fips_lst}').\
         drop_duplicates([f'fips_{region}', 'fips_state']) \
-        [['fips_state', 'fips_msa']]
+        [['fips_state', f'fips_{region}']]
 
 
 def _hispanic_create(df, covars):

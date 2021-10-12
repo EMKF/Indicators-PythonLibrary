@@ -38,7 +38,7 @@ def _url_groups(firm_char, private, state_lst, fips_lst):
     if 'industry' in firm_char:
         industries = ['00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81', '92']
         if private:
-            industries.remove(92)
+            industries.remove('92')
     else:
         industries = ['00']
 
@@ -83,7 +83,7 @@ def _build_url(fips, year, firmage, firmsize, industry, region, region_fips, wor
             for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
     elif region == 'county':
         if region_fips:
-            for_region = f'for=county:{region_fips}&in=state:{fips}'
+            for_region = f'for=county:{region_fips[-3:]}&in=state:{fips}'
         else:
             for_region = f'for=county:*&in=state:{fips}'
     else:
