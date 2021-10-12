@@ -70,7 +70,7 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, firmage, firmsize, industry, region, region_fips, worker_char, private, census_key):
+def _build_url(fips, year, firmage, firmsize, industry, region_fips, region, worker_char, private, census_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
     var_lst = ','.join(c.qwi_outcomes + worker_char)
     firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
@@ -215,7 +215,7 @@ def _county_msa_state_fetch_data(obs_level, firm_char, worker_char, private, key
         df = pd.concat(
             parallel(
                 delayed(_fetch_from_url)(_build_url(*g, obs_level, worker_char, private, key), s)
-                for g in _url_groups(state_lst, fips_lst, firm_char, private)
+                for g in _url_groups(firm_char, private, state_lst, fips_lst)
             )
         )
 
