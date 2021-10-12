@@ -8,7 +8,7 @@ from itertools import product
 from kauffman import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
 from joblib import Parallel, delayed
-from kauffman.tools._etl import state_msa_cross_walk, fips_state_cross_walk
+from kauffman.tools._etl import state_msa_cross_walk, fips_state_cross_walk, qwi_estimate_nrows
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -488,6 +488,11 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
         raise Exception('Invalid input to firm_char. Can only specify one of firmage or firmsize.')
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
+
+    if fips_list and any([region not in ['msa', 'county'] for region in region_lst]):
+        raise Exception('If fips_list is provided, region must be either msa or county.')
+    if qwi_estimate_nrows(region_lst, firm_char, worker_char, strata_totals, state_list, annualize, fips_list) > 10000000:
+        print('Warning: You are attempting to fetch a high volume of data. You may experience memory errors.')
 
     return pd.concat(
             [

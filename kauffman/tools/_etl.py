@@ -208,3 +208,77 @@ def race_ethnicity_categories_create(df, covars):
         append(_hispanic_create(df, covars)). \
         drop(['race', 'ethnicity'], 1).\
         sort_values(covars + ['race_ethnicity'])
+
+
+def load_CBSA_cw():
+    df_cw = pd.read_excel(
+                'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+                header=2,
+                skipfooter=4,
+                usecols=[0, 3, 4, 9, 10],
+                converters={
+                    'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
+                    'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
+                }
+            ).\
+            rename(
+                columns={
+                    'FIPS State Code': 'fips_state',
+                    'FIPS County Code': 'fips_county',
+                    'Metropolitan/Micropolitan Statistical Area': 'area',
+                    'CBSA Code': 'fips_msa'
+                }
+            ). \
+            assign(fips_county = lambda x: x['fips_state'] + x['fips_county']).\
+            astype({'fips_msa': 'str'})
+    return df_cw
+
+
+def qwi_estimate_nrows(region_lst, firm_char, worker_char, strata_totals, state_list, annualize, fips_list=None):
+    estimate = 0
+
+    for region in region_lst:
+        if region == 'us':
+            year_regions = 28
+        elif region == 'state':
+            year_regions = pd.DataFrame(c.qwi_start_to_end_year()). \
+                T.reset_index(). \
+                rename(columns={'index':'state'}). \
+                astype({'start_year':'int', 'end_year':'int'}). \
+                query(f'state in {state_list}'). \
+                assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
+                ['n_years'].sum()
+        elif fips_list or region in ['msa', 'county']:
+            d = c.qwi_start_to_end_year()
+            query = f"fips_{region} in {fips_list}" if fips_list else f"fips_state in {state_list}"
+            year_regions = load_CBSA_cw(). \
+                query(query) \
+                [[f'fips_{region}', 'fips_state']]. \
+                drop_duplicates(). \
+                groupby('fips_state').count(). \
+                reset_index(). \
+                assign(
+                    n_years=lambda x: x['fips_state']. \
+                        map(lambda y: int(d[y]['end_year']) - int(d[y]['start_year']) + 1),
+                    year_regions=lambda x: x['n_years']*x[f'fips_{region}']
+                ) \
+                ['year_regions'].sum()
+
+        # Get n_strata_levels
+        strata_levels = 1
+        strata = worker_char + firm_char
+        strata_to_nlevels = {
+            'firmage':5, 'firmsize':5, 'industry':17, 'sex':2, 'agegrp':8, 'race':6, 'ethnicity':2, 'education':5
+        }
+        if strata_totals:
+            strata_to_nlevels = {k:v + 1 for k,v in strata_to_nlevels.items()}
+
+        for s in strata:
+            strata_levels *= strata_to_nlevels[s]
+        
+        estimate += year_regions*strata_levels
+
+    if not annualize:
+        estimate *= 4
+    
+    return estimate
