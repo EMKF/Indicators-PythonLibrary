@@ -60,7 +60,7 @@ def pep_test():
 
 def qwi_test():
     # strata, msa
-    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['06'], private=True, strata=['firmage'], annualize=True)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, annualize=True)
     print(df)
     # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, strata=['firmage'], annualize=True)
     # print(df.head(1000))
@@ -152,9 +152,16 @@ def qwi_msa_fetch():
         to_csv(c.filenamer(f'../tests/data/qwi_heartland_firmage.csv'), index=False)
 
 
+def qwi_msa_fetch_fips():
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', fips_list=['28140', '31740'], private=True, firm_char=['firmage'], annualize=True)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, firm_char=['firmage'], annualize=True)
+    print(df)
+
 if __name__ == '__main__':
     # bfs_test()
     # qwi_test()
+    # pep_test()
+
     # mpj_data_fetch()
     # qwi_msa_fetch()
-    pep_test()
+    qwi_msa_fetch_fips()

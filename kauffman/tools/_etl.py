@@ -131,6 +131,7 @@ def state_msa_cross_walk(state_lst, area_type='metro'):
             }
         ).\
         pipe(lambda x: x if area_type == 'all' else x.query(f'area == "{area_type}"'))
+
     return df_cw.\
         query(f'fips_state in {state_lst}').\
         drop_duplicates('fips_msa') \
@@ -138,6 +139,45 @@ def state_msa_cross_walk(state_lst, area_type='metro'):
         merge(df_cw, how='left', on='fips_msa').\
         assign(fips_county=lambda x: x['fips_state'] + x['county_fips']).\
         drop(['CBSA Title', 'area', 'county_fips'], 1)
+
+
+def fips_state_cross_walk(fips_lst, region):
+    """
+    state_lst: list of states
+
+    area_type: str
+        metro: default, metro areas
+        micro: all micro areas
+        all: all micro and metro areas
+
+    output: dataframe with county and msa fips
+    """
+
+    df_cw = pd.read_excel(
+            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+            header=2,
+            skipfooter=4,
+            usecols=[0, 3, 4, 9, 10],
+            converters={
+                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
+                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
+            }
+        ).\
+        rename(
+            columns={
+                'FIPS State Code': 'fips_state',
+                'FIPS County Code': 'fips_county',
+                'Metropolitan/Micropolitan Statistical Area': 'area',
+                'CBSA Code': 'fips_msa'
+            }
+        ). \
+        assign(fips_county = lambda x: x['fips_state'] + x['fips_county']).\
+        astype({'fips_msa': 'str'})
+
+    return df_cw.\
+        query(f'fips_{region} in {fips_lst}').\
+        drop_duplicates([f'fips_{region}', 'fips_state']) \
+        [['fips_state', f'fips_{region}']]
 
 
 def _hispanic_create(df, covars):
