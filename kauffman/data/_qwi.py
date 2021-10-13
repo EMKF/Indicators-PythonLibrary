@@ -70,9 +70,9 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, firmage, firmsize, industry, region_fips, region, worker_char, private, census_key):
+def _build_url(fips, year, firmage, firmsize, industry, region_fips, indicator_lst, region, worker_char, private, census_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
-    var_lst = ','.join(c.qwi_outcomes + worker_char)
+    var_lst = ','.join(indicator_lst + worker_char)
     firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
     private = 'A05' if private == True else 'A00'
     database = database_name(worker_char)
@@ -207,14 +207,14 @@ def _LA_fetch_data(firm_char, worker_char):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, firm_char, worker_char, private, key, n_threads, state_lst=[], fips_lst=[]):
+def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, key, n_threads, state_lst=[], fips_lst=[]):
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
 
     with parallel:
         df = pd.concat(
             parallel(
-                delayed(_fetch_from_url)(_build_url(*g, obs_level, worker_char, private, key), s)
+                delayed(_fetch_from_url)(_build_url(*g, indicator_lst, obs_level, worker_char, private, key), s)
                 for g in _url_groups(firm_char, private, state_lst, fips_lst)
             )
         )
@@ -339,9 +339,9 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
         if fips_list:
-            df = _county_msa_state_fetch_data(region, firm_char, worker_char, private, key, n_threads, fips_lst=[tuple(row) for row in fips_state_cross_walk(fips_list, region).values])
+            df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, fips_lst=[tuple(row) for row in fips_state_cross_walk(fips_list, region).values])
         else:
-            df = _county_msa_state_fetch_data(region, firm_char, worker_char, private, key, n_threads, state_lst=state_lst)
+            df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, state_lst=state_lst)
 
     return df. \
         pipe(_covar_create_fips_region, region).\
