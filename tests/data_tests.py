@@ -154,7 +154,8 @@ def qwi_msa_fetch():
 
 def qwi_msa_fetch_fips():
     # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', fips_list=['28140', '31740'], private=True, firm_char=['firmage'], annualize=True)
-    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, firm_char=['firmage'], annualize=True)
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, firm_char=['firmage'], annualize=True)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', fips_list=['28140', '41180', '36540', '19780', '48620', '44180', '27900', '26980', '16300', '19340', '30700', '45820', '27620', '17860', '43580', '47940', '20220', '31740', '29940', '41460', '41140', '16020'], private=True, firm_char=['firmage'], annualize=True)
     print(df)
 
 if __name__ == '__main__':
