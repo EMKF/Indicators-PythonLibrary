@@ -1,12 +1,10 @@
 import io
-import sys
+from json import load
 import boto3
 import requests
-import numpy as np
 import pandas as pd
 from kauffman import constants as c
 from zipfile import ZipFile
-from itertools import product
 import kauffman.constants as c
 
 
@@ -58,40 +56,48 @@ def read_zip(zip_url, filename):
     return pd.read_csv(z.open(filename), encoding='cp1252', low_memory=False)
 
 
+def load_CBSA_cw():
+    df_cw = pd.read_excel(
+            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+            header=2,
+            skipfooter=4,
+            usecols=[0, 3, 4, 9, 10],
+            converters={
+                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
+                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
+            }
+        ).\
+        assign(fips_county=lambda x: x['FIPS State Code'] + x['FIPS County Code']). \
+        rename(
+            columns={
+                'FIPS State Code': 'fips_state',
+                'Metropolitan/Micropolitan Statistical Area': 'area',
+                'CBSA Code': 'fips_msa'
+            }
+        ). \
+        astype({'fips_msa': 'str'})
+
+    return df_cw
+
+
 def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
     """
     Receives county level data, and merges (on county fips) with a dataframe with CBSA codes.
 
     fips_county: fips column name
     """
-    outcomes = [outcomes] if type(outcomes) == str else outcomes
+    outcomes = list(outcomes)
     df_county[outcomes] = df_county[outcomes].apply(pd.to_numeric)
 
-    df_cw = pd.read_excel(
-            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
-            header=2,
-            skipfooter=4,
-            usecols=[0, 3, 9, 10],
-            # usecols=[0, 3, 4, 7, 8, 9, 10],
-            converters={
-                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
-                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
-            }
-        ).\
-        assign(fips_county=lambda x: x['FIPS State Code'] + x['FIPS County Code']).\
-        rename(columns={'CBSA Code': 'fips_msa'}).\
-        astype({'fips_msa': 'str'}).\
-        drop(['FIPS State Code', 'FIPS County Code'], 1)
+    df_cw = load_CBSA_cw()
 
-    return df_county.\
-        rename(columns={fips_county: 'fips_county'}).\
-        merge(df_cw, how='left', on='fips_county').\
-        drop(['fips_county', 'region'], 1) \
-        [['fips_msa', 'CBSA Title', 'time'] + outcomes].\
-        groupby(['fips_msa', 'CBSA Title', 'time']).agg(agg_method).\
-        reset_index(drop=False).\
+    return df_county. \
+        rename(columns={fips_county: 'fips_county'}). \
+        merge(df_cw, how='left', on='fips_county') \
+        [['fips_msa', 'CBSA Title', 'time'] + outcomes]. \
+        groupby(['fips_msa', 'CBSA Title', 'time']).agg(agg_method). \
+        reset_index(drop=False). \
         rename(columns={'CBSA Title': 'region', 'fips_msa':'fips'})
-        # query('fips == fips'). \
 # todo: I can't just groupby and sum wrt cw(), since there might be missing county values
 
 
@@ -112,33 +118,15 @@ def state_msa_cross_walk(state_lst, area_type='metro'):
     elif area_type == 'micro':
         area_type = 'Micropolitan Statistical Area'
 
-    df_cw = pd.read_excel(
-            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
-            header=2,
-            skipfooter=4,
-            usecols=[0, 3, 4, 9, 10],
-            converters={
-                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
-                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
-            }
-        ).\
-        rename(
-            columns={
-                'FIPS State Code': 'fips_state',
-                'FIPS County Code': 'county_fips',
-                'Metropolitan/Micropolitan Statistical Area': 'area',
-                'CBSA Code': 'fips_msa'
-            }
-        ).\
+    df_cw = load_CBSA_cw().\
         pipe(lambda x: x if area_type == 'all' else x.query(f'area == "{area_type}"'))
-
-    return df_cw.\
-        query(f'fips_state in {state_lst}').\
+    
+    return df_cw. \
+        query(f'fips_state in {state_lst}'). \
         drop_duplicates('fips_msa') \
-        [['fips_msa']].\
-        merge(df_cw, how='left', on='fips_msa').\
-        assign(fips_county=lambda x: x['fips_state'] + x['county_fips']).\
-        drop(['CBSA Title', 'area', 'county_fips'], 1)
+        [['fips_msa']]. \
+        merge(df_cw, how='left', on='fips_msa'). \
+        drop(['CBSA Title', 'area', 'FIPS County Code'], 1)
 
 
 def fips_state_cross_walk(fips_lst, region):
@@ -153,28 +141,7 @@ def fips_state_cross_walk(fips_lst, region):
     output: dataframe with county and msa fips
     """
 
-    df_cw = pd.read_excel(
-            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
-            header=2,
-            skipfooter=4,
-            usecols=[0, 3, 4, 9, 10],
-            converters={
-                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
-                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
-            }
-        ).\
-        rename(
-            columns={
-                'FIPS State Code': 'fips_state',
-                'FIPS County Code': 'fips_county',
-                'Metropolitan/Micropolitan Statistical Area': 'area',
-                'CBSA Code': 'fips_msa'
-            }
-        ). \
-        assign(fips_county = lambda x: x['fips_state'] + x['fips_county']).\
-        astype({'fips_msa': 'str'})
-
-    return df_cw.\
+    return load_CBSA_cw().\
         query(f'fips_{region} in {fips_lst}').\
         drop_duplicates([f'fips_{region}', 'fips_state']) \
         [['fips_state', f'fips_{region}']]
@@ -209,26 +176,3 @@ def race_ethnicity_categories_create(df, covars):
         drop(['race', 'ethnicity'], 1).\
         sort_values(covars + ['race_ethnicity'])
 
-
-def load_CBSA_cw():
-    df_cw = pd.read_excel(
-                'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
-                header=2,
-                skipfooter=4,
-                usecols=[0, 3, 4, 9, 10],
-                converters={
-                    'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
-                    'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
-                }
-            ).\
-            rename(
-                columns={
-                    'FIPS State Code': 'fips_state',
-                    'FIPS County Code': 'fips_county',
-                    'Metropolitan/Micropolitan Statistical Area': 'area',
-                    'CBSA Code': 'fips_msa'
-                }
-            ). \
-            assign(fips_county = lambda x: x['fips_state'] + x['fips_county']).\
-            astype({'fips_msa': 'str'})
-    return df_cw
