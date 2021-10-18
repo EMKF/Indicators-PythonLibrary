@@ -94,16 +94,26 @@ def _build_url(fips, year, firmage, firmsize, industry, region_fips, indicator_l
 
 
 def _fetch_from_url(url, session):
-    try:
-        r = session.get(url)
+    success = False
+    retries = 0
+    while not success and retries < 5:
         try:
-            df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
-        except:
-            print('Fail', r, url)
+            r = session.get(url)
+            if r.status_code == 200:
+                df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
+                success = True
+            elif r.status_code == 204:
+                print('Blank url:', url)
+                df = pd.DataFrame()
+                success = True
+            else:
+               print(f'Fail. Retry #{retries}', 'Status code:', r, url)
+               retries += 1
+               df = pd.DataFrame()
+        except Exception as e:
+            print(f'Fail. Retry #{retries}', e)
+            retries += 1
             df = pd.DataFrame()
-    except Exception as e:
-        print(e)
-        df = pd.DataFrame()
     return df
 
 
