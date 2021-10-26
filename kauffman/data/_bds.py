@@ -22,10 +22,31 @@ def _county_fips(df):
         drop('state', 1)
 
 
+def _fetch_data(url):
+    r = requests.get(url)
+    try:
+        df = pd.DataFrame(r.json())
+    except:
+        raise Exception(f'ERROR. Response code: {r.status_code} for url: {url}')
+    return df
+
+def _build_url(variables, region):
+    var_string = ",".join(variables + ["NAICS"])
+    
+    if region in ['state', 'us']:
+        region_string = f'{region}:*'
+    elif region == 'msa':
+        region_string = 'metropolitan%20statistical%20area/micropolitan%20statistical%20area:*'
+    elif region == 'county':
+        region_string = 'county:*&in=state:*'
+    
+    return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR=*'
+
+
 def _bds_data_create(variables, region, industry_lst):
-    url = f'https://api.census.gov/data/timeseries/bds?get={",".join(variables + ["NAICS"])}&for={region}:*&YEAR=*'
-    return pd.DataFrame(requests.get(url).json()).\
-        pipe(_make_header).\
+    url = _build_url(variables, region)
+    return _fetch_data(url). \
+        pipe(_make_header). \
         pipe(lambda x: _county_fips(x) if region == 'county' else x). \
         query(f'NAICS in {industry_lst}').\
         rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time', 'NAICS': 'naics'}).\
