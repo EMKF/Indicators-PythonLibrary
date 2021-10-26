@@ -365,8 +365,9 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
         reset_index(drop=True)
 
 
-def qwi_estimate_nrows(region_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
-    estimate = 0
+def qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
+    n_columns = len(indicator_lst + firm_char + worker_char)
+    row_estimate = 0
 
     for region in region_lst:
         if region == 'us':
@@ -407,9 +408,9 @@ def qwi_estimate_nrows(region_lst, firm_char, worker_char, strata_totals, state_
         for s in strata:
             strata_levels *= strata_to_nlevels[s]
         
-        estimate += year_regions*strata_levels*4
+        row_estimate += year_regions*strata_levels*4
 
-    return estimate
+    return (row_estimate, n_columns)
 
 
 def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1):
@@ -549,8 +550,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
     if fips_list and any([region not in ['msa', 'county'] for region in region_lst]):
         raise Exception('If fips_list is provided, region must be either msa or county.')
 
-    if qwi_estimate_nrows(region_lst, firm_char, worker_char, strata_totals, state_list, fips_list) > 10000000:
-        print('Warning: You are attempting to fetch a high volume of data. You may experience memory errors.')
+    estimated_shape = qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list)
+    if estimated_shape[0] * estimated_shape[1] > 100000000:
+        print(f'Warning: You are attempting to fetch a dataframe of estimated shape {estimated_shape}. You may experience memory errors.')
 
     return pd.concat(
             [
