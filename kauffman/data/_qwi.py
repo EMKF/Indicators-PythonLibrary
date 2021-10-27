@@ -366,7 +366,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
 
 
 def qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
-    n_columns = len(indicator_lst + firm_char + worker_char)
+    n_columns = len(indicator_lst + firm_char + worker_char + ['time', 'fips', 'region', 'ownercode'])
     row_estimate = 0
 
     for region in region_lst:
