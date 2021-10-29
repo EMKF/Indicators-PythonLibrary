@@ -151,10 +151,18 @@ def qwi_msa_fetch():
         query(f'fips in {heartland_regions}'). \
         to_csv(c.filenamer(f'../tests/data/qwi_heartland_firmage.csv'), index=False)
 
+def bfs_tester_hm():
+    df = bfs(['BA_BA', 'BA_CBA', 'BA_HBA', 'BA_WBA', 'BF_BF4Q', 'BF_BF8Q', 'BF_PBF4Q',\
+              'BF_PBF8Q', 'BF_SBF4Q', 'BF_SBF8Q', 'BF_DUR4Q', 'BF_DUR8Q'],\
+             obs_level='all', industry='00', annualize=True)
+
+
+
 
 if __name__ == '__main__':
     # bfs_test()
     # qwi_test()
     # mpj_data_fetch()
     # qwi_msa_fetch()
-    pep_test()
+    # pep_test()
+    bfs_tester_hm()

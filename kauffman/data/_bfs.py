@@ -68,7 +68,7 @@ def _annualize(df, annualize, bf_helper_lst, march_shift):
         return df.\
             pipe(_time_annualize, march_shift). \
             pipe(_DUR_numerator). \
-            groupby(['fips', 'region', 'time']).sum(min_count=12).\
+            groupby(['fips', 'region', 'time', 'industry', 'naics']).sum(min_count=12).\
             pipe(_BF_DURQ).\
             reset_index(drop=False) \
             [[col for col in df.columns if col not in bf_helper_lst]]
