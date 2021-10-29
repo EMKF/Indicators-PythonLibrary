@@ -60,7 +60,7 @@ def pep_test():
 
 def qwi_test():
     # strata, msa
-    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['06'], private=True, strata=['firmage'], annualize=True)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, annualize=True)
     print(df)
     # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, strata=['firmage'], annualize=True)
     # print(df.head(1000))
@@ -159,10 +159,127 @@ def bfs_tester_hm():
 
 
 
+def qwi_msa_fetch_fips():
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', fips_list=['28140', '31740'], private=True, firm_char=['firmage'], annualize=True)
+    # df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', state_list=['MO'], private=True, firm_char=['firmage'], annualize=True)
+    df = qwi(['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC'], obs_level='msa', fips_list=['28140', '41180', '36540', '19780', '48620', '44180', '27900', '26980', '16300', '19340', '30700', '45820', '27620', '17860', '43580', '47940', '20220', '31740', '29940', '41460', '41140', '16020'], private=True, firm_char=['firmage'], annualize=True)
+    print(df)
+
+
+def _qwi_standardize_df(df):
+    return df.\
+        reset_index(drop=True). \
+        sort_values(['fips', 'time', 'firmage'])
+
+
+def qwi_compare_county_fetch():
+    counties = [
+        '01003', '01047', '01089', '06037', '06047', '06059', '06067', '17143', 
+        '17131', '17113', '17089', '17077', '17043', '34007', '34001', '34033',
+        '34027', '34015'
+    ]
+    indicators = ['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC']
+
+    dfA = qwi(
+            indicators, obs_level='county', private=True, firm_char=['firmage'], annualize=True,
+            n_threads=50
+        ). \
+        query(f'fips in {counties}'). \
+        pipe(_qwi_standardize_df)
+
+    dfB = qwi(
+            indicators, obs_level='county', state_list=['AL', 'CA', 'IL', 'NJ'], private=True,
+            firm_char=['firmage'], annualize=True, n_threads=50
+        ). \
+        query(f'fips in {counties}'). \
+        pipe(_qwi_standardize_df)
+
+    dfC = qwi(
+            indicators, obs_level='county', fips_list=counties, private=True, firm_char=['firmage'], annualize=True, n_threads=50
+        ). \
+        pipe(_qwi_standardize_df)
+
+    if dfA.equals(dfB):
+        if dfB.equals(dfC):
+            return "Pass. dfA == dfB == dfC"
+        else:
+            return "Fail. dfA == B, but dfB != dfC"
+    else:
+        return "Fail. dfA != dfB"
+
+
+def qwi_compare_msa_fetch():
+    heartland_regions = [
+        '28140', '41180', '36540', '19780', '48620', '44180', '27900', '26980',
+        '16300', '19340', '30700', '45820', '27620', '17860', '43580', '47940',
+        '20220', '31740', '29940', '41460', '41140', '16020'
+    ]
+    indicators = ['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC']
+
+    dfA = qwi(
+            indicators, obs_level='msa', private=True, firm_char=['firmage'], annualize=True,
+            n_threads=50
+        ). \
+        query(f'fips in {heartland_regions}'). \
+        pipe(_qwi_standardize_df)
+
+    dfB = qwi(
+            indicators, obs_level='msa', private=True, state_list=['NE', 'IA', 'MO', 'KS'],
+            firm_char=['firmage'], annualize=True, n_threads=50
+        ). \
+        query(f'fips in {heartland_regions}'). \
+        pipe(_qwi_standardize_df)
+    
+    dfC = qwi(
+            indicators, obs_level='msa', fips_list=heartland_regions, private=True, 
+            firm_char=['firmage'], annualize=True, n_threads=50
+        ). \
+        pipe(_qwi_standardize_df)
+
+    if dfA.equals(dfB):
+        if dfB.equals(dfC):
+            return "Pass. dfA == dfB == dfC"
+        else:
+            return "Fail. dfA == dfB, but dfB != dfC"
+    else:
+        return "Fail. dfA != dfB"
+
+
+def qwi_compare_state_fetch():
+    states = ['IL', 'ND', 'AK', 'NC', 'RI', 'AZ', 'OR', 'MA', 'MD', 'CA', 'WY', 'MO']
+    indicators = ['Emp', 'EmpEnd', 'EarnBeg', 'EmpS', 'EmpTotal', 'FrmJbC']
+
+    dfA = qwi(
+            indicators, obs_level='state', private=True, firm_char=['firmage'], annualize=True,
+            n_threads=50
+        ). \
+        query(f'fips in {[c.state_abb_to_fips[s] for s in states]}'). \
+        pipe(_qwi_standardize_df)
+
+    dfB = qwi(
+        indicators, obs_level='state', state_list=states, private=True, firm_char=['firmage'],
+        annualize=True, n_threads=50
+        ). \
+        pipe(_qwi_standardize_df)
+
+
+    if dfA.equals(dfB):
+        return 'Pass. dfA == dfB'
+    else:
+        return 'Fail. dfA != dfB'
+
+
+
 if __name__ == '__main__':
     # bfs_test()
     # qwi_test()
+    # pep_test()
+
     # mpj_data_fetch()
     # qwi_msa_fetch()
+<<<<<<< HEAD
     # pep_test()
     bfs_tester_hm()
+=======
+    qwi_msa_fetch_fips()
+>>>>>>> dddde10fd65bff2e25153d1a35a8dd5be18f9d49

@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 from itertools import product
 from kauffman import constants as c
-from kauffman.tools._etl import state_msa_cross_walk
 from webdriver_manager.chrome import ChromeDriverManager
 from joblib import Parallel, delayed
+from kauffman.tools._etl import state_msa_cross_walk, fips_state_cross_walk, load_CBSA_cw
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -29,7 +29,7 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _url_groups(state_lst, firm_char, private):
+def _url_groups(firm_char, private, state_lst, fips_lst):
     out_lst = []
     d = c.qwi_start_to_end_year()
 
@@ -43,11 +43,21 @@ def _url_groups(state_lst, firm_char, private):
     else:
         industries = ['00']
 
-    for state in state_lst:
-        start_year = int(d[state]['start_year'])
-        end_year = int(d[state]['end_year'])
-        years = [x for x in range(start_year, end_year + 1)]
-        out_lst += list(product([state], years, firmages, firmsizes, industries))
+    if fips_lst:
+        for fips in fips_lst:
+            state = fips[0]
+            region = fips[1]
+
+            start_year = int(d[state]['start_year'])
+            end_year = int(d[state]['end_year'])
+            years = [x for x in range(start_year, end_year + 1)]
+            out_lst += list(product([state], years, firmages, firmsizes, industries, [region]))
+    else:
+        for state in state_lst:
+            start_year = int(d[state]['start_year'])
+            end_year = int(d[state]['end_year'])
+            years = [x for x in range(start_year, end_year + 1)]
+            out_lst += list(product([state], years, firmages, firmsizes, industries, [None]))
     return out_lst
 
 
@@ -60,17 +70,23 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, private, census_key):
+def _build_url(fips, year, firmage, firmsize, industry, region_fips, indicator_lst, region, worker_char, private, census_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
-    var_lst = ','.join(c.qwi_outcomes + worker_char)
+    var_lst = ','.join(indicator_lst + worker_char)
     firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
     private = 'A05' if private == True else 'A00'
     database = database_name(worker_char)
 
     if region == 'msa':
-        for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
+        if region_fips:
+            for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:{region_fips}&in=state:{fips}'
+        else:
+            for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
     elif region == 'county':
-        for_region = f'for=county:*&in=state:{fips}'
+        if region_fips:
+            for_region = f'for=county:{region_fips[-3:]}&in=state:{fips}'
+        else:
+            for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
     return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}&{6}&key={7}'. \
@@ -78,16 +94,26 @@ def _build_url(fips, year, firmage, firmsize, industry, region, worker_char, pri
 
 
 def _fetch_from_url(url, session):
-    try:
-        r = session.get(url)
+    success = False
+    retries = 0
+    while not success and retries < 5:
         try:
-            df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
-        except:
-            print('Fail', r, url)
+            r = session.get(url)
+            if r.status_code == 200:
+                df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
+                success = True
+            elif r.status_code == 204:
+                print('Blank url:', url)
+                df = pd.DataFrame()
+                success = True
+            else:
+               print(f'Fail. Retry #{retries}', 'Status code:', r, url)
+               retries += 1
+               df = pd.DataFrame()
+        except Exception as e:
+            print(f'Fail. Retry #{retries}', e)
+            retries += 1
             df = pd.DataFrame()
-    except Exception as e:
-        print(e)
-        df = pd.DataFrame()
     return df
 
 
@@ -191,15 +217,15 @@ def _LA_fetch_data(firm_char, worker_char):
     return df
 
 
-def _county_msa_state_fetch_data(obs_level, state_lst, firm_char, worker_char, private, key, n_threads):
+def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, key, n_threads, state_lst=[], fips_lst=[]):
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
 
     with parallel:
         df = pd.concat(
             parallel(
-                delayed(_fetch_from_url)(_build_url(*g, obs_level, worker_char, private, key), s)
-                for g in _url_groups(state_lst, firm_char, private)
+                delayed(_fetch_from_url)(_build_url(*g, indicator_lst, obs_level, worker_char, private, key), s)
+                for g in _url_groups(firm_char, private, state_lst, fips_lst)
             )
         )
 
@@ -306,11 +332,11 @@ def _obs_filter_msa_state_lst(df, state_lst, state_lst0):
             drop('_keep', 1)
 
 
-def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_char, worker_char, strata_totals, key, n_threads, state_lst0=None):
+def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads, state_lst0=None):
     covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
 
-    if (len(state_lst) < 51) and (region == 'msa'):
-        state_lst0 = state_lst
+    state_lst0 = state_lst
+    if (len(state_lst) < 51) and (region == 'msa') and not fips_list:
         state_lst = state_msa_cross_walk(state_lst, 'metro')['fips_state'].unique().tolist()
 
     if region == 'us':
@@ -322,7 +348,10 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        df = _county_msa_state_fetch_data(region, state_lst, firm_char, worker_char, private, key, n_threads)
+        if fips_list:
+            df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, fips_lst=[tuple(row) for row in fips_state_cross_walk(fips_list, region).values])
+        else:
+            df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, state_lst=state_lst)
 
     return df. \
         pipe(_covar_create_fips_region, region).\
@@ -336,7 +365,55 @@ def _qwi_data_create(indicator_lst, region, state_lst, private, annualize, firm_
         reset_index(drop=True)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1):
+def qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
+    n_columns = len(indicator_lst + firm_char + worker_char)
+    row_estimate = 0
+
+    for region in region_lst:
+        if region == 'us':
+            year_regions = 28
+        elif region == 'state':
+            year_regions = pd.DataFrame(c.qwi_start_to_end_year()). \
+                T.reset_index(). \
+                rename(columns={'index':'state'}). \
+                astype({'start_year':'int', 'end_year':'int'}). \
+                query(f'state in {state_list}'). \
+                assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
+                ['n_years'].sum()
+        elif fips_list or region in ['msa', 'county']:
+            d = c.qwi_start_to_end_year()
+            query = f"fips_{region} in {fips_list}" if fips_list else f"fips_state in {state_list}"
+            year_regions = load_CBSA_cw(). \
+                query(query) \
+                [[f'fips_{region}', 'fips_state']]. \
+                drop_duplicates(). \
+                groupby('fips_state').count(). \
+                reset_index(). \
+                assign(
+                    n_years=lambda x: x['fips_state']. \
+                        map(lambda y: int(d[y]['end_year']) - int(d[y]['start_year']) + 1),
+                    year_regions=lambda x: x['n_years']*x[f'fips_{region}']
+                ) \
+                ['year_regions'].sum()
+
+        # Get n_strata_levels
+        strata_levels = 1
+        strata = worker_char + firm_char
+        strata_to_nlevels = {
+            'firmage':5, 'firmsize':5, 'industry':17, 'sex':2, 'agegrp':8, 'race':6, 'ethnicity':2, 'education':5
+        }
+        if strata_totals:
+            strata_to_nlevels = {k:v + 1 for k,v in strata_to_nlevels.items()}
+
+        for s in strata:
+            strata_levels *= strata_to_nlevels[s]
+        
+        row_estimate += year_regions*strata_levels*4
+
+    return (row_estimate, n_columns)
+
+
+def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -394,6 +471,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
         'all': default, includes all US states and D.C.
         otherwise: a state or list of states, identified using postal code abbreviations
 
+    fips_list: lst
+        msa or county fips to pull
+
     private: bool
         True: All private only
         False: All
@@ -416,7 +496,6 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
         'sex': stratify by worker sex
         'education': stratify by worker education
-    # todo: need to make it so these can be crossed
 
         'race': worker race
         'ethnicity': worker ethnicity
@@ -432,6 +511,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
     else:
         print('Invalid input to obs_level.')
 
+    # todo: should I allow for state_list and fips_list together?
+    #     I think we want some logic that makes only one of state_list and fips_list nonempty, and change the default parameter values to empty lists
     if state_list == 'all':
         state_list = [c.state_abb_to_fips[s] for s in c.states]
     else:
@@ -466,10 +547,18 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', private=False, a
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
 
+    if fips_list and any([region not in ['msa', 'county'] for region in region_lst]):
+        raise Exception('If fips_list is provided, region must be either msa or county.')
+
+    estimated_shape = qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list)
+    if estimated_shape[0] * estimated_shape[1] > 100000000:
+        print(f'Warning: You are attempting to fetch a dataframe of estimated shape {estimated_shape}. You may experience memory errors.')
+
     return pd.concat(
             [
-                _qwi_data_create(indicator_lst, region, state_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads)
+                _qwi_data_create(indicator_lst, region, state_list, fips_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads)
                 for region in region_lst
             ],
             axis=0
         )
+
