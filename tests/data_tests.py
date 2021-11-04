@@ -276,9 +276,4 @@ if __name__ == '__main__':
 
     # mpj_data_fetch()
     # qwi_msa_fetch()
-<<<<<<< HEAD
-    # pep_test()
-    bfs_tester_hm()
-=======
     qwi_msa_fetch_fips()
->>>>>>> dddde10fd65bff2e25153d1a35a8dd5be18f9d49
