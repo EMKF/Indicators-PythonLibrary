@@ -22,11 +22,10 @@ def acs_test():
 
 
 def bds_test():
-    print(bds(['FIRM', 'FAGE'], obs_level='us', industry='11'))
-    sys.exit()
-
-    bds(['FIRM', 'FAGE'], obs_level='us', industry='all').\
-        to_csv('/Users/thowe/Projects/data_science/mastering_shiny/indicator_app/bds_us.csv', index=False)
+    df = bds(['EMP'])
+    df = bds(['EMP'], obs_level='state')
+    df = bds(['EMP', 'FIRM'], obs_level=['state', 'county'])
+    df = bds(['FIRM'], strata=['FAGE', 'EAGE'])
 
 
 def bed_test():

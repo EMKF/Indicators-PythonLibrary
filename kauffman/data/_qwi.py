@@ -348,8 +348,10 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        if fips_list:
+        if fips_list and region == 'msa':
             df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, fips_lst=[tuple(row) for row in fips_state_cross_walk(fips_list, region).values])
+        elif fips_list and region == 'county':
+            df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, fips_lst=list(zip([x[:2] for x in fips_list], fips_list)))
         else:
             df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, state_lst=state_lst)
 
@@ -366,7 +368,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
 
 
 def qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
-    n_columns = len(indicator_lst + firm_char + worker_char)
+    n_columns = len(indicator_lst + firm_char + worker_char + ['time', 'fips', 'region', 'ownercode'])
     row_estimate = 0
 
     for region in region_lst:
