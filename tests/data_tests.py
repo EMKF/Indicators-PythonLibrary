@@ -24,7 +24,7 @@ def acs_test():
 def bds_test():
     df = bds(['EMP'])
     df = bds(['EMP'], obs_level='state')
-    df = bds(['EMP', ''], obs_level=['state', 'county'])
+    df = bds(['EMP', 'FIRM'], obs_level=['state', 'county'])
     df = bds(['FIRM'], strata=['FAGE', 'EAGE'])
 
 
