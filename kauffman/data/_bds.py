@@ -18,13 +18,24 @@ def _county_fips(df):
 
 
 def _fetch_data(url):
-    r = requests.get(url)
-    if r.status_code == 200:
-        df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
-    elif r.status_code == 204:
-        df = pd.DataFrame()
-    else:
-        raise Exception(f'ERROR. Response code: {r.status_code} for url: {url}')
+    success = False
+    retries = 0
+    while not success and retries < 5:
+        try:
+            r = requests.get(url)
+            if r.status_code == 200:
+                df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
+                success = True
+            elif r.status_code == 204:
+                df = pd.DataFrame()
+                success = True
+            else:
+                print(f'ERROR. Retry #{retries}. Status code: {r} for url: {url}')
+                retries += 1
+        except Exception as e:
+            print(f'ERROR. Retry #{retries}. URL: {url}. Error message: {e}')
+            df = pd.DataFrame()
+            retries += 1
     return df
 
 def _build_url(variables, region, strata, census_key, state_fips=None, year='*'):
