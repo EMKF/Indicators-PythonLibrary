@@ -11,11 +11,6 @@ pd.set_option('max_colwidth', 4000)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def _make_header(df):
-    df.columns = df.iloc[0].tolist()
-    return df.iloc[1:]
-
-
 def _county_fips(df):
     return df.\
         assign(county=lambda x: x['state'] + x['county']).\
@@ -24,31 +19,43 @@ def _county_fips(df):
 
 def _fetch_data(url):
     r = requests.get(url)
-    try:
-        df = pd.DataFrame(r.json())
-    except:
+    if r.status_code == 200:
+        df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
+    elif r.status_code == 204:
+        df = pd.DataFrame()
+    else:
         raise Exception(f'ERROR. Response code: {r.status_code} for url: {url}')
     return df
 
-def _build_url(variables, region, strata):
+def _build_url(variables, region, strata, state_fips=None, year='*'):
     var_string = ",".join(variables + strata)
     
-    if region in ['state', 'us']:
-        region_string = f'{region}:*'
-    elif region == 'msa':
-        region_string = 'metropolitan%20statistical%20area/micropolitan%20statistical%20area:*'
-    elif region == 'county':
-        region_string = 'county:*&in=state:*'
+    region_string = {
+        'us':'us:*',
+        'state':f'state:{state_fips}',
+        'msa':'metropolitan%20statistical%20area/micropolitan%20statistical%20area:*',
+        'county':f'county:*&in=state:{state_fips}'
+    }[region]
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     
-    return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR=*{naics_string}'
+    return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}'
 
 
 def _bds_data_create(variables, region, strata):
-    url = _build_url(variables, region, strata)
-    return _fetch_data(url). \
-        pipe(_make_header). \
+    if region in ['us', 'msa']:
+        df = _fetch_data(_build_url(variables, region, strata))
+    else:
+        years = ['*'] if region == 'state' else [y for y in range(1978, 2020)]
+        df = pd.concat(
+            [
+                _fetch_data(_build_url(variables, region, strata, state_fips, year))
+                for state_fips in [c.state_abb_to_fips[s] for s in c.states]
+                for year in years
+            ]
+        )
+
+    return df. \
         pipe(lambda x: _county_fips(x) if region == 'county' else x). \
         rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time', 'NAICS': 'naics'}).\
         assign(
