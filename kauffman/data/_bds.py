@@ -27,7 +27,7 @@ def _fetch_data(url):
         raise Exception(f'ERROR. Response code: {r.status_code} for url: {url}')
     return df
 
-def _build_url(variables, region, strata, state_fips=None, year='*'):
+def _build_url(variables, region, strata, census_key, state_fips=None, year='*'):
     var_string = ",".join(variables + strata)
     
     region_string = {
@@ -39,17 +39,17 @@ def _build_url(variables, region, strata, state_fips=None, year='*'):
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     
-    return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}'
+    return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}&key={census_key}'
 
 
-def _bds_data_create(variables, region, strata):
+def _bds_data_create(variables, region, strata, census_key):
     if region in ['us', 'msa']:
-        df = _fetch_data(_build_url(variables, region, strata))
+        df = _fetch_data(_build_url(variables, region, strata, census_key))
     else:
         years = ['*'] if region == 'state' else [y for y in range(1978, 2020)]
         df = pd.concat(
             [
-                _fetch_data(_build_url(variables, region, strata, state_fips, year))
+                _fetch_data(_build_url(variables, region, strata, census_key, state_fips, year))
                 for state_fips in [c.state_abb_to_fips[s] for s in c.states]
                 for year in years
             ]
@@ -69,7 +69,7 @@ def _bds_data_create(variables, region, strata):
         [['fips', 'region', 'time'] + strata + variables]
 
 
-def bds(series_lst, obs_level='all', strata=[]):
+def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY')):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
     Keyword arguments:
@@ -163,7 +163,7 @@ def bds(series_lst, obs_level='all', strata=[]):
 
     return pd.concat(
             [
-                _bds_data_create(series_lst, region, strata)
+                _bds_data_create(series_lst, region, strata, census_key)
                 for region in region_lst
             ],
             axis=0
