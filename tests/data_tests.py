@@ -1,4 +1,5 @@
 import sys
+import os
 import pandas as pd
 import kauffman.constants as c
 from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
@@ -22,10 +23,38 @@ def acs_test():
 
 
 def bds_test():
-    df = bds(['EMP'])
-    df = bds(['EMP'], obs_level='state')
-    df = bds(['EMP', 'FIRM'], obs_level=['state', 'county'])
-    df = bds(['FIRM'], strata=['FAGE', 'EAGE'])
+    # State examples
+    df = bds(series_lst=['EMP', 'FIRM', 'ESTABS'], obs_level='state', strata=['NAICS'])
+    df = bds(series_lst=['FIRM'], obs_level='state', strata=['STATE', 'GEOCOMP', 'METRO'])
+    df = bds(series_lst=['EMP', 'FIRM', 'ESTABS'], obs_level='state')
+
+    # US examples
+    df = bds(series_lst=['EMP', 'FIRM', 'ESTABS'], obs_level='us')
+    df = bds(series_lst=['FIRM'], obs_level='us', strata=['FAGE', 'NAICS'])
+    df = bds(series_lst=['ESTABS_EXIT', 'JOB_DESTRUCTION_RATE'], obs_level='us', strata=['NAICS'])
+
+    # County examples
+    df = bds(series_lst=['NET_JOB_CREATION'], obs_level='county', strata = ['FAGE'])
+    df = bds(series_lst=['ESTABS', 'EMP', 'FIRM'], obs_level='county', strata = ['EMPSZFII'])
+    df = bds(series_lst=['EMP', 'FIRMDEATH_FIRMS'], obs_level='county', strata = ['NAICS'])
+
+    # MSA examples
+    df = bds(series_lst=['JOB_DESTRUCTION_DEATHS'], obs_level='msa', strata = ['FAGE'])
+    df = bds(series_lst=['EMP', 'DENOM'], obs_level='county', strata = ['EMPSZFII'])
+
+    # Multiple regions
+    df = bds(series_lst=['ESTABS', 'ESTABS_ENTRY_RATE'], obs_level=['us', 'state'], strata=['METRO', 'GEOCOMP'])
+    df = bds(series_lst=['EMP', 'DENOM'], obs_level=['msa', 'county'])
+    df = bds(series_lst=['EMP', 'FIRM', 'ESTABS'], obs_level='all')
+    df = bds(series_lst=['EMP'])
+
+    # With all arguments specified
+    df = bds(series_lst=['EMP'], obs_level='state', strata=[], key=os.getenv('CENSUS_KEY'))
+    df = bds(series_lst=['FIRM'], obs_level=['us', 'state'], strata=['FAGE'], key=os.getenv('CENSUS_KEY'))
+
+    # Without keywords
+    df = bds(['EMP', 'FIRM', 'ESTABS'], 'state', [])
+    df = bds(['EMP'], 'county', ['METRO', 'GEOCOMP'])
 
 
 def bed_test():
