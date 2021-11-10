@@ -20,8 +20,8 @@ def _county_fips(df):
 
 def _fetch_data(url):
     success = False
-    retries = 0
-    while not success and retries < 5:
+    attempts = 0
+    while not success and attempts < 5:
         try:
             r = requests.get(url)
             if r.status_code == 200:
@@ -31,12 +31,13 @@ def _fetch_data(url):
                 df = pd.DataFrame()
                 success = True
             else:
-                print(f'ERROR. Retry #{retries}. Status code: {r} for url: {url}')
-                retries += 1
+                attempts += 1
+                print(f'ERROR on attempt #{attempts}/5. Status code: {r} for url: {url}')
+                df = pd.DataFrame()
         except Exception as e:
-            print(f'ERROR. Retry #{retries}. URL: {url}. Error message: {e}')
+            attempts += 1
+            print(f'ERROR on attempt #{attempts}/5. URL: {url}. Error message: {e}')
             df = pd.DataFrame()
-            retries += 1
     return df
 
 def _build_url(variables, region, strata, census_key, state_fips=None, year='*'):
