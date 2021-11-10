@@ -116,7 +116,6 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         JOB_DESTRUCTION_DEATHS: Number of jobs lost from closing establishments during the last 12 months
         JOB_DESTRUCTION_RATE: Rate of jobs lost from contracting and closing establishments during the last 12 months
         JOB_DESTRUCTION_RATE_DEATHS: Rate of jobs lost from closing establishments during the last 12 months
-        METRO: Establishments located in Metropolitan or Micropolitan Statistical Area indicator
         NATION: Geography
         NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
         NET_JOB_CREATION_RATE: Rate of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
@@ -137,6 +136,7 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         EMPSZFII: Initial employment size of firms code
         FAGE: Firm age code
         NAICS: 2017 NAICS Code
+        METRO: Establishments located in Metropolitan or Micropolitan Statistical Area indicator
 
         FAGE codes
             1   Total   0   All firm ages
@@ -171,9 +171,14 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
     else:
         region_lst = ['us', 'state', 'county', 'msa']
 
-    invalid_strata = set(strata) - {'GEOCOMP', 'EAGE', 'EMPSZES', 'EMPSZESI', 'EMPSZFI', 'EMPSZFII', 'FAGE', 'NAICS'}
+    invalid_strata = set(strata) - {'GEOCOMP', 'EAGE', 'EMPSZES', 'EMPSZESI', 'EMPSZFI', 'EMPSZFII', 'FAGE', 'NAICS', 'METRO'}
     if invalid_strata:
         raise Exception(f'Variables {invalid_strata} are invalid inputs to strata argument. Refer to the function documentation for valid strata.')
+    
+    if len({'METRO', 'GEOCOMP'} - set(strata)) == 1:
+        missing_var = {'METRO', 'GEOCOMP'} - set(strata)
+        strata = strata + list(missing_var)
+        print('Warning: Variables METRO and GEOCOMP must be used together. Variable {missing_var} has been added to strata list.')
 
     return pd.concat(
             [
