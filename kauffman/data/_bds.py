@@ -68,10 +68,14 @@ def _bds_data_create(variables, region, strata, census_key):
             ]
         )
 
-    strata = [x if x != 'NAICS' else 'naics' for x in strata]
     return df. \
         pipe(lambda x: _county_fips(x) if region == 'county' else x). \
-        rename(columns={region: 'fips', 'metropolitan statistical area/micropolitan statistical area':'fips', 'YEAR': 'time', 'NAICS': 'naics'}).\
+        rename(columns={
+            **{'metropolitan statistical area/micropolitan statistical area':'fips'},
+            **{region: 'fips', 'YEAR': 'time'}, 
+            **{x:x.lower() for x in strata}
+            }
+        ).\
         assign(
             fips=lambda x: '00' if region == 'us' else x['fips'],
             region=lambda x: x['fips'].map(c.all_fips_to_name),
@@ -80,7 +84,7 @@ def _bds_data_create(variables, region, strata, census_key):
         apply(lambda x: pd.to_numeric(x, errors='ignore') if x.name not in ['fips', 'naics'] else x).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True) \
-        [['fips', 'region', 'time'] + strata + variables]
+        [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables]
 
 
 def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY')):
