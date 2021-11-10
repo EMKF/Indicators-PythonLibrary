@@ -68,9 +68,10 @@ def _bds_data_create(variables, region, strata, census_key):
             ]
         )
 
+    strata = [x if x != 'NAICS' else 'naics' for x in strata]
     return df. \
         pipe(lambda x: _county_fips(x) if region == 'county' else x). \
-        rename(columns={'county': 'fips', 'state': 'fips', 'us': 'fips', 'YEAR': 'time', 'NAICS': 'naics'}).\
+        rename(columns={region: 'fips', 'metropolitan statistical area/micropolitan statistical area':'fips', 'YEAR': 'time', 'NAICS': 'naics'}).\
         assign(
             fips=lambda x: '00' if region == 'us' else x['fips'],
             region=lambda x: x['fips'].map(c.all_fips_to_name),
@@ -152,7 +153,7 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
             90  16-20 Years 1   Firms between sixteen and twenty years old
             100 21-25 Years 1   Firms between twenty one and twenty five years old
             110 26+ Years   1   Firms twenty six or more years old
-            150 Left Censored   0   "Firms of unknown age (born before 1977)”
+            150 Left Censored   0   "Firms of unknown age (born before 1977)"
 
     obs_level--str or lst of the level of observation(s) to pull at.
         all:
@@ -165,10 +166,10 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
     """
     if type(obs_level) == list:
         region_lst = obs_level
-    elif obs_level in ['us', 'state', 'county']:
+    elif obs_level in ['us', 'state', 'county', 'msa']:
         region_lst = [obs_level]
     else:
-        region_lst = ['us', 'state', 'county']
+        region_lst = ['us', 'state', 'county', 'msa']
 
     invalid_strata = set(strata) - {'GEOCOMP', 'EAGE', 'EMPSZES', 'EMPSZESI', 'EMPSZFI', 'EMPSZFII', 'FAGE', 'NAICS'}
     if invalid_strata:
