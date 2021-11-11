@@ -81,7 +81,7 @@ def _bds_data_create(variables, region, strata, census_key):
             region=lambda x: x['fips'].map(c.all_fips_to_name),
             industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))
         ). \
-        apply(lambda x: pd.to_numeric(x, errors='ignore') if x.name in variables + '[time]' else x).\
+        apply(lambda x: pd.to_numeric(x, errors='ignore') if x.name in variables + ['time'] else x).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True) \
         [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables]
