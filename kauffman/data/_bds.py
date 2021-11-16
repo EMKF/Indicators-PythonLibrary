@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import kauffman.constants as c
 import os
+from joblib import Parallel, delayed
 
 
 pd.set_option('max_columns', 1000)
@@ -18,12 +19,12 @@ def _county_fips(df):
         drop('state', 1)
 
 
-def _fetch_data(url):
+def _fetch_data(url, session):
     success = False
     attempts = 0
     while not success and attempts < 5:
         try:
-            r = requests.get(url)
+            r = session.get(url)
             if r.status_code == 200:
                 df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
                 success = True
@@ -55,18 +56,24 @@ def _build_url(variables, region, strata, census_key, state_fips=None, year='*')
     return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}&key={census_key}'
 
 
-def _bds_data_create(variables, region, strata, census_key):
-    if region in ['us', 'msa']:
-        df = _fetch_data(_build_url(variables, region, strata, census_key))
+def _bds_data_create(variables, region, strata, census_key, n_threads):
+    s = requests.Session()
+    parallel = Parallel(n_jobs=n_threads, backend='threading')
+
+    if 'NAICS' not in strata or region == 'us':
+        df = _fetch_data(_build_url(variables, region, strata, census_key, '*'))
     else:
-        years = ['*'] if region == 'state' else [y for y in range(1978, 2020)]
-        df = pd.concat(
-            [
-                _fetch_data(_build_url(variables, region, strata, census_key, state_fips, year))
-                for state_fips in [c.state_abb_to_fips[s] for s in c.states]
-                for year in years
-            ]
-        )
+        with parallel:
+            df = pd.concat(
+                parallel(
+                    [
+                        delayed(_fetch_data)(_build_url(variables, region, strata, census_key, '*', year), s)
+                        for year in range(1978, 2020)
+                    ]
+                )         
+            )
+            
+    s.close()
 
     return df. \
         pipe(lambda x: _county_fips(x) if region == 'county' else x). \
@@ -87,7 +94,7 @@ def _bds_data_create(variables, region, strata, census_key):
         [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables]
 
 
-def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY')):
+def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY'), n_threads=1):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
     Keyword arguments:
@@ -186,7 +193,7 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
 
     return pd.concat(
             [
-                _bds_data_create(series_lst, region, strata, census_key)
+                _bds_data_create(series_lst, region, strata, census_key, n_threads)
                 for region in region_lst
             ],
             axis=0
