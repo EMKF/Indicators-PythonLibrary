@@ -1,4 +1,3 @@
-from pandas.core import series
 import requests
 import pandas as pd
 import kauffman.constants as c
@@ -62,16 +61,14 @@ def _bds_data_create(variables, region, strata, census_key, n_threads):
     parallel = Parallel(n_jobs=n_threads, backend='threading')
 
     if 'NAICS' not in strata or region == 'us':
-        df = _fetch_data(_build_url(variables, region, strata, census_key, '*'))
+        df = _fetch_data(_build_url(variables, region, strata, census_key, '*'), s)
     else:
         with parallel:
             df = pd.concat(
                 parallel(
-                    [
-                        delayed(_fetch_data)(_build_url(variables, region, strata, census_key, '*', year), s)
-                        for year in range(1978, 2020)
-                    ]
-                )         
+                    delayed(_fetch_data)(_build_url(variables, region, strata, census_key, '*', year), s)
+                    for year in range(1978, 2020)
+                )
             )
             
     s.close()
@@ -189,7 +186,7 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         print('Warning: Variables METRO and GEOCOMP must be used together. Variable {missing_var} has been added to strata list.')
 
     # Convert coded variables to their labeled versions
-    strata = [f'{strata}_LABEL' if var != 'GEOCOMP' else var for var in strata]
+    strata = strata + [f'{var}_LABEL' for var in strata if var != 'GEOCOMP']
 
     return pd.concat(
             [
