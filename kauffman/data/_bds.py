@@ -1,3 +1,4 @@
+from pandas.core import series
 import requests
 import pandas as pd
 import kauffman.constants as c
@@ -115,8 +116,6 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         FIRMDEATH_ESTABS: Number of establishments associated with firm deaths during the last 12 months
         FIRMDEATH_FIRMS: Number of firms that exited during the last 12 months
         GEO_ID: Geographic identifier code
-        INDGROUP: Industry group
-        INDLEVEL: Industry level
         JOB_CREATION: Number of jobs created from expanding and opening establishments during the last 12 months
         JOB_CREATION_BIRTHS: Number of jobs created from opening establishments during the last 12 months
         JOB_CREATION_CONTINUERS: Number of jobs created from expanding establishments during the last 12 months
@@ -131,9 +130,7 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
         NET_JOB_CREATION_RATE: Rate of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
         REALLOCATION_RATE: Rate of reallocation during the last 12 months
-        SECTOR: NAICS economic sector
         STATE: Geography
-        SUBSECTOR: Subsector
         SUMLEVEL: Summary Level code
         ucgid: Uniform Census Geography Identifier clause
         YEAR: Year
@@ -190,6 +187,9 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         missing_var = {'METRO', 'GEOCOMP'} - set(strata)
         strata = strata + list(missing_var)
         print('Warning: Variables METRO and GEOCOMP must be used together. Variable {missing_var} has been added to strata list.')
+
+    # Convert coded variables to their labeled versions
+    strata = [f'{strata}_LABEL' if var != 'GEOCOMP' else var for var in strata]
 
     return pd.concat(
             [
