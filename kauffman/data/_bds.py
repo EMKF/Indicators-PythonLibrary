@@ -3,6 +3,7 @@ import pandas as pd
 import kauffman.constants as c
 import os
 from joblib import Parallel, delayed
+import numpy as np
 
 
 pd.set_option('max_columns', 1000)
@@ -42,7 +43,8 @@ def _fetch_data(url, session):
     return df
 
 def _build_url(variables, region, strata, census_key, state_fips=None, year='*'):
-    var_string = ",".join(variables + strata)
+    flag_var = [f'{var}_F' for var in variables]
+    var_string = ",".join(variables + strata + flag_var)
     
     region_string = {
         'us':'us:*',
@@ -54,6 +56,16 @@ def _build_url(variables, region, strata, census_key, state_fips=None, year='*')
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     
     return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}&key={census_key}'
+
+
+def _mark_flagged(df, variables):
+    df[variables] = df[variables]. \
+        apply(
+            lambda x: df[f'{x.name}_F']. \
+                where(df[f'{x.name}_F'].isin(['D', 'S', 'X']), x). \
+                replace(['D', 'S', 'X'], np.NaN)
+        )
+    return df
 
 
 def _bds_data_create(variables, region, strata, census_key, n_threads):
@@ -87,6 +99,7 @@ def _bds_data_create(variables, region, strata, census_key, n_threads):
             industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))
         ). \
         apply(lambda x: pd.to_numeric(x, errors='ignore') if x.name in variables + ['time'] else x).\
+        pipe(_mark_flagged, variables).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True) \
         [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables]
