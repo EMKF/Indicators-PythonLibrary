@@ -40,7 +40,7 @@ def bds_test():
 
     # MSA examples
     df = bds(series_lst=['JOB_DESTRUCTION_DEATHS'], obs_level='msa', strata = ['FAGE'])
-    df = bds(series_lst=['EMP', 'DENOM'], obs_level='county', strata = ['EMPSZFII'])
+    df = bds(series_lst=['EMP', 'DENOM'], obs_level='msa', strata = ['EMPSZFII'])
 
     # Multiple regions
     df = bds(series_lst=['ESTAB', 'ESTABS_ENTRY_RATE'], obs_level=['us', 'state'], strata=['METRO', 'GEOCOMP'])
