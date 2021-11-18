@@ -105,6 +105,23 @@ def _bds_data_create(variables, region, strata, census_key, n_threads):
         [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables]
 
 
+def check_strata_valid(obs_level, strata):
+    valid_crosses = c.bds_valid_crosses
+
+    if not strata:
+        valid = True
+    elif obs_level in ['state', 'county', 'msa']:
+        strata = set(strata + [obs_level.upper()])
+        valid = strata in valid_crosses
+    elif obs_level == 'all':
+        valid = all(set(strata + [o.upper()]) in valid_crosses for o in ['us', 'state', 'msa', 'county'])
+    else:
+        strata = set(strata)
+        valid = strata in valid_crosses
+
+    return valid
+
+
 def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY'), n_threads=1):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
@@ -196,8 +213,12 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
     if len({'METRO', 'GEOCOMP'} - set(strata)) == 1:
         missing_var = {'METRO', 'GEOCOMP'} - set(strata)
         strata = strata + list(missing_var)
-        print('Warning: Variables METRO and GEOCOMP must be used together. Variable {missing_var} has been added to strata list.')
+        print(f'Warning: Variables METRO and GEOCOMP must be used together. Variable {missing_var} has been added to strata list.')
 
+    # Test that we have a valid strata crossing
+    if not check_strata_valid(obs_level, strata):
+        raise Exception(f'This is not a valid combination of strata for obs_level {obs_level}. See https://www.census.gov/data/datasets/time-series/econ/bds/bds-datasets.html for a list of valid crossings.')
+    
     # Convert coded variables to their labeled versions
     strata = strata + [f'{var}_LABEL' for var in strata if var != 'GEOCOMP']
 

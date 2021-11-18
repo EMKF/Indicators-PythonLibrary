@@ -509,3 +509,33 @@ def naics_code_to_abb(digits, pub_admin=False):
         query('name not in ["Public Administration", "Unclassified"]' if not pub_admin else '').\
         set_index(['naics']).\
         to_dict()['name']
+
+
+bds_valid_crosses = [
+    {'FAGE'}, {'EAGE'}, {'EMPSZFI'}, {'EMPSZES'}, {'EMPSZFII'}, {'EMPSZESI'},
+    {'GEOCOMP', 'METRO'}, {'STATE'}, {'COUNTY'}, {'MSA'}, {'NAICS'}, 
+    {'EMPSZFI', 'FAGE'}, {'EMPSZFII', 'FAGE'}, {'EAGE', 'EMPSZES'}, 
+    {'EAGE', 'EMPSZESI'}, {'NAICS', 'STATE'}, {'GEOCOMP', 'METRO', 'STATE'},
+    {'FAGE', 'STATE'}, {'EMPSZFI', 'STATE'}, {'EMPSZFII', 'STATE'}, {'EAGE', 'STATE'}, 
+    {'EMPSZES', 'STATE'}, {'EMPSZESI', 'STATE'}, {'FAGE', 'NAICS'}, 
+    {'EMPSZFI', 'NAICS'}, {'EMPSZFII', 'NAICS'}, {'EAGE', 'NAICS'}, 
+    {'EMPSZES', 'NAICS'}, {'EMPSZESI', 'NAICS'}, {'FAGE', 'GEOCOMP', 'METRO'},
+    {'EMPSZFI', 'GEOCOMP', 'METRO'}, {'EMPSZFII', 'GEOCOMP', 'METRO'}, 
+    {'EAGE', 'GEOCOMP', 'METRO'}, {'EMPSZES', 'GEOCOMP', 'METRO'}, 
+    {'EMPSZESI', 'GEOCOMP', 'METRO'}, {'GEOCOMP', 'METRO', 'NAICS'}, {'FAGE', 'MSA'}, 
+    {'EMPSZFI', 'MSA'}, {'EMPSZFII', 'MSA'}, {'EAGE', 'MSA'}, {'MSA', 'NAICS'}, 
+    {'COUNTY', 'FAGE'}, {'COUNTY', 'EMPSZFI'}, {'COUNTY', 'EMPSZFII'},
+    {'COUNTY', 'EAGE'}, {'COUNTY', 'NAICS'}, {'FAGE', 'MSA', 'NAICS'}, 
+    {'EMPSZFI', 'MSA', 'NAICS'}, {'EMPSZFII', 'MSA', 'NAICS'}, {'EAGE', 'MSA', 'NAICS'}, 
+    {'FAGE', 'NAICS', 'STATE'}, {'EMPSZFI', 'NAICS', 'STATE'}, 
+    {'EMPSZFII', 'NAICS', 'STATE'}, {'EAGE', 'NAICS', 'STATE'},
+    {'FAGE', 'GEOCOMP', 'METRO', 'NAICS'}, {'EMPSZFI', 'GEOCOMP', 'METRO', 'NAICS'}, 
+    {'EMPSZFII', 'GEOCOMP', 'METRO', 'NAICS'}, {'EAGE', 'GEOCOMP', 'METRO', 'NAICS'},
+    {'FAGE', 'GEOCOMP', 'METRO', 'STATE'}, {'EMPSZFI', 'GEOCOMP', 'METRO', 'STATE'},
+    {'EMPSZFII', 'GEOCOMP', 'METRO', 'STATE'}, {'EAGE', 'GEOCOMP', 'METRO', 'STATE'},
+    {'GEOCOMP', 'METRO', 'NAICS', 'STATE'}, {'EMPSZFI', 'FAGE', 'NAICS'},
+    {'EMPSZFII', 'FAGE', 'NAICS'}, {'FAGE', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'},
+    {'EMPSZFI', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'}, 
+    {'EMPSZFII', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'}, 
+    {'EAGE', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'}
+]
