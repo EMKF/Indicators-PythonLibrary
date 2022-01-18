@@ -15,7 +15,7 @@ def _fetch_data(section='data'):
     bfs_file = file.open("BFS-mf.csv")
 
     if section == 'data':
-        return pd.read_csv(bfs_file, skiprows=324)
+        return pd.read_csv(bfs_file, skiprows=325)
     else:
         key_to_rows = {
             'industry_key':[1,22],
