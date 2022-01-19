@@ -68,7 +68,7 @@ def _mark_flagged(df, variables):
     return df
 
 
-def _bds_data_create(variables, region, strata, census_key, n_threads):
+def _bds_data_create(variables, region, strata, get_flags, census_key, n_threads):
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
 
@@ -84,6 +84,8 @@ def _bds_data_create(variables, region, strata, census_key, n_threads):
             )
             
     s.close()
+
+    flags = [f'{var}_F' for var in variables] if get_flags else []
 
     return df. \
         pipe(lambda x: _county_fips(x) if region == 'county' else x). \
@@ -102,7 +104,7 @@ def _bds_data_create(variables, region, strata, census_key, n_threads):
         pipe(_mark_flagged, variables).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True) \
-        [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables]
+        [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables + flags]
 
 
 def check_strata_valid(obs_level, strata):
@@ -122,7 +124,7 @@ def check_strata_valid(obs_level, strata):
     return valid
 
 
-def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY'), n_threads=1):
+def bds(series_lst, obs_level='all', strata=[], get_flags=False, census_key=os.getenv('CENSUS_KEY'), n_threads=1):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
     Keyword arguments:
@@ -224,7 +226,7 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
 
     return pd.concat(
             [
-                _bds_data_create(series_lst, region, strata, census_key, n_threads)
+                _bds_data_create(series_lst, region, strata, get_flags, census_key, n_threads)
                 for region in region_lst
             ],
             axis=0
