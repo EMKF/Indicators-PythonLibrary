@@ -268,8 +268,8 @@ def _state_2020():
     return pd.read_csv('https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/state/totals/nst-est2020.csv', dtype={'STATE':str}).\
         query('STATE != "00"').\
         assign(time=2020).\
-        rename(columns={'POPESTIMATE2020': 'population', 'STATE': 'fips', 'NAME':'region'})\
-        [['fips', 'region', 'time', 'population']].\
+        rename(columns={'POPESTIMATE2020': 'POP', 'STATE': 'fips', 'NAME':'region'})\
+        [['fips', 'region', 'time', 'POP']].\
         sort_values(['fips', 'time']).\
         reset_index(drop=True)
 
