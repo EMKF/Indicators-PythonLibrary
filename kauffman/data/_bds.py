@@ -3,6 +3,7 @@ import pandas as pd
 import kauffman.constants as c
 import os
 from joblib import Parallel, delayed
+import numpy as np
 
 
 pd.set_option('max_columns', 1000)
@@ -42,7 +43,8 @@ def _fetch_data(url, session):
     return df
 
 def _build_url(variables, region, strata, census_key, state_fips=None, year='*'):
-    var_string = ",".join(variables + strata)
+    flag_var = [f'{var}_F' for var in variables]
+    var_string = ",".join(variables + strata + flag_var)
     
     region_string = {
         'us':'us:*',
@@ -56,24 +58,34 @@ def _build_url(variables, region, strata, census_key, state_fips=None, year='*')
     return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}&key={census_key}'
 
 
-def _bds_data_create(variables, region, strata, census_key, n_threads):
+def _mark_flagged(df, variables):
+    df[variables] = df[variables]. \
+        apply(
+            lambda x: df[f'{x.name}_F']. \
+                where(df[f'{x.name}_F'].isin(['D', 'S', 'X']), x). \
+                replace(['D', 'S', 'X'], np.NaN)
+        )
+    return df
+
+
+def _bds_data_create(variables, region, strata, get_flags, census_key, n_threads):
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
 
     if 'NAICS' not in strata or region == 'us':
-        df = _fetch_data(_build_url(variables, region, strata, census_key, '*'))
+        df = _fetch_data(_build_url(variables, region, strata, census_key, '*'), s)
     else:
         with parallel:
             df = pd.concat(
                 parallel(
-                    [
-                        delayed(_fetch_data)(_build_url(variables, region, strata, census_key, '*', year), s)
-                        for year in range(1978, 2020)
-                    ]
-                )         
+                    delayed(_fetch_data)(_build_url(variables, region, strata, census_key, '*', year), s)
+                    for year in range(1978, 2020)
+                )
             )
             
     s.close()
+
+    flags = [f'{var}_F' for var in variables] if get_flags else []
 
     return df. \
         pipe(lambda x: _county_fips(x) if region == 'county' else x). \
@@ -89,12 +101,30 @@ def _bds_data_create(variables, region, strata, census_key, n_threads):
             industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))
         ). \
         apply(lambda x: pd.to_numeric(x, errors='ignore') if x.name in variables + ['time'] else x).\
+        pipe(_mark_flagged, variables).\
         sort_values(['fips', 'time']).\
         reset_index(drop=True) \
-        [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables]
+        [['fips', 'region', 'time'] + [x.lower() for x in strata] + variables + flags]
 
 
-def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY'), n_threads=1):
+def check_strata_valid(obs_level, strata):
+    valid_crosses = c.bds_valid_crosses
+
+    if not strata:
+        valid = True
+    elif obs_level in ['state', 'county', 'msa']:
+        strata = set(strata + [obs_level.upper()])
+        valid = strata in valid_crosses
+    elif obs_level == 'all':
+        valid = all(set(strata + [o.upper()]) in valid_crosses for o in ['us', 'state', 'msa', 'county'])
+    else:
+        strata = set(strata)
+        valid = strata in valid_crosses
+
+    return valid
+
+
+def bds(series_lst, obs_level='all', strata=[], get_flags=False, census_key=os.getenv('CENSUS_KEY'), n_threads=1):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
     Keyword arguments:
@@ -115,8 +145,6 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         FIRMDEATH_ESTABS: Number of establishments associated with firm deaths during the last 12 months
         FIRMDEATH_FIRMS: Number of firms that exited during the last 12 months
         GEO_ID: Geographic identifier code
-        INDGROUP: Industry group
-        INDLEVEL: Industry level
         JOB_CREATION: Number of jobs created from expanding and opening establishments during the last 12 months
         JOB_CREATION_BIRTHS: Number of jobs created from opening establishments during the last 12 months
         JOB_CREATION_CONTINUERS: Number of jobs created from expanding establishments during the last 12 months
@@ -131,9 +159,7 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
         NET_JOB_CREATION: Number of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
         NET_JOB_CREATION_RATE: Rate of net jobs created from expanding/contracting and opening/closing establishments during the last 12 months
         REALLOCATION_RATE: Rate of reallocation during the last 12 months
-        SECTOR: NAICS economic sector
         STATE: Geography
-        SUBSECTOR: Subsector
         SUMLEVEL: Summary Level code
         ucgid: Uniform Census Geography Identifier clause
         YEAR: Year
@@ -189,11 +215,18 @@ def bds(series_lst, obs_level='all', strata=[], census_key=os.getenv('CENSUS_KEY
     if len({'METRO', 'GEOCOMP'} - set(strata)) == 1:
         missing_var = {'METRO', 'GEOCOMP'} - set(strata)
         strata = strata + list(missing_var)
-        print('Warning: Variables METRO and GEOCOMP must be used together. Variable {missing_var} has been added to strata list.')
+        print(f'Warning: Variables METRO and GEOCOMP must be used together. Variable {missing_var} has been added to strata list.')
+
+    # Test that we have a valid strata crossing
+    if not check_strata_valid(obs_level, strata):
+        raise Exception(f'This is not a valid combination of strata for obs_level {obs_level}. See https://www.census.gov/data/datasets/time-series/econ/bds/bds-datasets.html for a list of valid crossings.')
+    
+    # Convert coded variables to their labeled versions
+    strata = strata + [f'{var}_LABEL' for var in strata if var != 'GEOCOMP']
 
     return pd.concat(
             [
-                _bds_data_create(series_lst, region, strata, census_key, n_threads)
+                _bds_data_create(series_lst, region, strata, get_flags, census_key, n_threads)
                 for region in region_lst
             ],
             axis=0

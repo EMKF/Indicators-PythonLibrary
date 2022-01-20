@@ -1,34 +1,82 @@
-import sys
-import datetime
 import pandas as pd
+import numpy as np
+from pandas.core import series
 from kauffman import constants as c
-
-pd.set_option('max_columns', 1000)
-pd.set_option('max_info_columns', 1000)
-pd.set_option('expand_frame_repr', False)
-pd.set_option('display.max_rows', 30000)
-pd.set_option('max_colwidth', 4000)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
+from zipfile import ZipFile
+from io import BytesIO
+import urllib.request as urllib2
 
 
+def _fetch_data(section='data'):
+    link = 'https://www.census.gov/econ/currentdata/clutch/getzippedfile?program=BFS&filename=BFS-mf.zip'
 
+    r = urllib2.urlopen(link).read()
+    file = ZipFile(BytesIO(r)) 
+    bfs_file = file.open("BFS-mf.csv")
 
-# url = f'https://api.census.gov/data/timeseries/eits/bfs?get=data_type_code,seasonally_adj,category_code,cell_value,error_data&for=us:*&time={year}'
-def _url(region, series, seasonally_adj, industry):
-    if 'DUR' in series:
-        adjusted = 'no'
+    if section == 'data':
+        return pd.read_csv(bfs_file, skiprows=325)
     else:
-        if seasonally_adj:
-            adjusted = 'yes'
-        else:
-            adjusted = 'no'
-    bfs_industry = c.naics_to_bfsnaics[industry]
-    return 'https://www.census.gov/econ/currentdata/export/csv?programCode=BFS&timeSlotType=12&startYear=2004&endYear=2021&' + \
-          f'categoryCode={bfs_industry}&' + \
-          f'dataTypeCode={series}&' + \
-          f'geoLevelCode={region}&' + \
-          f'adjusted={adjusted}&' + \
-          'errorData=no&internal=false'
+        key_to_rows = {
+            'industry_key':[1,22],
+            'series_key':[27,12],
+            'region_key':[43,56],
+            'time_key':[103,210]
+        }
+        return pd.read_csv(bfs_file, skiprows=key_to_rows[section][0], nrows=key_to_rows[section][1])
+
+
+def clean_data(df, series_lst, bf_helper_lst):
+    # Get dictionaries
+    industry_key, series_key, region_key, time_key = (
+        _fetch_data(key) 
+        for key in ['industry_key', 'series_key', 'region_key', 'time_key']
+    )
+
+    df = df. \
+        merge(industry_key.drop(columns='cat_indent'), on='cat_idx', how='left'). \
+        merge(series_key[['dt_idx', 'dt_code']], on='dt_idx', how='left'). \
+        merge(region_key, on='geo_idx', how='left'). \
+        merge(time_key, on='per_idx', how='left'). \
+        rename(columns={'cat_code':'naics', 'cat_desc':'industry', 'dt_code':'series', 'geo_code':'region_code', 'geo_desc':'region', 'per_name':'time'}). \
+        assign(
+            naics=lambda x: x.naics.str.replace('NAICS', ''). \
+                replace({'TOTAL':'00', 'TW':'48-49', 'RET':'44-45', 'MNF':'31-33', 'NO':'ZZ'}),
+        ). \
+        pivot(
+            index=['time', 'region', 'region_code', 'industry', 'naics', 'is_adj'],
+            columns='series', values='val'
+        ). \
+        reset_index()
+    
+    df.columns.name = None
+
+    df[series_lst + bf_helper_lst] = df[series_lst + bf_helper_lst]. \
+        replace({'D':np.NaN}). \
+        apply(pd.to_numeric, errors='ignore')
+
+    return df
+
+
+def _seasonal_adjust(df, seasonally_adj, series_lst, bf_helper_lst):
+    if seasonally_adj and any([i.startswith('BF_DUR') for i in series_lst]):
+        # Seasonal adjustment not available for DUR variables, so we just sub
+        # in non-adjusted for DUR var and leave everything else the same
+        index_var = ['time', 'region', 'region_code', 'industry', 'naics', 'is_adj']
+        df_DUR = df[index_var + [s for s in series_lst if 'DUR' in s]]. \
+            query('is_adj == False')
+        df_non_DUR = df[index_var + [s for s in series_lst if 'DUR' not in s] + bf_helper_lst]. \
+            query('is_adj == True')
+        return df_DUR.merge(df_non_DUR, on=['time', 'region', 'region_code', 'industry', 'naics'])
+    else:
+        return df.query(f'is_adj == {seasonally_adj}')
+
+def _query_data(df, region_lst, series_lst, bf_helper_lst, industry_lst, seasonally_adj):
+    return df. \
+        pipe(_seasonal_adjust, seasonally_adj, series_lst, bf_helper_lst). \
+        query(f"region_code in {region_lst}"). \
+        query(f"naics in {industry_lst}") \
+        [['time', 'region', 'region_code', 'industry', 'naics'] + series_lst + bf_helper_lst]
 
 
 def _year_create_shift(x):
@@ -68,23 +116,15 @@ def _annualize(df, annualize, bf_helper_lst, march_shift):
         return df.\
             pipe(_time_annualize, march_shift). \
             pipe(_DUR_numerator). \
-            groupby(['fips', 'region', 'time', 'industry', 'naics']).sum(min_count=12).\
+            groupby(['fips', 'region', 'region_code', 'time', 'industry', 'naics']).sum(min_count=12).\
             pipe(_BF_DURQ).\
-            reset_index(drop=False) \
+            reset_index(drop=False). \
+            astype({'time':'int'}) \
             [[col for col in df.columns if col not in bf_helper_lst]]
     return df
 
 
-def _df_series(series_lst, bf_helper_lst, region, seasonally_adj, industry):
-    df = pd.DataFrame(columns=['Period'])
-    for series in series_lst + bf_helper_lst:
-        df = pd.read_csv(_url(region, series, seasonally_adj, industry), skiprows=7). \
-            rename(columns={'Value': series}). \
-            merge(df, how='outer', on='Period')
-    return df
-
-
-def _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize, march_shift):
+def _bfs_data_create(region_lst, series_lst, industry_lst, seasonally_adj, annualize, march_shift):
     if march_shift: annualize = True
 
     bf_helper_lst = []
@@ -92,22 +132,13 @@ def _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize
         if ('BF_DUR4Q' in series_lst) and ('BF_BF4Q' not in series_lst): bf_helper_lst.append('BF_BF4Q')
         if ('BF_DUR8Q' in series_lst) and ('BF_BF8Q' not in series_lst): bf_helper_lst.append('BF_BF8Q')
 
-    return pd.concat(
-            [
-                _df_series(series_lst, bf_helper_lst, region, seasonally_adj, industry).\
-                    assign(
-                        naics=industry,
-                        industry=c.naics_code_to_abb(2)[industry],  # todo: we might want to hard code this dictionary into constants
-                    )
-                for industry in industry_lst
-            ]
-        ). \
+    return _fetch_data(). \
+        pipe(clean_data, series_lst, bf_helper_lst). \
+        pipe(_query_data, region_lst, series_lst, bf_helper_lst, industry_lst, seasonally_adj). \
         assign(
-            time=lambda x: pd.to_datetime(x['Period'], format='%b-%Y'),
-            region=c.state_abb_to_name[region],
-            fips=lambda x: c.state_abb_to_fips[region],
+            time=lambda x: pd.to_datetime(x['time'], format='%b%Y'),
+            fips=lambda x: x.region_code.map(c.state_abb_to_fips)
         ). \
-        drop('Period', 1). \
         pipe(_annualize, annualize, bf_helper_lst, march_shift) \
         [['fips', 'region', 'naics', 'industry', 'time'] + series_lst]. \
         reset_index(drop=True)
@@ -115,7 +146,6 @@ def _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize
 
 def bfs(series_lst, obs_level='all', industry='00', seasonally_adj=True, annualize=False, march_shift=False):
     """ Create a pandas data frame with results from a BFS query. Column order: fips, region, time, series_lst.
-
 
     Keyword arguments:
     series_lst-- lst of variables to be pulled.
@@ -167,9 +197,6 @@ def bfs(series_lst, obs_level='all', industry='00', seasonally_adj=True, annuali
     annualize-- Aggregates across months and annulizes data. (True or False)
 
     march_shift-- When True the year end is March, False the year end is December. (True or False)
-
-
-
     """
 
     if type(obs_level) == list:
@@ -190,12 +217,4 @@ def bfs(series_lst, obs_level='all', industry='00', seasonally_adj=True, annuali
         else:
             industry_lst = [industry]
 
-    return pd.concat(
-            [
-                _bfs_data_create(region, series_lst, industry_lst, seasonally_adj, annualize, march_shift)
-                for region in region_lst
-            ],
-            axis=0
-        )
-
-
+    return _bfs_data_create(region_lst, series_lst, industry_lst, seasonally_adj, annualize, march_shift)
