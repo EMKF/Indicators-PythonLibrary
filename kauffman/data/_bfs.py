@@ -21,7 +21,7 @@ def _fetch_data(section='data'):
             'industry_key':[1,22],
             'series_key':[27,12],
             'region_key':[43,56],
-            'time_key':[103,208]
+            'time_key':[103,210]
         }
         return pd.read_csv(bfs_file, skiprows=key_to_rows[section][0], nrows=key_to_rows[section][1])
 
@@ -58,12 +58,25 @@ def clean_data(df, series_lst, bf_helper_lst):
     return df
 
 
+def _seasonal_adjust(df, seasonally_adj, series_lst, bf_helper_lst):
+    if seasonally_adj and any([i.startswith('BF_DUR') for i in series_lst]):
+        # Seasonal adjustment not available for DUR variables, so we just sub
+        # in non-adjusted for DUR var and leave everything else the same
+        index_var = ['time', 'region', 'region_code', 'industry', 'naics', 'is_adj']
+        df_DUR = df[index_var + [s for s in series_lst if 'DUR' in s]]. \
+            query('is_adj == False')
+        df_non_DUR = df[index_var + [s for s in series_lst if 'DUR' not in s] + bf_helper_lst]. \
+            query('is_adj == True')
+        return df_DUR.merge(df_non_DUR, on=['time', 'region', 'region_code', 'industry', 'naics'])
+    else:
+        return df.query(f'is_adj == {seasonally_adj}')
+
 def _query_data(df, region_lst, series_lst, bf_helper_lst, industry_lst, seasonally_adj):
     return df. \
-        query(f'is_adj == {seasonally_adj}'). \
+        pipe(_seasonal_adjust, seasonally_adj, series_lst, bf_helper_lst). \
         query(f"region_code in {region_lst}"). \
         query(f"naics in {industry_lst}") \
-        [['time', 'region', 'region_code', 'industry', 'naics', 'is_adj'] + series_lst + bf_helper_lst]
+        [['time', 'region', 'region_code', 'industry', 'naics'] + series_lst + bf_helper_lst]
 
 
 def _year_create_shift(x):
@@ -203,9 +216,5 @@ def bfs(series_lst, obs_level='all', industry='00', seasonally_adj=True, annuali
             industry_lst = list(c.naics_code_to_abb(2).keys())
         else:
             industry_lst = [industry]
-
-    if any([i.startswith('BF_DUR') for i in series_lst]) and seasonally_adj:
-        seasonally_adj = False
-        print('Warning: Seasonal adjustment not available for DUR series. seasonally_adj has been set to False.')
 
     return _bfs_data_create(region_lst, series_lst, industry_lst, seasonally_adj, annualize, march_shift)
