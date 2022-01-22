@@ -40,6 +40,11 @@ def _fetch_data(url, session):
             attempts += 1
             print(f'ERROR on attempt #{attempts}/5. URL: {url}. Error message: {e}')
             df = pd.DataFrame()
+    if not success:
+        print(
+            f'\nRAN OUT OF ATTEMPTS for url: {url}', 
+            '\n*****If unexpected, please double check your census_key and other parameters.***\n'
+        )
     return df
 
 def _build_url(variables, region, strata, census_key, state_fips=None, year='*'):
@@ -84,6 +89,8 @@ def _bds_data_create(variables, region, strata, get_flags, census_key, n_threads
             )
             
     s.close()
+
+    if len(df) == 0: raise Exception('The data fetch returned an empty dataframe. Please double check that you have a valid census_key.')
 
     flags = [f'{var}_F' for var in variables] if get_flags else []
 
