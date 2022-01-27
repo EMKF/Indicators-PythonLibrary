@@ -10,7 +10,6 @@ import urllib.request as urllib2
 def _format_df(df):
     df.columns = df.iloc[1]
     return df.dropna(axis=1, how='all'). \
-        astype('str'). \
         iloc[2:]
 
 	
@@ -20,7 +19,7 @@ def _fetch_data():
     file = ZipFile(BytesIO(r)) 
     bfs_file = file.open("BFS-mf.csv")
 
-    df = pd.read_csv(bfs_file, names=['a', 'b', 'c', 'd', 'e', 'f'])
+    df = pd.read_csv(bfs_file, names=['a', 'b', 'c', 'd', 'e', 'f'], dtype='str')
     names = ['CATEGORIES', 'DATA TYPES', 'GEO LEVELS', 'TIME PERIODS', 'NOTES', 'DATA']
     row_splits = list(df.query(f'a in {names}').index)
 
