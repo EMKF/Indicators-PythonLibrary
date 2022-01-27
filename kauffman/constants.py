@@ -460,16 +460,16 @@ state_shed_codes_to_abb = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16:
                             88: "NV", 91: "WA", 92: "OR", 93: "CA", 94: "AK", 95: "HI"}
 
 
-recession_dates = pd.read_html('https://www.nber.org/research/data/us-business-cycle-expansions-and-contractions')[0] \
-    ['Business Cycle Reference Dates'].\
-    loc[lambda x: x['Peak Month'] != '-'].\
-    loc[lambda x: x['Trough Month'] != '-'].\
-    assign(
-        peak_time=lambda x: pd.to_datetime(x['Peak Year'].astype(str) + x['Peak Month'], format='%Y%B'),
-        trough_time=lambda x: pd.to_datetime(x['Trough Year'].astype(str) + x['Trough Month'], format='%Y%B'),
-    ) \
-    [['peak_time', 'trough_time']].\
-    values
+# recession_dates = pd.read_html('https://www.nber.org/research/data/us-business-cycle-expansions-and-contractions')[0] \
+#     ['Business Cycle Reference Dates'].\
+#     loc[lambda x: x['Peak Month'] != '-'].\
+#     loc[lambda x: x['Trough Month'] != '-'].\
+#     assign(
+#         peak_time=lambda x: pd.to_datetime(x['Peak Year'].astype(str) + x['Peak Month'], format='%Y%B'),
+#         trough_time=lambda x: pd.to_datetime(x['Trough Year'].astype(str) + x['Trough Month'], format='%Y%B'),
+#     ) \
+#     [['peak_time', 'trough_time']].\
+#     values
 
 bfs_industries = [
     'NAICS11', 'NAICS21', 'NAICS22', 'NAICS23', 'NAICS42', 'NAICS51', 'NAICS52',
