@@ -273,6 +273,14 @@ def _state_2020():
         sort_values(['fips', 'time']).\
         reset_index(drop=True)
 
+def _state_2021():
+    return pd.read_csv('https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/state/totals/NST-EST2021-alldata.csv', dtype={'STATE':str}).\
+        query('STATE != "00"').\
+        assign(time=2021).\
+        rename(columns={'POPESTIMATE2021': 'POP', 'STATE': 'fips', 'NAME':'region'})\
+        [['fips', 'region', 'time', 'POP']].\
+        sort_values(['fips', 'time']).\
+        reset_index(drop=True)
 
 def _us_1900_1999():
     return pd.read_csv(
@@ -331,6 +339,15 @@ def _us_2020():
         sort_values(['fips', 'time']).\
         reset_index(drop=True)
 
+def _us_2021():
+    return pd.read_csv('https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/state/totals/NST-EST2021-alldata.csv', dtype={'STATE':str}).\
+        query('NAME == "United States"').\
+        assign(time=2021).\
+        rename(columns={'POPESTIMATE2021': 'POP', 'STATE': 'fips', 'NAME':'region'})\
+        [['fips', 'region', 'time', 'POP']].\
+        sort_values(['fips', 'time']).\
+        reset_index(drop=True)
+
 
 def _pep_data_create(region):
     if region == 'county':
@@ -349,13 +366,13 @@ def _pep_data_create(region):
         df = pd.concat(
                 [_state_1900_1989(year) for year in range(1900,1981,10)] + 
                 [f() for f in [_state_1990_1999, _state_2000_2009, 
-                _state_2010_2019, _state_2020]],
+                _state_2010_2019, _state_2020, _state_2021]],
                 axis=0
             )
     else:
         df = pd.concat(
             [
-                f() for f in [_us_1900_1999, _us_2000_2009, _us_2010_2019, _us_2020]
+                f() for f in [_us_1900_1999, _us_2000_2009, _us_2010_2019, _us_2020, _us_2021]
             ],
             sort=True,
             axis=0

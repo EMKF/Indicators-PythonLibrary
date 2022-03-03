@@ -78,12 +78,14 @@ def bfs_test():
 def pep_test():
     # pep(obs_level='us').\
     #     to_csv('/Users/thowe/Projects/indicator_shiny_app/pep_us.csv', index=False)
-    pep(obs_level='msa').\
-        to_csv(c.filenamer(f'../tests/data/pep_msa.csv'), index=False)
+    # pep(obs_level='msa').\
+    #     to_csv(c.filenamer(f'../tests/data/pep_msa.csv'), index=False)
 
     # df = pep(obs_level='state')
     # df = pep(obs_level='msa')
     # df = pep(obs_level='county')
+    df = pep(obs_level='state')
+    print(df)
 
 
 def qwi_test():
@@ -305,4 +307,5 @@ if __name__ == '__main__':
 
     # mpj_data_fetch()
     # qwi_msa_fetch()
-    qwi_msa_fetch_fips()
+    # qwi_msa_fetch_fips()
+    pep_test()
