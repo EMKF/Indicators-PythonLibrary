@@ -7,38 +7,41 @@ from io import BytesIO
 import urllib.request as urllib2
 
 
-def _fetch_data(section='data'):
-    link = 'https://www.census.gov/econ/currentdata/clutch/getzippedfile?program=BFS&filename=BFS-mf.zip'
+def _format_df(df):
+    df.columns = df.iloc[1]
+    return df.dropna(axis=1, how='all'). \
+        iloc[2:]
 
+	
+def _fetch_data():
+    link = 'https://www.census.gov/econ/currentdata/clutch/getzippedfile?program=BFS&filename=BFS-mf.zip'
     r = urllib2.urlopen(link).read()
     file = ZipFile(BytesIO(r)) 
     bfs_file = file.open("BFS-mf.csv")
 
-    if section == 'data':
-        return pd.read_csv(bfs_file, skiprows=325)
-    else:
-        key_to_rows = {
-            'industry_key':[1,22],
-            'series_key':[27,12],
-            'region_key':[43,56],
-            'time_key':[103,210]
-        }
-        return pd.read_csv(bfs_file, skiprows=key_to_rows[section][0], nrows=key_to_rows[section][1])
+    df = pd.read_csv(bfs_file, names=['a', 'b', 'c', 'd', 'e', 'f'], dtype='str')
+    names = ['CATEGORIES', 'DATA TYPES', 'GEO LEVELS', 'TIME PERIODS', 'NOTES', 'DATA']
+    row_splits = list(df.query(f'a in {names}').index)
 
+    industry_key, series_key, region_key, time_key = [
+        df[row_splits[i]:row_splits[i+1]]. \
+            pipe(_format_df)
+        for i in range(0,4)
+    ]
+    data = _format_df(df[row_splits[-1]:])
 
-def clean_data(df, series_lst, bf_helper_lst):
-    # Get dictionaries
-    industry_key, series_key, region_key, time_key = (
-        _fetch_data(key) 
-        for key in ['industry_key', 'series_key', 'region_key', 'time_key']
-    )
+    return data, industry_key, series_key, region_key, time_key
+	
 
+def clean_data(df, industry_key, series_key, region_key, time_key):
     df = df. \
         merge(industry_key.drop(columns='cat_indent'), on='cat_idx', how='left'). \
         merge(series_key[['dt_idx', 'dt_code']], on='dt_idx', how='left'). \
         merge(region_key, on='geo_idx', how='left'). \
         merge(time_key, on='per_idx', how='left'). \
-        rename(columns={'cat_code':'naics', 'cat_desc':'industry', 'dt_code':'series', 'geo_code':'region_code', 'geo_desc':'region', 'per_name':'time'}). \
+        rename(
+            columns={'cat_code':'naics', 'cat_desc':'industry', 'dt_code':'series', 'geo_code':'region_code', 'geo_desc':'region', 'per_name':'time'}
+        ). \
         assign(
             naics=lambda x: x.naics.str.replace('NAICS', ''). \
                 replace({'TOTAL':'00', 'TW':'48-49', 'RET':'44-45', 'MNF':'31-33', 'NO':'ZZ'}),
@@ -47,13 +50,11 @@ def clean_data(df, series_lst, bf_helper_lst):
             index=['time', 'region', 'region_code', 'industry', 'naics', 'is_adj'],
             columns='series', values='val'
         ). \
-        reset_index()
-    
-    df.columns.name = None
-
-    df[series_lst + bf_helper_lst] = df[series_lst + bf_helper_lst]. \
-        replace({'D':np.NaN}). \
+        reset_index(). \
+        replace({'D':np.NaN, 'S':np.NaN}). \
         apply(pd.to_numeric, errors='ignore')
+        
+    df.columns.name = None
 
     return df
 
@@ -70,6 +71,7 @@ def _seasonal_adjust(df, seasonally_adj, series_lst, bf_helper_lst):
         return df_DUR.merge(df_non_DUR, on=['time', 'region', 'region_code', 'industry', 'naics'])
     else:
         return df.query(f'is_adj == {seasonally_adj}')
+
 
 def _query_data(df, region_lst, series_lst, bf_helper_lst, industry_lst, seasonally_adj):
     return df. \
@@ -132,8 +134,10 @@ def _bfs_data_create(region_lst, series_lst, industry_lst, seasonally_adj, annua
         if ('BF_DUR4Q' in series_lst) and ('BF_BF4Q' not in series_lst): bf_helper_lst.append('BF_BF4Q')
         if ('BF_DUR8Q' in series_lst) and ('BF_BF8Q' not in series_lst): bf_helper_lst.append('BF_BF8Q')
 
-    return _fetch_data(). \
-        pipe(clean_data, series_lst, bf_helper_lst). \
+    df, industry_key, series_key, region_key, time_key = _fetch_data()
+
+    return df. \
+        pipe(clean_data, industry_key, series_key, region_key, time_key). \
         pipe(_query_data, region_lst, series_lst, bf_helper_lst, industry_lst, seasonally_adj). \
         assign(
             time=lambda x: pd.to_datetime(x['time'], format='%b%Y'),
