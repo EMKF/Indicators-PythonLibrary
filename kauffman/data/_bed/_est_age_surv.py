@@ -122,7 +122,7 @@ def table7(lines):
         if (not line.split()) or ('openings' in line) or ('ended' in line):
             continue
         data_lst.append([cohort] + line.split()[1:])
-        if 'March 2020' in line:  # this is something that needs to be incremented yearly
+        if 'March 2021' in line:  # this is something that needs to be incremented yearly
             cohort += 1
 
     return pd.DataFrame(
@@ -143,7 +143,7 @@ def _extract_rows(df, age, size):
     return df.iloc[(ind - num_rows) + 4:ind]
 
 def _remove_trailing_rows(df):
-    last_year_ind = df.index[df['Table 1-B-F: Annual gross job gains and gross job losses by age and base size of firm'] == 2020].tolist()[0]
+    last_year_ind = df.index[df['Table 1-B-F: Annual gross job gains and gross job losses by age and base size of firm'] == 2021].tolist()[0]
     return df.loc[:last_year_ind].reset_index(drop=True)
 
 def _column_headers(df):
