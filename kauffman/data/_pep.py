@@ -379,11 +379,11 @@ def _pep_data_create(region):
         )
 
     return df. \
-        sort_values(['fips', 'time']). \
-        reset_index(drop=True).\
-        rename(columns={'POP': 'population'}).\
-        astype({'population': 'float', 'time': 'int'}) \
-        [['fips', 'region', 'time', 'population']]
+			rename(columns={'POP': 'population'}). \
+			astype({'population': 'float', 'time': 'int'}). \
+			sort_values(['fips', 'time']). \
+			reset_index(drop=True) \
+			[['fips', 'region', 'time', 'population']]
 
 
 def pep(obs_level='all'):
