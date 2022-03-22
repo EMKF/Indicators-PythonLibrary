@@ -129,74 +129,74 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
 
     # Geography
     if region == 'LA':
-        driver.find_elements_by_link_text('California')[0].click()
+        driver.find_elements(By.LINK_TEXT, 'California')[0].click()
         time.sleep(pause2)
-        driver.find_element_by_xpath('//*[@title="Click to select Micro/Metropolitan Areas"]').click()
+        driver.find_element(By.XPATH, '//*[@title="Click to select Micro/Metropolitan Areas"]').click()
         time.sleep(pause2)
-        driver.find_element_by_xpath('//*[@title="Click to select 06 California"]').click()
-        driver.find_element_by_xpath('//*[@title="Click to select 0631080 Los Angeles-Long Beach-Anaheim, CA"]').click()
+        driver.find_element(By.XPATH, '//*[@title="Click to select 06 California"]').click()
+        driver.find_element(By.XPATH, '//*[@title="Click to select 0631080 Los Angeles-Long Beach-Anaheim, CA"]').click()
     time.sleep(pause1)
-    driver.find_element_by_id('continue_with_selection_label').click()
+    driver.find_element(By.ID, 'continue_with_selection_label').click()
 
     # Firm Characteristics
     if private:
-        driver.find_element_by_id('dijit_form_RadioButton_4').click()
+        driver.find_element(By.XPATH, '//*[@id="dijit_layout_ContentPane_8"]/form[2]/div[3]/label/input').click()
 
     if 'firmage' in firm_char:
         for box in range(1, 6):
-            driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
+            driver.find_element(By.ID, 'dijit_form_CheckBox_{}'.format(box)).click()
 
     if 'firmsize' in firm_char:
         for box in range(7, 12):
-            driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
+            driver.find_element(By.ID, 'dijit_form_CheckBox_{}'.format(box)).click()
 
     if 'industry' in firm_char:
-        elems = driver.find_elements_by_xpath("//a[@href]")[12]
+        elems = driver.find_elements(By.XPATH, "//a[@href]")[12]
         driver.execute_script("arguments[0].click();", elems)
-    driver.find_element_by_id('continue_to_worker_char').click()
+    driver.find_element(By.ID, 'continue_to_worker_char').click()
 
     # Worker Characteristics
     if 'sex' in worker_char:
-        driver.find_element_by_id('dijit_form_CheckBox_13').click()
-        driver.find_element_by_id('dijit_form_CheckBox_14').click()
+        driver.find_element(By.ID, 'dijit_form_CheckBox_13').click()
+        driver.find_element(By.ID, 'dijit_form_CheckBox_14').click()
     if 'agegrp' in worker_char:
         for box in range(1, 9):
-            driver.find_element_by_xpath(f'//input[@value="A0{box}"]').click()
+            driver.find_element(By.XPATH, f'//input[@value="A0{box}"]').click()
     if 'education' in worker_char:
-        driver.find_element_by_id('worker_char_switch').click()
-        driver.find_element_by_id('dijit_MenuItem_2').click()
+        driver.find_element(By.ID, 'worker_char_switch').click()
+        driver.find_element(By.ID, 'dijit_MenuItem_2').click()
         for box in range(1, 6):
-            driver.find_element_by_xpath(f'//input[@value="E{box}"]').click()
+            driver.find_element(By.XPATH, f'//input[@value="E{box}"]').click()
     if 'race' in worker_char:
-        driver.find_element_by_id('worker_char_switch').click()
-        driver.find_element_by_id('dijit_MenuItem_3').click()
+        driver.find_element(By.ID, 'worker_char_switch').click()
+        driver.find_element(By.ID, 'dijit_MenuItem_3').click()
         for box in range(1, 8):
-            for element in driver.find_elements_by_xpath(f'//input[@value="A{box}"]'):
+            for element in driver.find_elements(By.XPATH, f'//input[@value="A{box}"]'):
                 element.click()
-    driver.find_element_by_id('continue_to_indicators').click()
+    driver.find_element(By.ID, 'continue_to_indicators').click()
 
     # Indicators
     for _ in range(0, 3):
-        driver.find_element_by_class_name('ClosedGroup').click()
+        driver.find_element(By.CLASS_NAME, 'ClosedGroup').click() # Scroll through all the options
         time.sleep(pause2)
-    for box in range(19, 50):
-        driver.find_element_by_id('dijit_form_CheckBox_{}'.format(box)).click()
+    for box in driver.find_elements(By.NAME, 'indicator'):
+        if box.get_attribute('value') != "001_Emp": box.click()
         # time.sleep(pause1)
-    driver.find_element_by_id('continue_to_quarters').click()
+    driver.find_element(By.ID, 'continue_to_quarters').click()
 
     # Quarters
     for quarter in range(1, 5):
-        driver.find_element_by_xpath('//*[@title="Check All Q{}"]'.format(quarter)).click()
-    driver.find_element_by_id('continue_to_export').click()
+        driver.find_element(By.XPATH, '//*[@title="Check All Q{}"]'.format(quarter)).click()
+    driver.find_element(By.ID, 'continue_to_export').click()
 
     # Summary and Export
     time.sleep(pause2)
-    driver.find_element_by_id('submit_request').click()
+    driver.find_element(By.ID, 'submit_request').click()
 
     try:
         element = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.LINK_TEXT, 'CSV')))
     finally:
-        href = driver.find_element_by_link_text('CSV').get_attribute('href')
+        href = driver.find_element(By.LINK_TEXT, 'CSV').get_attribute('href')
         return pd.read_csv(href)
 
 
