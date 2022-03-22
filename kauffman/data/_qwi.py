@@ -122,19 +122,20 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
     pause2 = 3
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--headless')
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
     if region == 'LA':
-        driver.find_elements(By.LINK_TEXT, 'California')[0].click()
-        time.sleep(pause2)
-        driver.find_element(By.XPATH, '//*[@title="Click to select Micro/Metropolitan Areas"]').click()
-        time.sleep(pause2)
-        driver.find_element(By.XPATH, '//*[@title="Click to select 06 California"]').click()
-        driver.find_element(By.XPATH, '//*[@title="Click to select 0631080 Los Angeles-Long Beach-Anaheim, CA"]').click()
+        time.sleep(pause1)
+        driver.find_element(By.XPATH, '//*[text()="California"]').click()
+        time.sleep(pause1)
+        driver.find_element(By.XPATH, '//*[text()="Metro/Micropolitan Areas"]').click()
+        time.sleep(pause1)
+        driver.find_element(By.XPATH, '//input[@aria-label="Los Angeles-Long Beach-Anaheim, CA 0631080"]').click()
+        time.sleep(pause1)
     time.sleep(pause1)
     driver.find_element(By.ID, 'continue_with_selection_label').click()
 
