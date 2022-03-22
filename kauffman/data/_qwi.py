@@ -140,48 +140,49 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
     driver.find_element(By.ID, 'continue_with_selection_label').click()
 
     # Firm Characteristics
-    if private:
-        driver.find_element(By.XPATH, '//*[@id="dijit_layout_ContentPane_8"]/form[2]/div[3]/label/input').click()
+    if not private:
+        driver.find_element(By.XPATH, '//input[@data-label="All Ownership"]').click()
 
     if 'firmage' in firm_char:
-        for box in range(1, 6):
-            driver.find_element(By.ID, 'dijit_form_CheckBox_{}'.format(box)).click()
+        driver.find_element(By.XPATH, '//*[text()="Firm Age, Private Ownership"]').click()
+        driver.find_element(By.XPATH, '//input[@name="firmage_all"]').click()
 
     if 'firmsize' in firm_char:
-        for box in range(7, 12):
-            driver.find_element(By.ID, 'dijit_form_CheckBox_{}'.format(box)).click()
+        driver.find_element(By.XPATH, '//*[text()="Firm Size, Private Ownership"]').click()
+        driver.find_element(By.XPATH, '//input[@name="firmsize_all"]').click()
 
     if 'industry' in firm_char:
-        elems = driver.find_elements(By.XPATH, "//a[@href]")[12]
-        driver.execute_script("arguments[0].click();", elems)
+        driver.find_element(By.XPATH, '//input[@name="industries_list_all"]').click()
+
     driver.find_element(By.ID, 'continue_to_worker_char').click()
 
     # Worker Characteristics
-    if 'sex' in worker_char:
-        driver.find_element(By.ID, 'dijit_form_CheckBox_13').click()
-        driver.find_element(By.ID, 'dijit_form_CheckBox_14').click()
-    if 'agegrp' in worker_char:
-        for box in range(1, 9):
-            driver.find_element(By.XPATH, f'//input[@value="A0{box}"]').click()
-    if 'education' in worker_char:
-        driver.find_element(By.ID, 'worker_char_switch').click()
-        driver.find_element(By.ID, 'dijit_MenuItem_2').click()
-        for box in range(1, 6):
-            driver.find_element(By.XPATH, f'//input[@value="E{box}"]').click()
-    if 'race' in worker_char:
-        driver.find_element(By.ID, 'worker_char_switch').click()
-        driver.find_element(By.ID, 'dijit_MenuItem_3').click()
-        for box in range(1, 8):
-            for element in driver.find_elements(By.XPATH, f'//input[@value="A{box}"]'):
-                element.click()
+    if set(worker_char) in [{'sex', 'agegrp'}, {'sex'}, {'agegrp'}]:
+        if 'sex' in worker_char:
+            driver.find_element(By.XPATH, '//input[@name="worker_sa_sex_all"]').click()
+        if 'agegrp' in worker_char:
+            driver.find_element(By.XPATH, '//input[@name="worker_sa_age_all"]').click()
+    elif set(worker_char) in [{'sex', 'education'}, {'education'}]:
+        driver.find_element(By.XPATH, '//*[text()="Sex and Education"]').click()
+        if 'sex' in worker_char:
+            driver.find_element(By.XPATH, '//input[@name="worker_se_sex_all"]').click()
+        if 'education' in worker_char:
+            driver.find_element(By.XPATH, '//input[@name="worker_se_education_all"]').click()
+    else:
+        driver.find_element(By.XPATH, '//*[text()="Race and Ethnicity"]').click()
+        if 'race' in worker_char:
+            driver.find_element(By.XPATH, '//input[@name="worker_rh_race_all"]').click()
+        if 'ethnicity' in worker_char:
+            driver.find_element(By.XPATH, '//input[@name="worker_rh_ethnicity_all"]').click()
+
     driver.find_element(By.ID, 'continue_to_indicators').click()
 
     # Indicators
     for _ in range(0, 3):
         driver.find_element(By.CLASS_NAME, 'ClosedGroup').click() # Scroll through all the options
         time.sleep(pause2)
-    for box in driver.find_elements(By.NAME, 'indicator'):
-        if box.get_attribute('value') != "001_Emp": box.click()
+    for box in range(1,32):
+        driver.find_elements(By.NAME, 'indicator')[box].click()
         # time.sleep(pause1)
     driver.find_element(By.ID, 'continue_to_quarters').click()
 
