@@ -123,6 +123,7 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
 
     chrome_options = Options()
     chrome_options.add_argument('--headless')
+    chrome_options.add_argument("window-size=1920x1080")
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
