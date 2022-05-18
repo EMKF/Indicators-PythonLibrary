@@ -340,7 +340,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
 
     state_lst0 = state_lst
     if (len(state_lst) < 51) and (region == 'msa') and not fips_list:
-        state_lst = state_msa_cross_walk(state_lst, 'metro')['fips_state'].unique().tolist()
+        state_lst = state_msa_cross_walk(state_lst, 'all')['fips_state'].unique().tolist()
 
     if region == 'us':
         df = _us_fetch_data(private, firm_char, worker_char). \
