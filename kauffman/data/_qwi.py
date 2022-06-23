@@ -113,14 +113,22 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
     pause2 = 3
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
     chrome_options.add_argument("window-size=1920x1080")
 
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get('https://ledextract.ces.census.gov/static/data.html')
 
     # Geography
-    if region == 'LA':
+    if region == 'us':
+        # For some reason, the default right now is to select Wisconsin, so this code is to reset that
+        # TODO: We need to come up with a way to handle changes to the default checkboxes...
+        time.sleep(pause1)
+        driver.find_element(By.XPATH, '//input[@name="areas_list_all"]').click()
+        driver.find_element(By.XPATH, '//input[@name="areas_list_all"]').click()
+        driver.find_element(By.XPATH, '//input[@aria-label="National (50 States + DC) 00"]').click()
+        time.sleep(pause1)
+    elif region == 'LA':
         time.sleep(pause1)
         driver.find_element(By.XPATH, '//*[text()="California"]').click()
         time.sleep(pause1)
