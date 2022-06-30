@@ -11,6 +11,10 @@ We are still developing this library, obviously, so local updating will be neces
 pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kcr
 ```
 
+# Requirements
+In order to run the `bds` or `qwi` functions, you will need to create an environmental variable on your computer called "CENSUS_KEY" where the value is your census API key. If you do not have one, you can submit a request at the following URL: https://api.census.gov/data/key_signup.html.
+
+
 # Library Structure
 The kauffman library contains two packages:
 
