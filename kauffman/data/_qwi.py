@@ -63,7 +63,7 @@ def database_name(worker_char):
 
 def _build_url(fips, year, firmage, firmsize, industry, region_fips, indicator_lst, region, worker_char, private, census_key):
     base_url = 'https://api.census.gov/data/timeseries/qwi/'
-    var_lst = ','.join(indicator_lst + worker_char)
+    var_lst = ','.join(indicator_lst + worker_char + ['geo_level'])
     firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
     private = 'A05' if private == True else 'A00'
     database = database_name(worker_char)
@@ -335,7 +335,7 @@ def _obs_filter_msa_state_lst(df, state_lst, state_lst0):
 
 
 def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads, state_lst0=None):
-    covars = ['time', 'fips', 'region', 'ownercode'] + firm_char + worker_char
+    covars = ['time', 'fips', 'region', 'ownercode', 'geo_level'] + firm_char + worker_char
 
     state_lst0 = state_lst
     if (len(state_lst) < 51) and (region == 'msa') and not fips_list:
