@@ -20,7 +20,7 @@ https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
 """
 
 
-def _url_groups(firm_char, private, state_lst, fips_lst):
+def _url_groups(obs_level, firm_char, private, state_lst, fips_lst):
     out_lst = []
     d = c.qwi_start_to_end_year()
 
@@ -49,6 +49,13 @@ def _url_groups(firm_char, private, state_lst, fips_lst):
             end_year = int(d[state]['end_year'])
             years = [x for x in range(start_year, end_year + 1)]
             out_lst += list(product([state], years, firmages, firmsizes, industries, [None]))
+
+            if obs_level == 'county' and state in c.qwi_missing_counties:
+                fips_string = ','.join(c.qwi_missing_counties[state])
+                out_lst += list(product([state], years, firmages, firmsizes, industries, [fips_string]))
+            elif obs_level == 'msa' and state in c.qwi_missing_msas:
+                fips_string = ','.join(c.qwi_missing_msas[state])
+                out_lst += list(product([state], years, firmages, firmsizes, industries, [fips_string]))
     return out_lst
 
 
@@ -229,7 +236,7 @@ def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_cha
         df = pd.concat(
             parallel(
                 delayed(_fetch_from_url)(_build_url(*g, indicator_lst, obs_level, worker_char, private, key), s)
-                for g in _url_groups(firm_char, private, state_lst, fips_lst)
+                for g in _url_groups(obs_level, firm_char, private, state_lst, fips_lst)
             )
         )
 
