@@ -115,7 +115,7 @@ def _fetch_from_url(url, session):
     return df
 
 
-def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
+def _qwi_ui_fetch_data(private, firm_char, worker_char):
     pause1 = 1
     pause2 = 3
 
@@ -134,17 +134,8 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
     driver.find_element(By.XPATH, '//input[@name="areas_list_all"]').click()
     time.sleep(pause1)
 
-    # Geography
-    if region == 'us':
-        driver.find_element(By.XPATH, '//input[@aria-label="National (50 States + DC) 00"]').click()
-        time.sleep(pause1)
-    elif region == 'LA':
-        driver.find_element(By.XPATH, '//*[text()="California"]').click()
-        time.sleep(pause1)
-        driver.find_element(By.XPATH, '//*[text()="Metro/Micropolitan Areas"]').click()
-        time.sleep(pause1)
-        driver.find_element(By.XPATH, '//input[@aria-label="Los Angeles-Long Beach-Anaheim, CA 0631080"]').click()
-        time.sleep(pause1)
+    # Select US
+    driver.find_element(By.XPATH, '//input[@aria-label="National (50 States + DC) 00"]').click()
     time.sleep(pause1)
     driver.find_element(By.ID, 'continue_with_selection_label').click()
 
@@ -211,23 +202,6 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char, region='us'):
         return pd.read_csv(href)
 
 
-def _us_fetch_data(private, firm_char, worker_char):
-    return _qwi_ui_fetch_data(private, firm_char, worker_char)
-
-
-def _LA_fetch_data(firm_char, worker_char):
-    df = _qwi_ui_fetch_data(True, firm_char, worker_char, region='LA'). \
-            assign(
-                time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
-                HirAEndRepl=np.nan,
-                HirAEndReplr=np.nan,
-                state='06'
-            ). \
-            rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
-    df['metropolitan statistical area/micropolitan statistical area'] = '31080'
-    return df
-
-
 def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, key, n_threads, state_lst=[], fips_lst=[]):
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
@@ -241,9 +215,6 @@ def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_cha
         )
 
     s.close()
-    
-    if ('06' in state_lst) and obs_level == 'msa':
-        df = df.append(_LA_fetch_data(firm_char, worker_char))
 
     return df
 
@@ -351,7 +322,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
         state_lst = state_msa_cross_walk(state_lst, 'all')['fips_state'].unique().tolist()
 
     if region == 'us':
-        df = _us_fetch_data(private, firm_char, worker_char). \
+        df = _qwi_ui_fetch_data(private, firm_char, worker_char). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
                 HirAEndRepl=np.nan,
