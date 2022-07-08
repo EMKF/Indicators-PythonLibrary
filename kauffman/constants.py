@@ -99,7 +99,13 @@ def msa_fips_to_name():
 
 
 all_fips_to_name = {
-    **{'01001': 'Autauga County'},
+    **{
+        '01001': 'Autauga County',
+        '02063': 'Chugach Census Area',
+        '02066': 'Copper River Census Area',
+        '02158': 'Kusilvak Census Area',
+        '46102': 'Oglala Lakota County'
+    },
     **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()},
     **msa_fips_to_name(),
     **{k: state_abb_to_name[v] for k, v in state_fips_to_abb.items() if v != 'PR'}

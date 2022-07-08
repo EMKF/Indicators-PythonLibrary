@@ -82,7 +82,8 @@ def _build_url(fips, year, firmage, firmsize, industry, region_fips, indicator_l
             for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
     elif region == 'county':
         if region_fips:
-            for_region = f'for=county:{region_fips[-3:]}&in=state:{fips}'
+            region_fips_str = region_fips if ',' in region_fips else region_fips[-3:]
+            for_region = f'for=county:{region_fips_str}&in=state:{fips}'
         else:
             for_region = f'for=county:*&in=state:{fips}'
     else:
