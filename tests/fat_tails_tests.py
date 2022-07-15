@@ -7,13 +7,6 @@ import matplotlib.pyplot as plt
 from kauffman.tools import alpha, log_log_plot, maximum_to_sum_plot, excess_conditional_expectation, \
     maximum_quartic_variation, M, kappa, n_v
 
-pd.set_option('max_columns', 1000)
-pd.set_option('max_info_columns', 1000)
-pd.set_option('expand_frame_repr', False)
-pd.set_option('display.max_rows', 40000)
-pd.set_option('max_colwidth', 4000)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
-
 
 def log_log():
     # df = bfs(['BA_BA'], obs_level='us'). \
