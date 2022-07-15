@@ -20,42 +20,42 @@ https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
 """
 
 
-def _url_groups(obs_level, firm_char, private, state_lst, fips_lst):
+def _url_groups(obs_level, looped_strata, private, state_lst, fips_lst):
     out_lst = []
     d = c.qwi_start_to_end_year()
 
-    firmages = [x for x in range(0, 6)] if 'firmage' in firm_char else [0]
-    firmsizes = [x for x in range(0, 6)] if 'firmsize' in firm_char else [0]
-
-    if 'industry' in firm_char:
-        industries = ['00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81', '92']
-        if private:
-            industries.remove('92')
-    else:
-        industries = ['00']
+    #var_to_levels = c.strata_to_levels
+    var_to_levels = {**c.qwi_strata_to_levels, **{'quarter':[x for x in range(1,5)]}}
+    if private and 'industry' in looped_strata:
+        var_to_levels['industry'] = [i for i in var_to_levels['industry'] if i != '92']
 
     if fips_lst:
-        for fips in fips_lst:
-            state = fips[0]
-            region = fips[1]
-
-            start_year = int(d[state]['start_year'])
-            end_year = int(d[state]['end_year'])
-            years = [x for x in range(start_year, end_year + 1)]
-            out_lst += list(product([state], years, firmages, firmsizes, industries, [region]))
+        region_years = [
+            (state, region, year) 
+            for state, region in fips_lst
+            for year in range(int(d[state]['start_year']), int(d[state]['end_year']) + 1)
+        ]
     else:
-        for state in state_lst:
-            start_year = int(d[state]['start_year'])
-            end_year = int(d[state]['end_year'])
-            years = [x for x in range(start_year, end_year + 1)]
-            out_lst += list(product([state], years, firmages, firmsizes, industries, [None]))
+        region_years = [
+            (state, None, year) for state in state_lst
+            for year in range(int(d[state]['start_year']), int(d[state]['end_year']) + 1)
+        ]
+        if obs_level in ['county', 'msa']:
+            missing_dict = c.qwi_missing_counties if obs_level == 'county' else c.qwi_missing_msas
+            region_years += [
+                (state, ','.join(missing_dict[state]), year)
+                for state in set(missing_dict) & set(state_lst)
+                for year in range(int(d[state]['start_year']), int(d[state]['end_year']) + 1)
+            ]
 
-            if obs_level == 'county' and state in c.qwi_missing_counties:
-                fips_string = ','.join(c.qwi_missing_counties[state])
-                out_lst += list(product([state], years, firmages, firmsizes, industries, [fips_string]))
-            elif obs_level == 'msa' and state in c.qwi_missing_msas:
-                fips_string = ','.join(c.qwi_missing_msas[state])
-                out_lst += list(product([state], years, firmages, firmsizes, industries, [fips_string]))
+    out_lst += [{
+        **{'state_fips':value[0][0], 'region_fips':value[0][1], 'time':value[0][2]},
+        **{
+            f'{label}':value[i + 1]
+            for i,label in enumerate(looped_strata) 
+        }   
+    } for value in product(region_years, *[var_to_levels[s] for s in looped_strata])]
+
     return out_lst
 
 
@@ -68,28 +68,33 @@ def database_name(worker_char):
         return 'sa'
 
 
-def _build_url(fips, year, firmage, firmsize, industry, region_fips, indicator_lst, region, worker_char, private, census_key):
-    base_url = 'https://api.census.gov/data/timeseries/qwi/'
-    var_lst = ','.join(indicator_lst + worker_char + ['geo_level'])
-    firm_char_section = f'firmsize={firmsize}&firmage={firmage}&industry={industry}'
+def _build_url(looped_var, non_looped_strata, indicator_lst, region, private, census_key):
+    base_url = 'https://api.census.gov/data/timeseries/qwi'
+    database = database_name(list(looped_var) + non_looped_strata)
+    get_statement = ','.join(indicator_lst + non_looped_strata + ['geo_level'])
+    loop_section = f'&'.join([
+        f'{k}={looped_var[k]}' 
+        for k in looped_var
+        if k != 'state_fips' and k != 'region_fips'
+    ])
     private = 'A05' if private == True else 'A00'
-    database = database_name(worker_char)
+    fips, region_fips = looped_var['state_fips'], looped_var['region_fips']
 
     if region == 'msa':
-        if region_fips:
-            for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:{region_fips}&in=state:{fips}'
-        else:
-            for_region = f'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*&in=state:{fips}'
+        region_section = f'{region_fips}&in=state:{fips}' if region_fips else f'*&in=state:{fips}'
+        for_region = 'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:' \
+            + region_section
     elif region == 'county':
         if region_fips:
-            region_fips_str = region_fips if ',' in region_fips else region_fips[-3:]
-            for_region = f'for=county:{region_fips_str}&in=state:{fips}'
+            region_fips = region_fips if ',' in region_fips else region_fips[-3:]
+            for_region = f'for=county:{region_fips}&in=state:{fips}'
         else:
             for_region = f'for=county:*&in=state:{fips}'
     else:
         for_region = f'for=state:{fips}'
-    return '{0}{1}?get={2}&{3}&time={4}&ownercode={5}&{6}&key={7}'. \
-        format(base_url, database, var_lst, for_region, year, private, firm_char_section, census_key)
+
+    return f'{base_url}/{database}?get={get_statement}&{for_region}' \
+        + f'&ownercode={private}&{loop_section}&key={census_key}'
 
 
 def _fetch_from_url(url, session):
@@ -203,15 +208,49 @@ def _qwi_ui_fetch_data(private, firm_char, worker_char):
         return pd.read_csv(href)
 
 
+def _check_combo(combo, target, winning_combo):
+    product = 1
+    for c in combo.values():
+        product *= c
+
+    if product <= target:
+        if product > winning_combo[1]:
+            return ([k for k in combo.keys()], product)
+        else:
+            return winning_combo
+
+    for k in combo.keys():
+        combo_subset = combo.copy()
+        combo_subset.pop(k)
+        winning_combo = _check_combo(combo_subset, target, winning_combo)
+        
+    return winning_combo
+
+
+def _get_optimal_method(strata, obs_level):
+    loopable_dict = {
+        **{k:v for k,v in c.qwi_strata_to_nlevels.items() if k in strata},
+        **{'quarter':4}
+    }
+    target = (c.API_CELL_LIMIT/c.QWI_NCOLS)/c.qwi_worst_case_dict[obs_level]
+
+    winning_combo = _check_combo(loopable_dict, target, (None, 0))
+    loop_over_list = [l for l in loopable_dict.keys() if l not in winning_combo[0]]
+
+    return loop_over_list, winning_combo[0]
+
+
 def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, key, n_threads, state_lst=[], fips_lst=[]):
+    looped_strata, non_looped_strata = _get_optimal_method(firm_char + worker_char, obs_level)
+
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
 
     with parallel:
         df = pd.concat(
             parallel(
-                delayed(_fetch_from_url)(_build_url(*g, indicator_lst, obs_level, worker_char, private, key), s)
-                for g in _url_groups(obs_level, firm_char, private, state_lst, fips_lst)
+                delayed(_fetch_from_url)(_build_url(g, non_looped_strata, indicator_lst, obs_level, private, key), s)
+                for g in _url_groups(obs_level, looped_strata, private, state_lst, fips_lst)
             )
         )
 

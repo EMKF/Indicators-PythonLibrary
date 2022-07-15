@@ -210,6 +210,35 @@ month_to_quarter = {
     'December': 4
 }
 
+
+API_CELL_LIMIT = 400000
+QWI_NCOLS = 83
+
+qwi_strata_to_nlevels = {
+    'firmage':6, 'firmsize':6, 'industry':20, 'sex':3, 'agegrp':9,
+    'race':7, 'ethnicity':3, 'education':6
+}
+
+qwi_worst_case_dict = {
+    'county': 254,
+    'msa': 71,
+    'state': 1
+}
+
+qwi_strata_to_levels = {
+    'firmage': [x for x in range(0,6)],
+    'firmsize': [x for x in range(0,6)],
+    'industry': [
+        '00', '11', '21', '22', '23', '31-33', '42', '44-45', '51', '52', '53',
+        '54', '55', '56', '61', '62', '71', '72', '81', '92'
+    ],
+    'education': [f'E{i}' for i in range(0,6)],
+    'sex': [x for x in range(0,3)],
+    'agegrp':[f'A0{i}' for i in range(0,9)],
+    'race':[f'A{i}' for i in range(0,8) if i != 6],
+    'ethnicity':[f'A{i}' for i in range(0,3)]
+}
+
 qwi_outcomes = [
     'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnS', 'EarnSepS', 'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'FrmJbC',
     'FrmJbCS', 'FrmJbGn', 'FrmJbGnS', 'FrmJbLs', 'FrmJbLsS', 'HirA', 'HirAEnd', 'HirAEndR', 'HirAEndRepl',
