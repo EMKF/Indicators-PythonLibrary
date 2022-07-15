@@ -6,14 +6,6 @@ from joblib import Parallel, delayed
 import numpy as np
 
 
-pd.set_option('max_columns', 1000)
-pd.set_option('max_info_columns', 1000)
-pd.set_option('expand_frame_repr', False)
-pd.set_option('display.max_rows', 30000)
-pd.set_option('max_colwidth', 4000)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
-
-
 def _county_fips(df):
     return df.\
         assign(county=lambda x: x['state'] + x['county']).\

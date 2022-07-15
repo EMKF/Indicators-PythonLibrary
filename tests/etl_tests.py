@@ -4,13 +4,6 @@ import kauffman.constants as c
 from kauffman.data import qwi
 from kauffman.tools import mpj_indicators, county_msa_cross_walk, read_zip, state_msa_cross_walk, race_ethnicity_categories_create
 
-pd.set_option('max_columns', 1000)
-pd.set_option('max_info_columns', 1000)
-pd.set_option('expand_frame_repr', False)
-pd.set_option('display.max_rows', 40000)
-pd.set_option('max_colwidth', 4000)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
-
 
 def county_msa_cw():
     df = qwi(['Emp'], obs_level='county', state_list=['MO'], annualize=False).\
