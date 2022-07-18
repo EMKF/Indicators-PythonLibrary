@@ -3,6 +3,7 @@ import time
 import requests
 import numpy as np
 import pandas as pd
+from math import ceil
 from itertools import product
 from kauffman import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
@@ -20,11 +21,19 @@ https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
 """
 
 
-def _url_groups(obs_level, looped_strata, private, state_lst, fips_lst):
+def _get_year_groups(state_dict, max_years_per_call):
+    years = list(range(int(state_dict['start_year']), int(state_dict['end_year']) + 1))
+    if max_years_per_call == 1:
+        return years
+    else:
+        n_bins = ceil(len(years)/min(max_years_per_call, len(years)))
+        return [f'from{x[0]}to{x[-1]}' for x in np.array_split(years, n_bins)]
+    
+
+def _url_groups(obs_level, looped_strata, max_years_per_call, private, state_lst, fips_lst):
     out_lst = []
     d = c.qwi_start_to_end_year()
 
-    #var_to_levels = c.strata_to_levels
     var_to_levels = {**c.qwi_strata_to_levels, **{'quarter':[x for x in range(1,5)]}}
     if private and 'industry' in looped_strata:
         var_to_levels['industry'] = [i for i in var_to_levels['industry'] if i != '92']
@@ -33,19 +42,19 @@ def _url_groups(obs_level, looped_strata, private, state_lst, fips_lst):
         region_years = [
             (state, region, year) 
             for state, region in fips_lst
-            for year in range(int(d[state]['start_year']), int(d[state]['end_year']) + 1)
+            for year in _get_year_groups(d[state], max_years_per_call)
         ]
     else:
         region_years = [
             (state, None, year) for state in state_lst
-            for year in range(int(d[state]['start_year']), int(d[state]['end_year']) + 1)
+            for year in _get_year_groups(d[state], max_years_per_call)
         ]
         if obs_level in ['county', 'msa']:
             missing_dict = c.qwi_missing_counties if obs_level == 'county' else c.qwi_missing_msas
             region_years += [
                 (state, ','.join(missing_dict[state]), year)
                 for state in set(missing_dict) & set(state_lst)
-                for year in range(int(d[state]['start_year']), int(d[state]['end_year']) + 1)
+                for year in _get_year_groups(d[state], max_years_per_call)
             ]
 
     out_lst += [{
@@ -227,7 +236,7 @@ def _check_combo(combo, target, winning_combo):
     return winning_combo
 
 
-def _get_optimal_method(strata, obs_level):
+def _choose_loops(strata, obs_level):
     loopable_dict = {
         **{k:v for k,v in c.qwi_strata_to_nlevels.items() if k in strata},
         **{'quarter':4}
@@ -236,12 +245,13 @@ def _get_optimal_method(strata, obs_level):
 
     winning_combo = _check_combo(loopable_dict, target, (None, 0))
     loop_over_list = [l for l in loopable_dict.keys() if l not in winning_combo[0]]
+    max_years_per_call = int(target/winning_combo[1])
 
-    return loop_over_list, winning_combo[0]
+    return loop_over_list, winning_combo[0], max_years_per_call
 
 
 def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, key, n_threads, state_lst=[], fips_lst=[]):
-    looped_strata, non_looped_strata = _get_optimal_method(firm_char + worker_char, obs_level)
+    looped_strata, non_looped_strata, max_years_per_call = _choose_loops(firm_char + worker_char, obs_level)
 
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
@@ -250,7 +260,7 @@ def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_cha
         df = pd.concat(
             parallel(
                 delayed(_fetch_from_url)(_build_url(g, non_looped_strata, indicator_lst, obs_level, private, key), s)
-                for g in _url_groups(obs_level, looped_strata, private, state_lst, fips_lst)
+                for g in _url_groups(obs_level, looped_strata, max_years_per_call, private, state_lst, fips_lst)
             )
         )
 
