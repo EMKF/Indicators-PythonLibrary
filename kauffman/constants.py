@@ -212,11 +212,10 @@ month_to_quarter = {
 
 
 API_CELL_LIMIT = 400000
-QWI_NCOLS = 83
 
 qwi_strata_to_nlevels = {
     'firmage':6, 'firmsize':6, 'industry':20, 'sex':3, 'agegrp':9,
-    'race':7, 'ethnicity':3, 'education':6
+    'race':8, 'ethnicity':3, 'education':6
 }
 
 qwi_worst_case_dict = {

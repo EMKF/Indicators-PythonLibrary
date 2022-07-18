@@ -236,12 +236,13 @@ def _check_combo(combo, target, winning_combo):
     return winning_combo
 
 
-def _choose_loops(strata, obs_level):
+def _choose_loops(strata, obs_level, indicator_lst):
     loopable_dict = {
         **{k:v for k,v in c.qwi_strata_to_nlevels.items() if k in strata},
         **{'quarter':4}
     }
-    target = (c.API_CELL_LIMIT/c.QWI_NCOLS)/c.qwi_worst_case_dict[obs_level]
+    n_columns = len(strata + indicator_lst + ['geo_level', 'quarter', 'region', 'state', 'ownercode', 'time', 'key'])
+    target = (c.API_CELL_LIMIT/n_columns)/c.qwi_worst_case_dict[obs_level]
 
     winning_combo = _check_combo(loopable_dict, target, (None, 0))
     loop_over_list = [l for l in loopable_dict.keys() if l not in winning_combo[0]]
@@ -251,7 +252,7 @@ def _choose_loops(strata, obs_level):
 
 
 def _county_msa_state_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, key, n_threads, state_lst=[], fips_lst=[]):
-    looped_strata, non_looped_strata, max_years_per_call = _choose_loops(firm_char + worker_char, obs_level)
+    looped_strata, non_looped_strata, max_years_per_call = _choose_loops(firm_char + worker_char, obs_level, indicator_lst)
 
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
@@ -400,7 +401,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
 
 
 def qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
-    n_columns = len(indicator_lst + firm_char + worker_char + ['time', 'fips', 'region', 'ownercode'])
+    n_columns = len(indicator_lst + firm_char + worker_char + ['time', 'fips', 'region', 'ownercode', 'geo_level'])
     row_estimate = 0
 
     for region in region_lst:

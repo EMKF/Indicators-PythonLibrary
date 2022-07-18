@@ -1,82 +1,81 @@
-import joblib
+from kauffman.data._qwi import qwi
 import pandas as pd
-import kauffman.constants as c
-from kauffman import raw_kese_formatter
-
-pd.set_option('max_columns', 1000)
-pd.set_option('max_info_columns', 1000)
-pd.set_option('expand_frame_repr', False)
-pd.set_option('display.max_rows', 30000)
-pd.set_option('max_colwidth', 4000)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def scratch_panel_to_alley():
-    df = pd.read_csv(c.filenamer('../scratch/jobs_indicators_sample_all.csv')).\
-        rename(columns={'Age': 'Age of Business'})
-    df.loc[df['Age of Business'] == '0-1', 'Age of Business'] = 'Ages 0 to 1'
-    df.loc[df['Age of Business'] == '2-3', 'Age of Business'] = 'Ages 2 to 3'
-    df.loc[df['Age of Business'] == '4-5', 'Age of Business'] = 'Ages 4 to 5'
-    df.loc[df['Age of Business'] == '6-10', 'Age of Business'] = 'Ages 6 to 10'
-    df.loc[df['Age of Business'] == '11+', 'Age of Business'] = 'Ages 11+'
-
-    df_overall = df.loc[df['Age of Business'] == 'Ages 0 to 1']
-    df_overall.loc[:, 'Age of Business'] = 'overall'
-
-    df_in = df.\
-        append(df_overall).\
-        sort_values(['fips', 'year', 'Age of Business'])
-
-    df_out = df_in.pub.panel_to_alley(['Age of Business'], 'Age Share of Employment')
-    print(df_out.head(65))
+indicators = ['Emp', 'EmpEnd', 'EmpS', 'HirAs', 'Sep', 'EarnBeg', 'FrmJbC']
+counties = [
+    '02013', '02063', '46102', '09001', '25001', '37001', '41067', '48043',
+    '54049', '15009', '11001'
+]
+msas = [
+    '47900', '18980', '31080', '36740', '19430', '14300', '40530', '34350',
+    '39150', '23780', '38860'
+]
 
 
-# todo: create a repo that does this or something...I need to remember what to do once a year when we get this request
-def scratch_kese_to_panel():
-    df = raw_kese_formatter(c.filenamer('../scratch/Kauffman Indicators Data State 1996_2019_v3.xlsx'), c.filenamer('../scratch/Kauffman Indicators Data National 1996_2020.xlsx'))
-    df.to_csv('/Users/thowe/Downloads/kese_2020_download.csv', index=False)
-    print(df.head())
+# Calls in MPJ
+df = qwi(obs_level='county', firm_char=['firmage'], n_threads=30)
+df = qwi(obs_level='msa', firm_char=['firmage'], n_threads=30)
+df = qwi(obs_level='state', firm_char=['firmage'], n_threads=30)
+df = qwi(obs_level='us', firm_char=['firmage'], n_threads=30)
 
-    for indicator in ['rne', 'ose', 'sjc', 'ssr', 'zindex']:
-        df.pub.download_to_alley_formatter(['type', 'category'], indicator).\
-            to_csv(f'/Users/thowe/Downloads/kese_2020_{indicator}.csv', index=False)
-
-
-def plot_maps():
-    # pd.read_csv('/Users/thowe/Downloads/ba_state_perc_change.csv'). \
-    #     assign(fips=lambda x: x['Region'].map(c.state_dic_temp)). \
-    #     pub.choro_map('Percentage Change')
-
-    # import kauffman.bfs as bfs
-    # bfs.get_data(['BA_BA'], obs_level='state'). \
-    #     query('time == 2019'). \
-    #     assign(fips=lambda x: x['region'].map(c.state_dic_temp)). \
-    #     pub.choro_map('BA_BA', 'Business Applications 2019', 'Business Applications')
-
-    import kauffman.data.helpers.pep_helpers as pep
-    pep.get_data('county'). \
-        query('time == "2019"'). \
-        astype({'population': 'int'}). \
-        pub.choro_map('population', 'County Population 2019', 'Population', write='/Users/thowe/Downloads/scratch.png', range_factor=.02)
-    #     pipe(joblib.dump, '/Users/thowe/Downloads/scratch.pkl')
-    joblib.load('/Users/thowe/Downloads/scratch.pkl').\
-        query('time == "2019"'). \
-        astype({'population': 'int'}). \
-        pub.choro_map('population', 'County Population 2019', 'Population', write='/Users/thowe/Downloads/scratch.png', range_factor=.02)
+# Playing with state_list
+df = qwi(indicators, obs_level='state', state_list=['AL', 'HI'], n_threads=30)
+df = qwi(indicators, obs_level='county', state_list=['CO'], n_threads=30)
+df = qwi(indicators, obs_level='msa', state_list=['CO'], n_threads=30)
+df = qwi(indicators, obs_level='msa', state_list=['KS'], n_threads=30) # Problem msas
+df = qwi(
+    indicators, obs_level='state', state_list=['CO', 'KY', 'HI', 'OR'],
+    firm_char=['industry', 'firmage'], worker_char=['sex', 'agegrp'], n_threads=30
+)
+df = qwi(
+    indicators, obs_level='state', state_list=['CT', 'DC'],
+    firm_char=['firmage'], worker_char=['race', 'ethnicity'], n_threads=30
+)
+df = qwi(indicators, obs_level='state', worker_char=['education'], n_threads=30)
+df = qwi(
+    indicators, obs_level='msa', state_list=['GA', 'WY', 'TX', 'KS'],
+    firm_char=['firmsize'], worker_char=['sex', 'education'], n_threads=30
+)
+df = qwi(
+    indicators, obs_level='county', state_list=['AL', 'NY'],
+    firm_char=['industry'], worker_char=['race'], n_threads=30
+)
 
 
-def msa_plot():
-    # qwi.get_data('msa', ['Emp'], start_year=2016, end_year=2016, annualize=True).to_csv('/Users/thowe/Downloads/scratch.csv', index=False)
-    df = pd.read_csv('/Users/thowe/Downloads/scratch.csv').\
-        query('firmage == 1').\
-        astype({'fips': 'str'}).\
-        pub.choro_map('msa', 'Emp', 'MSA Startup Employment 2016', 'Emp', write=False, range_factor=.5)
+# Playing with missing counties + msas
+df = qwi(indicators, obs_level='county', state_list=['AK', 'SD'], n_threads=30)
+df = qwi(indicators, obs_level='msa', state_list=['KS', 'AL', 'WV'], n_threads=30)
+df = qwi(indicators, obs_level='county', worker_char=['ethnicity'], n_threads=30)
+df = qwi(indicators, obs_level='msa', n_threads=30)
 
-def main():
-    # scratch_panel_to_alley()
-    scratch_kese_to_panel()
-    # plot_maps()
-    # msa_plot()
+# Fips_list
+df = qwi(indicators, obs_level='county', fips_list=counties, n_threads=30)
+df = qwi(indicators, obs_level='msa', fips_list=msas, n_threads=30)
+df = qwi(indicators, obs_level='county', fips_list=counties, worker_char=['ethnicity'], n_threads=30)
+df = qwi(indicators, obs_level='msa', fips_list=msas, firm_char=['industry'], n_threads=30)
+df = qwi(
+    indicators, obs_level='msa', fips_list=msas, firm_char=['industry'],
+    worker_char=['education'], n_threads=30
+)
 
-if __name__ == '__main__':
-    main()
+# Private
+df = qwi(indicators, obs_level='county', private=True, n_threads=30)
+df = qwi(indicators, obs_level='msa', private=True, n_threads=30)
+df = qwi(indicators, obs_level='state', private=True, n_threads=30)
+df = qwi(indicators, obs_level='us', private=True, n_threads=30)
+
+# Annualize
+df = qwi(indicators, obs_level='county', worker_char=['sex'], annualize='January', n_threads=30)
+df = qwi(indicators, obs_level='county', annualize='March', n_threads=30)
+df = qwi(indicators, obs_level='county', annualize=False, n_threads=30)
+df = qwi(indicators, obs_level='msa', annualize='January', n_threads=30)
+df = qwi(indicators, obs_level='msa', firm_char=['firmsize'], annualize='March', n_threads=30)
+df = qwi(indicators, obs_level='msa', annualize=False, n_threads=30)
+df = qwi(indicators, obs_level='state', annualize='January', n_threads=30)
+df = qwi(indicators, obs_level='state', annualize='March', n_threads=30)
+df = qwi(indicators, obs_level='state', firm_char=['industry'], annualize=False, n_threads=30)
+
+# Strata totals
+df = qwi(indicators, obs_level='state', firm_char=['firmsize'], strata_totals=True, n_threads=30)
+df = qwi(indicators, obs_level='state', worker_char=['sex'], strata_totals=True, n_threads=30)
