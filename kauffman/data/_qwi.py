@@ -78,6 +78,13 @@ def database_name(worker_char):
 
 
 def _build_url(looped_var, non_looped_strata, indicator_lst, region, private, census_key):
+    # API has started including all industry 3-digit subsectors and 4-digit groups in calls--
+    # howevever, it doesn't allow for filtering by ind_level
+    # Including this code to only include the 2-digit level industries for now
+    if 'industry' in non_looped_strata:
+        non_looped_strata = [x for x in non_looped_strata if x != 'industry']
+        looped_var['industry'] = '&industry='.join(c.qwi_strata_to_levels['industry'])
+    
     base_url = 'https://api.census.gov/data/timeseries/qwi'
     database = database_name(list(looped_var) + non_looped_strata)
     get_statement = ','.join(indicator_lst + non_looped_strata + ['geo_level'])
@@ -328,7 +335,9 @@ def _obs_filter_strata_totals(df, firm_char, worker_char, strata_totals):
             elif stratum == 'education':
                 df.query(f'education != "E0"', inplace=True)
             elif stratum == 'race':
-                df.query(f'(race != "A0") and (ethnicity != "A0")', inplace=True)
+                df.query(f'race != "A0"', inplace=True)
+            elif stratum == 'ethnicity':
+                df.query('ethnicity != "A0"', inplace=True)
             else:
                 df.query(f'{stratum} != "0"', inplace=True)
     return df
@@ -588,6 +597,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
     estimated_shape = qwi_estimate_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list)
     if estimated_shape[0] * estimated_shape[1] > 100000000:
         print(f'Warning: You are attempting to fetch a dataframe of estimated shape {estimated_shape}. You may experience memory errors.')
+
+    print('QWI Dynamic API version')
 
     return pd.concat(
             [
