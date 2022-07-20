@@ -249,7 +249,7 @@ def _choose_loops(strata, obs_level, indicator_lst):
         **{'quarter':4}
     }
     n_columns = len(strata + indicator_lst + ['geo_level', 'quarter', 'region', 'state', 'ownercode', 'time', 'key'])
-    target = (c.API_CELL_LIMIT/n_columns)/c.qwi_worst_case_dict[obs_level]
+    target = (c.API_CELL_LIMIT/n_columns)/c.qwi_region_to_max_cardinality[obs_level]
 
     winning_combo = _check_combo(loopable_dict, target, (None, 0))
     loop_over_list = [l for l in loopable_dict.keys() if l not in winning_combo[0]]
