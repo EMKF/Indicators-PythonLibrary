@@ -123,7 +123,6 @@ def _fetch_from_url(url, session):
                 df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
                 success = True
             elif r.status_code == 204:
-                print('Blank url:', url)
                 df = pd.DataFrame()
                 success = True
             else:
@@ -134,6 +133,8 @@ def _fetch_from_url(url, session):
             print(f'Fail. Retry #{retries}', e)
             retries += 1
             df = pd.DataFrame()
+    if not success:
+        raise Exception(f'Maxed out retries with url: {url}')
     return df
 
 
