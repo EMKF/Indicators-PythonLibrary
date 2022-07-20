@@ -399,6 +399,7 @@ def _qwi_data_create(indicator_lst, region, state_lst, fips_list, private, annua
             df = _county_msa_state_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, state_lst=state_lst)
 
     return df. \
+        drop_duplicates().\
         pipe(_covar_create_fips_region, region).\
         pipe(_cols_to_numeric, indicator_lst). \
         pipe(_obs_filter_strata_totals, firm_char, worker_char, strata_totals). \
@@ -554,7 +555,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
     elif obs_level == 'all':
         region_lst = ['us', 'state', 'county', 'msa']
     else:
-        print('Invalid input to obs_level.')
+        raise Exception('Invalid input to obs_level.')
 
     # todo: should I allow for state_list and fips_list together?
     #     I think we want some logic that makes only one of state_list and fips_list nonempty, and change the default parameter values to empty lists
