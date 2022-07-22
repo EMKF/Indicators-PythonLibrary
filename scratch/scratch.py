@@ -146,6 +146,6 @@ df_33_old = qwi(indicators, obs_level='state', firm_char=['firmsize'], strata_to
 df_34_old = qwi(indicators, obs_level='state', worker_char=['sex'], strata_totals=True, n_threads=30)
 
 
-for i in range(33,35):
+for i in range(5,13):
     result = eval(f'df_{i}').equals(eval(f'df_{i}_old'))
-    print(result)
+    print(i, result)
