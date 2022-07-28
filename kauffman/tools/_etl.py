@@ -75,7 +75,15 @@ def load_CBSA_cw():
                 'CBSA Code': 'fips_msa'
             }
         ). \
-        astype({'fips_msa': 'str'})
+        astype({'fips_msa': 'str'}). \
+        append(
+            pd.DataFrame(
+                [['27980', 'Kahului-Wailuku-Lahaina, HI', 'Metropolitan Statistical Area', '15', '005', '15005'],
+                ['31340', 'Lynchburg, VA', 'Metropolitan Statistical Area', '51', '515', '51515']],
+                columns=['fips_msa', 'CBSA Title', 'area', 'fips_state', 'FIPS County Code', 'fips_county']
+            )
+        ). \
+        reset_index(drop=True)
 
     return df_cw
 
