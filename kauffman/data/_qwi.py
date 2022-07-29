@@ -19,6 +19,12 @@ from selenium.webdriver.support import expected_conditions as EC
 https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
 """
 
+# WARNING: Please ensure that QWI has consistent releases for all 50 states
+# before running. Here is a link to validate that folder containing most recent
+# release has all 50 states + D.C.: https://lehd.ces.census.gov/data/qwi/.
+# This link: https://lehd.ces.census.gov/doc/QWI_data_notices.pdf is updated
+# by the Census Bureau whenever a complete new release of QWI data are available.
+
 
 def _url_groups(obs_level, firm_char, private, state_lst, fips_lst):
     out_lst = []
