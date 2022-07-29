@@ -20,6 +20,12 @@ from selenium.webdriver.support import expected_conditions as EC
 https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
 """
 
+# WARNING: Please ensure that QWI has consistent releases for all 50 states
+# before running. Here is a link to validate that folder containing most recent
+# release has all 50 states + D.C.: https://lehd.ces.census.gov/data/qwi/.
+# This link: https://lehd.ces.census.gov/doc/QWI_data_notices.pdf is updated
+# by the Census Bureau whenever a complete new release of QWI data are available.
+
 
 def _get_year_groups(state_dict, max_years_per_call):
     years = list(range(int(state_dict['start_year']), int(state_dict['end_year']) + 1))
