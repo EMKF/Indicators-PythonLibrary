@@ -36,7 +36,7 @@ def _get_year_groups(state_dict, max_years_per_call):
         return [f'from{x[0]}to{x[-1]}' for x in np.array_split(years, n_bins)]
     
 
-def _url_groups(obs_level, looped_strata, max_years_per_call, private, state_list, fips_lst):
+def _get_url_groups(obs_level, looped_strata, max_years_per_call, private, state_list, fips_list):
     out_lst = []
     d = c.qwi_start_to_end_year()
 
@@ -44,10 +44,10 @@ def _url_groups(obs_level, looped_strata, max_years_per_call, private, state_lis
     if private and 'industry' in looped_strata:
         var_to_levels['industry'] = [i for i in var_to_levels['industry'] if i != '92']
 
-    if fips_lst:
+    if fips_list:
         region_years = [
             (state, region, year) 
-            for state, region in fips_lst
+            for state, region in fips_list
             for year in _get_year_groups(d[state], max_years_per_call)
         ]
     else:
@@ -83,7 +83,7 @@ def _get_database_name(worker_char):
         return 'sa'
 
 
-def _build_url(looped_var, non_looped_strata, indicator_lst, region, private, census_key):
+def _build_url(looped_var, non_looped_strata, indicator_list, obs_level, private, census_key):
     # API has started including all industry 3-digit subsectors and 4-digit groups in calls--
     # howevever, it doesn't allow for filtering by ind_level
     # Including this code to only include the 2-digit level industries for now
@@ -96,27 +96,27 @@ def _build_url(looped_var, non_looped_strata, indicator_lst, region, private, ce
     
     base_url = 'https://api.census.gov/data/timeseries/qwi'
     database = _get_database_name(list(looped_var) + non_looped_strata)
-    get_statement = ','.join(indicator_lst + non_looped_strata + ['geo_level'])
+    get_statement = ','.join(indicator_list + non_looped_strata + ['geo_level'])
     loop_section = f'&'.join([
         f'{k}={looped_var[k]}' 
         for k in looped_var
         if k != 'state_fips' and k != 'region_fips'
     ])
     ownercode = 'A05' if private == True else 'A00'
-    fips, region_fips = looped_var['state_fips'], looped_var['region_fips']
+    state_fips, region_fips = looped_var['state_fips'], looped_var['region_fips']
 
-    if region == 'msa':
-        region_section = f'{region_fips}&in=state:{fips}' if region_fips else f'*&in=state:{fips}'
+    if obs_level == 'msa':
+        region_section = f'{region_fips}&in=state:{state_fips}' if region_fips else f'*&in=state:{state_fips}'
         for_region = 'for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:' \
             + region_section
-    elif region == 'county':
+    elif obs_level == 'county':
         if region_fips:
             region_fips = region_fips if ',' in region_fips else region_fips[-3:]
-            for_region = f'for=county:{region_fips}&in=state:{fips}'
+            for_region = f'for=county:{region_fips}&in=state:{state_fips}'
         else:
-            for_region = f'for=county:*&in=state:{fips}'
+            for_region = f'for=county:*&in=state:{state_fips}'
     else:
-        for_region = f'for=state:{fips}'
+        for_region = f'for=state:{state_fips}'
 
     return f'{base_url}/{database}?get={get_statement}&{for_region}' \
         + f'&ownercode={ownercode}&{loop_section}&key={census_key}'
@@ -234,42 +234,42 @@ def _led_scrape_data(private, firm_char, worker_char):
         return pd.read_csv(href)
 
 
-def _check_combo(combo, target, winning_combo):
+def _check_loop_group(group, target, winning_combo):
     product = 1
-    for c in combo.values():
+    for c in group.values():
         product *= c
 
     if product <= target:
         if product > winning_combo[1]:
-            return ([k for k in combo.keys()], product)
+            return ([k for k in group.keys()], product)
         else:
             return winning_combo
 
-    for k in combo.keys():
-        combo_subset = combo.copy()
+    for k in group.keys():
+        combo_subset = group.copy()
         combo_subset.pop(k)
-        winning_combo = _check_combo(combo_subset, target, winning_combo)
+        winning_combo = _check_loop_group(combo_subset, target, winning_combo)
         
     return winning_combo
 
 
-def _choose_loops(strata, obs_level, indicator_lst):
+def _choose_loops(strata, obs_level, indicator_list):
     loopable_dict = {
         **{k:v for k,v in c.qwi_strata_to_nlevels.items() if k in strata},
         **{'quarter':4}
     }
-    n_columns = len(strata + indicator_lst + ['geo_level', 'quarter', 'region', 'state', 'ownercode', 'time', 'key'])
-    target = (c.API_CELL_LIMIT/n_columns)/c.qwi_region_to_max_cardinality[obs_level]
+    n_columns = len(strata + indicator_list + ['geo_level', 'quarter', 'region', 'state', 'ownercode', 'time', 'key'])
+    target = (c.API_CELL_LIMIT/n_columns)/c.qwi_geo_to_max_cardinality[obs_level]
 
-    winning_combo = _check_combo(loopable_dict, target, (None, 0))
+    winning_combo = _check_loop_group(loopable_dict, target, (None, 0))
     loop_over_list = [l for l in loopable_dict.keys() if l not in winning_combo[0]]
     max_years_per_call = int(target/winning_combo[1])
 
     return loop_over_list, winning_combo[0], max_years_per_call
 
 
-def _api_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, key, n_threads, state_list=[], fips_lst=[]):
-    looped_strata, non_looped_strata, max_years_per_call = _choose_loops(firm_char + worker_char, obs_level, indicator_lst)
+def _api_fetch_data(indicator_list, obs_level, firm_char, worker_char, private, key, n_threads, state_list=[], fips_list=[]):
+    looped_strata, non_looped_strata, max_years_per_call = _choose_loops(firm_char + worker_char, obs_level, indicator_list)
 
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
@@ -277,8 +277,8 @@ def _api_fetch_data(indicator_lst, obs_level, firm_char, worker_char, private, k
     with parallel:
         df = pd.concat(
             parallel(
-                delayed(_fetch_from_url)(_build_url(g, non_looped_strata, indicator_lst, obs_level, private, key), s)
-                for g in _url_groups(obs_level, looped_strata, max_years_per_call, private, state_list, fips_lst)
+                delayed(_fetch_from_url)(_build_url(g, non_looped_strata, indicator_list, obs_level, private, key), s)
+                for g in _get_url_groups(obs_level, looped_strata, max_years_per_call, private, state_list, fips_list)
             )
         )
 
@@ -320,12 +320,12 @@ def _annualize_data(df, annualize, covars):
         # groupby(covars).apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)).\  # this line is so we get a nan if a value is missing
 
 
-def _create_fips(df, region):
-    if region == 'state':
+def _create_fips(df, obs_level):
+    if obs_level == 'state':
         df['fips'] = df['state'].astype(str)
-    elif region == 'county':
+    elif obs_level == 'county':
         df['fips'] = df['state'].astype(str) + df['county'].astype(str)
-    elif region == 'msa':
+    elif obs_level == 'msa':
         df['fips'] = df['metropolitan statistical area/micropolitan statistical area'].astype(str)
     else:
         df = df.assign(fips='00')
@@ -336,7 +336,7 @@ def _filter_strata_totals(df, firm_char, worker_char, strata_totals):
     strata = firm_char + worker_char
     df = df.astype(dict(zip(strata, ['string'] * len(strata))))
 
-    if not strata_totals:
+    if not strata_totals and strata:
         strata_to_total_cat = {s:c.qwi_strata_to_levels[s][0] for s in strata}
         df = df.query(
             'and '.join([
@@ -348,8 +348,8 @@ def _filter_strata_totals(df, firm_char, worker_char, strata_totals):
     return df
 
 
-def _aggregate_msas(df, covars, region):
-    if region != 'msa':
+def _aggregate_msas(df, covars, obs_level):
+    if obs_level != 'msa':
         return df
     return df. \
         assign(
@@ -379,14 +379,14 @@ def _remove_extra_msas(df, state_list, state_list0):
             drop('_keep', 1)
 
 
-def _create_data(indicator_lst, region, state_list, fips_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads, state_list0=None):
+def _create_data(indicator_list, obs_level, state_list, fips_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads, state_list0=None):
     covars = ['time', 'fips', 'region', 'ownercode', 'geo_level'] + firm_char + worker_char
 
     state_list0 = state_list
-    if (len(state_list) < 51) and (region == 'msa') and not fips_list:
+    if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
         state_list = state_msa_cross_walk(state_list, 'all')['fips_state'].unique().tolist()
 
-    if region == 'us':
+    if obs_level == 'us':
         df = _led_scrape_data(private, firm_char, worker_char). \
             assign(
                 time=lambda x: x['year'].astype(str) + '-Q' + x['quarter'].astype(str),
@@ -395,35 +395,35 @@ def _create_data(indicator_lst, region, state_list, fips_list, private, annualiz
             ). \
             rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        if fips_list and region == 'msa':
-            df = _api_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, fips_lst=[tuple(row) for row in fips_state_cross_walk(fips_list, region).values])
-        elif fips_list and region == 'county':
-            df = _api_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, fips_lst=list(zip([x[:2] for x in fips_list], fips_list)))
+        if fips_list and obs_level == 'msa':
+            df = _api_fetch_data(indicator_list, obs_level, firm_char, worker_char, private, key, n_threads, fips_list=[tuple(row) for row in fips_state_cross_walk(fips_list, obs_level).values])
+        elif fips_list and obs_level == 'county':
+            df = _api_fetch_data(indicator_list, obs_level, firm_char, worker_char, private, key, n_threads, fips_list=list(zip([x[:2] for x in fips_list], fips_list)))
         else:
-            df = _api_fetch_data(indicator_lst, region, firm_char, worker_char, private, key, n_threads, state_list=state_list)
+            df = _api_fetch_data(indicator_list, obs_level, firm_char, worker_char, private, key, n_threads, state_list=state_list)
 
     df.drop_duplicates(inplace=True)
 
     return df. \
-        pipe(_create_fips, region).\
-        pipe(_cols_to_numeric, indicator_lst). \
+        pipe(_create_fips, obs_level).\
+        pipe(_cols_to_numeric, indicator_list). \
         pipe(_filter_strata_totals, firm_char, worker_char, strata_totals). \
-        pipe(_aggregate_msas, covars, region). \
+        pipe(_aggregate_msas, covars, obs_level). \
         pipe(_remove_extra_msas, state_list, state_list0) \
-        [covars + indicator_lst].\
+        [covars + indicator_list].\
         pipe(_annualize_data, annualize, covars).\
         sort_values(covars).\
         reset_index(drop=True)
 
 
-def _estimate_data_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
-    n_columns = len(indicator_lst + firm_char + worker_char + ['time', 'fips', 'region', 'ownercode', 'geo_level'])
+def _estimate_data_shape(indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, state_list, fips_list):
+    n_columns = len(indicator_list + firm_char + worker_char + ['time', 'fips', 'region', 'ownercode', 'geo_level'])
     row_estimate = 0
 
-    for region in region_lst:
-        if region == 'us':
+    for level in obs_level_lst:
+        if level == 'us':
             year_regions = 28
-        elif region == 'state':
+        elif level == 'state':
             year_regions = pd.DataFrame(c.qwi_start_to_end_year()). \
                 T.reset_index(). \
                 rename(columns={'index':'state'}). \
@@ -431,19 +431,19 @@ def _estimate_data_shape(indicator_lst, region_lst, firm_char, worker_char, stra
                 query(f'state in {state_list}'). \
                 assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
                 ['n_years'].sum()
-        elif fips_list or region in ['msa', 'county']:
+        elif fips_list or level in ['msa', 'county']:
             d = c.qwi_start_to_end_year()
-            query = f"fips_{region} in {fips_list}" if fips_list else f"fips_state in {state_list}"
+            query = f"fips_{level} in {fips_list}" if fips_list else f"fips_state in {state_list}"
             year_regions = load_CBSA_cw(). \
                 query(query) \
-                [[f'fips_{region}', 'fips_state']]. \
+                [[f'fips_{level}', 'fips_state']]. \
                 drop_duplicates(). \
                 groupby('fips_state').count(). \
                 reset_index(). \
                 assign(
                     n_years=lambda x: x['fips_state']. \
                         map(lambda y: int(d[y]['end_year']) - int(d[y]['start_year']) + 1),
-                    year_regions=lambda x: x['n_years']*x[f'fips_{region}']
+                    year_regions=lambda x: x['n_years']*x[f'fips_{level}']
                 ) \
                 ['year_regions'].sum()
 
@@ -464,7 +464,7 @@ def _estimate_data_shape(indicator_lst, region_lst, firm_char, worker_char, stra
     return (row_estimate, n_columns)
 
 
-def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1):
+def qwi(indicator_list='all', obs_level='all', state_list='all', fips_list=[], private=False, annualize='January', firm_char=[], worker_char=[], strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce Indicators (QWI) data either from the LED
     extractor tool in the case of national data (https://ledextract.ces.census.gov/static/data.html) or from the
@@ -478,7 +478,7 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
         'us': resident population in the united states from 1959 through 2019
         'all': default, returns data on all of the above observation levels
 
-    indicator_lst: str, lst
+    indicator_list: str, lst
         'all': default, will return all QWI indicaotrs;
         otherwise: return list of indicators plus 'time', 'ownercode', 'firmage', and 'fips'
 
@@ -556,9 +556,9 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
     """
 
     if obs_level in ['us', 'state', 'county', 'msa']:
-        region_lst = [obs_level]
+        obs_level_lst = [obs_level]
     elif obs_level == 'all':
-        region_lst = ['us', 'state', 'county', 'msa']
+        obs_level_lst = ['us', 'state', 'county', 'msa']
     else:
         raise Exception('Invalid input to obs_level.')
 
@@ -569,14 +569,14 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
     else:
         state_list = [c.state_abb_to_fips[s] for s in state_list]
 
-    if indicator_lst == 'all':
-        indicator_lst = c.qwi_outcomes
-    elif type(indicator_lst) == str:
-        indicator_lst = [indicator_lst]
+    if indicator_list == 'all':
+        indicator_list = c.qwi_outcomes
+    elif type(indicator_list) == str:
+        indicator_list = [indicator_list]
 
     # todo: keep this?
-    # if annualize and any(x in c.qwi_averaged_outcomes for x in indicator_lst):
-    #     raise Exception(f'{indicator_lst} is not compatible with annualize==True')
+    # if annualize and any(x in c.qwi_averaged_outcomes for x in indicator_list):
+    #     raise Exception(f'{indicator_list} is not compatible with annualize==True')
 
 
     firm_char = [firm_char] if type(firm_char) == str else firm_char
@@ -598,10 +598,10 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
 
-    if fips_list and any([region not in ['msa', 'county'] for region in region_lst]):
-        raise Exception('If fips_list is provided, region must be either msa or county.')
+    if fips_list and any([level not in ['msa', 'county'] for level in obs_level_lst]):
+        raise Exception('If fips_list is provided, obs_level must be either msa or county.')
 
-    estimated_shape = _estimate_data_shape(indicator_lst, region_lst, firm_char, worker_char, strata_totals, state_list, fips_list)
+    estimated_shape = _estimate_data_shape(indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, state_list, fips_list)
     if estimated_shape[0] * estimated_shape[1] > 100000000:
         print(f'Warning: You are attempting to fetch a dataframe of estimated shape {estimated_shape}. You may experience memory errors.')
 
@@ -609,8 +609,8 @@ def qwi(indicator_lst='all', obs_level='all', state_list='all', fips_list=[], pr
 
     return pd.concat(
             [
-                _create_data(indicator_lst, region, state_list, fips_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads)
-                for region in region_lst
+                _create_data(indicator_list, level, state_list, fips_list, private, annualize, firm_char, worker_char, strata_totals, key, n_threads)
+                for level in obs_level_lst
             ],
             axis=0
         )

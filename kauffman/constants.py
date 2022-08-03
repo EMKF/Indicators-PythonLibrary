@@ -218,7 +218,7 @@ qwi_strata_to_nlevels = {
     'race':8, 'ethnicity':3, 'education':6
 }
 
-qwi_region_to_max_cardinality = {
+qwi_geo_to_max_cardinality = {
     'county': 254,
     'msa': 30,
     'state': 1
