@@ -146,6 +146,12 @@ df_33_old = qwi(indicators, obs_level='state', firm_char=['firmsize'], strata_to
 df_34_old = qwi(indicators, obs_level='state', worker_char=['sex'], strata_totals=True, n_threads=30)
 
 
-for i in range(7,13):
-    result = eval(f'df_{i}').equals(eval(f'df_{i}_old'))
-    print(i, result)
+for i in range(23,35):
+    if i in [16,20]:
+        result = eval(f'df_{i}').equals(
+            eval(f'df_{i}_old').query('ethnicity != "A0"').reset_index(drop=True)
+        )
+        print(i, result, '(Once we account for the defect in master handling)')
+    else:
+        result = eval(f'df_{i}').equals(eval(f'df_{i}_old'))
+        print(i, result)

@@ -3,11 +3,13 @@ import geonamescache
 from itertools import product
 import os
 
-states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
-          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+states = [
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI",
+    "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN",
+    "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH",
+    "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA",
+    "WV", "WI", "WY"
+]
 
 state_abb_to_fips = {
     'WA': '53', 'DE': '10', 'DC': '11', 'WI': '55', 'WV': '54', 'HI': '15',
@@ -106,9 +108,15 @@ all_fips_to_name = {
         '02158': 'Kusilvak Census Area',
         '46102': 'Oglala Lakota County'
     },
-    **{dict['fips']: dict['name'] for dict in geonamescache.GeonamesCache().get_us_counties()},
+    **{
+        dict['fips']: dict['name'] 
+        for dict in geonamescache.GeonamesCache().get_us_counties()
+    },
     **msa_fips_to_name(),
-    **{k: state_abb_to_name[v] for k, v in state_fips_to_abb.items() if v != 'PR'}
+    **{
+        k: state_abb_to_name[v]
+        for k, v in state_fips_to_abb.items() if v != 'PR'
+    }
 }
 all_name_to_fips = dict(map(reversed, all_fips_to_name.items()))
 
@@ -173,7 +181,7 @@ age_code_to_label = {
 }
 
 size_code_to_label = {
-    0: '1 to 4 employees',
+    0: '1 to 4 employees',
     1: '5 to 9 employees',
     2: '10 to 19 employees',
     3: '20 to 49 employees',
@@ -184,12 +192,17 @@ size_code_to_label = {
 }
 age_size_lst = list(product(age_code_to_label.keys(), size_code_to_label.keys()))
 
-table1bf_cols = ['time', 'firms', 'establishments', 'net_change', 'total_job_gains', 'expanding_job_gains',
-                    'opening_job_gains', 'total_job_losses', 'contracting_job_losses', 'closing_job_losses']
+table1bf_cols = [
+    'time', 'firms', 'establishments', 'net_change', 'total_job_gains',
+    'expanding_job_gains', 'opening_job_gains', 'total_job_losses',
+    'contracting_job_losses', 'closing_job_losses'
+]
 
-table_firm_size_cols = ['time', 'quarter', 'net_change', 'total_job_gains', 'expanding_firms_job_gains',
-             'opening_firms_job_gains', 'total_job_losses', 'contracting_firms_job_losses',
-             'closing_firms_job_losses']
+table_firm_size_cols = [
+    'time', 'quarter', 'net_change', 'total_job_gains',
+    'expanding_firms_job_gains', 'opening_firms_job_gains', 'total_job_losses',
+    'contracting_firms_job_losses', 'closing_firms_job_losses'
+]
 
 size_code_to_label2 = {
     1: '1 to 4 employees',
@@ -212,6 +225,11 @@ month_to_quarter = {
 
 
 API_CELL_LIMIT = 400000
+
+qwi_worker_crosses = [
+    {'sex', 'agegrp'}, {'sex', 'education'}, {'education'}, 
+    {'ethnicity', 'race'}, {'sex'}, {'agegrp'}, {'race'}, {'ethnicity'}, set()
+]
 
 qwi_strata_to_nlevels = {
     'firmage':6, 'firmsize':6, 'industry':20, 'sex':3, 'agegrp':9,
@@ -239,13 +257,16 @@ qwi_strata_to_levels = {
 }
 
 qwi_outcomes = [
-    'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnS', 'EarnSepS', 'Emp', 'EmpEnd', 'EmpS', 'EmpSpv', 'EmpTotal', 'FrmJbC',
-    'FrmJbCS', 'FrmJbGn', 'FrmJbGnS', 'FrmJbLs', 'FrmJbLsS', 'HirA', 'HirAEnd', 'HirAEndR', 'HirAEndRepl',
-    'HirAEndReplr', 'HirAs', 'HirN', 'HirNs', 'HirR', 'Payroll', 'Sep', 'SepBeg', 'SepBegR', 'SepS', 'SepSnx',
-    'TurnOvrS'
+    'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnS', 'EarnSepS', 'Emp', 'EmpEnd',
+    'EmpS', 'EmpSpv', 'EmpTotal', 'FrmJbC', 'FrmJbCS', 'FrmJbGn', 'FrmJbGnS',
+    'FrmJbLs', 'FrmJbLsS', 'HirA', 'HirAEnd', 'HirAEndR', 'HirAEndRepl',
+    'HirAEndReplr', 'HirAs', 'HirN', 'HirNs', 'HirR', 'Payroll', 'Sep',
+    'SepBeg', 'SepBegR', 'SepS', 'SepSnx', 'TurnOvrS'
 ]
 
-qwi_averaged_outcomes = ['EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS']
+qwi_averaged_outcomes = [
+    'EarnS', 'EarnBeg', 'EarnHirAS', 'EarnHirNS', 'EarnSepS'
+]
 
 qwi_missing_counties = {
     '02': ['063', '066', '158'], 
@@ -368,9 +389,10 @@ acs_code_to_var = {
 
 # todo: new constants to vet
 shed_outcomes = [
-    'work_status', 'man_financially', 'rainy_day_saving', 'emergency_covered', 'applied_credit',
-    'has_bank_account', 'rent', 'better_off_financially', 'tot_income', 'income_variance',
-    'own_business_retirement', 'schedule_variance', 'num_jobs', 'self_emp_income'
+    'work_status', 'man_financially', 'rainy_day_saving', 'emergency_covered',
+    'applied_credit', 'has_bank_account', 'rent', 'better_off_financially',
+    'tot_income', 'income_variance', 'own_business_retirement',
+    'schedule_variance', 'num_jobs', 'self_emp_income'
 ]
 
 shed_dic = {
@@ -515,13 +537,16 @@ shed_dic = {
 }
 
 
-state_shed_codes_to_abb = {11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT",
-                            21: "NY", 22: "NJ", 23: "PA", 31: "OH", 32: "IN", 33: "IL", 34: "MI", 35: "WI",
-                            41: "MN", 42: "IA", 43: "MO", 44: "ND", 45: "SD", 46: "NE", 47: "KS",
-                            51: "DE", 52: "MD", 53: "DC", 54: "VA", 55: "WV", 56: "NC", 57: "SC", 58: "GA",
-                            59: "FL", 61: "KY", 62: "TN", 63: "AL", 64: "MS", 71: "AR", 72: "LA", 73: "OK",
-                            74: "TX", 81: "MT", 82: "ID", 83: "WY", 84: "CO", 85: "NM", 86: "AZ", 87: "UT",
-                            88: "NV", 91: "WA", 92: "OR", 93: "CA", 94: "AK", 95: "HI"}
+state_shed_codes_to_abb = {
+    11: "ME", 12: "NH", 13: "VT", 14: "MA", 15: "RI", 16: "CT", 21: "NY",
+    22: "NJ", 23: "PA", 31: "OH", 32: "IN", 33: "IL", 34: "MI", 35: "WI",
+    41: "MN", 42: "IA", 43: "MO", 44: "ND", 45: "SD", 46: "NE", 47: "KS",
+    51: "DE", 52: "MD", 53: "DC", 54: "VA", 55: "WV", 56: "NC", 57: "SC",
+    58: "GA", 59: "FL", 61: "KY", 62: "TN", 63: "AL", 64: "MS", 71: "AR",
+    72: "LA", 73: "OK", 74: "TX", 81: "MT", 82: "ID", 83: "WY", 84: "CO",
+    85: "NM", 86: "AZ", 87: "UT", 88: "NV", 91: "WA", 92: "OR", 93: "CA",
+    94: "AK", 95: "HI"
+}
 
 
 # recession_dates = pd.read_html('https://www.nber.org/research/data/us-business-cycle-expansions-and-contractions')[0] \
@@ -580,25 +605,29 @@ bds_valid_crosses = [
     {'GEOCOMP', 'METRO'}, {'STATE'}, {'COUNTY'}, {'MSA'}, {'NAICS'}, 
     {'EMPSZFI', 'FAGE'}, {'EMPSZFII', 'FAGE'}, {'EAGE', 'EMPSZES'}, 
     {'EAGE', 'EMPSZESI'}, {'NAICS', 'STATE'}, {'GEOCOMP', 'METRO', 'STATE'},
-    {'FAGE', 'STATE'}, {'EMPSZFI', 'STATE'}, {'EMPSZFII', 'STATE'}, {'EAGE', 'STATE'}, 
-    {'EMPSZES', 'STATE'}, {'EMPSZESI', 'STATE'}, {'FAGE', 'NAICS'}, 
-    {'EMPSZFI', 'NAICS'}, {'EMPSZFII', 'NAICS'}, {'EAGE', 'NAICS'}, 
-    {'EMPSZES', 'NAICS'}, {'EMPSZESI', 'NAICS'}, {'FAGE', 'GEOCOMP', 'METRO'},
-    {'EMPSZFI', 'GEOCOMP', 'METRO'}, {'EMPSZFII', 'GEOCOMP', 'METRO'}, 
-    {'EAGE', 'GEOCOMP', 'METRO'}, {'EMPSZES', 'GEOCOMP', 'METRO'}, 
-    {'EMPSZESI', 'GEOCOMP', 'METRO'}, {'GEOCOMP', 'METRO', 'NAICS'}, {'FAGE', 'MSA'}, 
-    {'EMPSZFI', 'MSA'}, {'EMPSZFII', 'MSA'}, {'EAGE', 'MSA'}, {'MSA', 'NAICS'}, 
-    {'COUNTY', 'FAGE'}, {'COUNTY', 'EMPSZFI'}, {'COUNTY', 'EMPSZFII'},
-    {'COUNTY', 'EAGE'}, {'COUNTY', 'NAICS'}, {'FAGE', 'MSA', 'NAICS'}, 
-    {'EMPSZFI', 'MSA', 'NAICS'}, {'EMPSZFII', 'MSA', 'NAICS'}, {'EAGE', 'MSA', 'NAICS'}, 
+    {'FAGE', 'STATE'}, {'EMPSZFI', 'STATE'}, {'EMPSZFII', 'STATE'}, 
+    {'EAGE', 'STATE'}, {'EMPSZES', 'STATE'}, {'EMPSZESI', 'STATE'}, 
+    {'FAGE', 'NAICS'}, {'EMPSZFI', 'NAICS'}, {'EMPSZFII', 'NAICS'},
+    {'EAGE', 'NAICS'}, {'EMPSZES', 'NAICS'}, {'EMPSZESI', 'NAICS'},
+    {'FAGE', 'GEOCOMP', 'METRO'}, {'EMPSZFI', 'GEOCOMP', 'METRO'},
+    {'EMPSZFII', 'GEOCOMP', 'METRO'}, {'EAGE', 'GEOCOMP', 'METRO'},
+    {'EMPSZES', 'GEOCOMP', 'METRO'}, {'EMPSZESI', 'GEOCOMP', 'METRO'}, 
+    {'GEOCOMP', 'METRO', 'NAICS'}, {'FAGE', 'MSA'}, {'EMPSZFI', 'MSA'}, 
+    {'EMPSZFII', 'MSA'}, {'EAGE', 'MSA'}, {'MSA', 'NAICS'}, {'COUNTY', 'FAGE'},
+    {'COUNTY', 'EMPSZFI'}, {'COUNTY', 'EMPSZFII'}, {'COUNTY', 'EAGE'},
+    {'COUNTY', 'NAICS'}, {'FAGE', 'MSA', 'NAICS'}, {'EMPSZFI', 'MSA', 'NAICS'},
+    {'EMPSZFII', 'MSA', 'NAICS'}, {'EAGE', 'MSA', 'NAICS'}, 
     {'FAGE', 'NAICS', 'STATE'}, {'EMPSZFI', 'NAICS', 'STATE'}, 
     {'EMPSZFII', 'NAICS', 'STATE'}, {'EAGE', 'NAICS', 'STATE'},
-    {'FAGE', 'GEOCOMP', 'METRO', 'NAICS'}, {'EMPSZFI', 'GEOCOMP', 'METRO', 'NAICS'}, 
-    {'EMPSZFII', 'GEOCOMP', 'METRO', 'NAICS'}, {'EAGE', 'GEOCOMP', 'METRO', 'NAICS'},
-    {'FAGE', 'GEOCOMP', 'METRO', 'STATE'}, {'EMPSZFI', 'GEOCOMP', 'METRO', 'STATE'},
-    {'EMPSZFII', 'GEOCOMP', 'METRO', 'STATE'}, {'EAGE', 'GEOCOMP', 'METRO', 'STATE'},
+    {'FAGE', 'GEOCOMP', 'METRO', 'NAICS'}, {'EMPSZFII', 'FAGE', 'NAICS'},
+    {'EMPSZFI', 'GEOCOMP', 'METRO', 'NAICS'}, 
+    {'EMPSZFII', 'GEOCOMP', 'METRO', 'NAICS'},
+    {'EAGE', 'GEOCOMP', 'METRO', 'NAICS'}, {'FAGE', 'GEOCOMP', 'METRO', 'STATE'},
+    {'EMPSZFI', 'GEOCOMP', 'METRO', 'STATE'}, 
+    {'EMPSZFII', 'GEOCOMP', 'METRO', 'STATE'}, 
+    {'EAGE', 'GEOCOMP', 'METRO', 'STATE'}, 
     {'GEOCOMP', 'METRO', 'NAICS', 'STATE'}, {'EMPSZFI', 'FAGE', 'NAICS'},
-    {'EMPSZFII', 'FAGE', 'NAICS'}, {'FAGE', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'},
+    {'FAGE', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'},
     {'EMPSZFI', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'}, 
     {'EMPSZFII', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'}, 
     {'EAGE', 'GEOCOMP', 'METRO', 'NAICS', 'STATE'}
