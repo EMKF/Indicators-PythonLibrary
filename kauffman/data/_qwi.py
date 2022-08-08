@@ -38,7 +38,7 @@ def _get_year_groups(state_dict, max_years_per_call):
     if max_years_per_call == 1:
         return years
     else:
-        n_bins = ceil(len(years)/min(max_years_per_call, len(years)))
+        n_bins = ceil(len(years) / min(max_years_per_call, len(years)))
         return [f'from{x[0]}to{x[-1]}' for x in np.array_split(years, n_bins)]
     
 
@@ -252,8 +252,8 @@ def _led_scrape_data(private, firm_char, worker_char):
                 By.XPATH, '//input[@name="worker_se_education_all"]'
             ).click()
     else:
-        driver.find_element(By.XPATH, '//*[text()="Race and Ethnicity"]'). \
-            click()
+        driver.find_element(By.XPATH, '//*[text()="Race and Ethnicity"]') \
+            .click()
         if 'race' in worker_char:
             driver.find_element(
                 By.XPATH, '//input[@name="worker_rh_race_all"]'
@@ -286,8 +286,8 @@ def _led_scrape_data(private, firm_char, worker_char):
     driver.find_element(By.ID, 'submit_request').click()
 
     try:
-        element = WebDriverWait(driver, 60). \
-            until(EC.presence_of_element_located((By.LINK_TEXT, 'CSV')))
+        element = WebDriverWait(driver, 60) \
+            .until(EC.presence_of_element_located((By.LINK_TEXT, 'CSV')))
     finally:
         href = driver.find_element(By.LINK_TEXT, 'CSV').get_attribute('href')
         return pd.read_csv(href)
@@ -376,33 +376,33 @@ def _annualize_data(df, annualize, covars):
     if not annualize:
         return df
     elif annualize == 'March':
-        df = df.\
-            assign(
+        df = df \
+            .assign(
                 quarter=lambda x: x['time'].str[-1:],
                 time=lambda x: x.apply(
                     lambda y: int(y['time'][:4]) - 1 \
                         if y['quarter'] == '1' else int(y['time'][:4]),
                     axis=1
                 )
-            ).\
-            astype({'time': 'str'}).\
-            drop('quarter', 1)
+            ) \
+            .astype({'time': 'str'}) \
+            .drop('quarter', 1)
     else:
-        df = df. \
-            assign(
+        df = df \
+            .assign(
                 time=lambda x: x['time'].str[:4].astype(int),
             )
-    return df. \
-        assign(
-            row_count=lambda x: x['fips']. \
-                groupby([x[var] for var in covars], dropna=False). \
-                transform('count')
-        ). \
-        query('row_count == 4'). \
-        drop(columns=['row_count']). \
-        groupby(covars). \
-        apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)). \
-        reset_index(drop=False)
+    return df \
+        .assign(
+            row_count=lambda x: x['fips'] \
+                .groupby([x[var] for var in covars], dropna=False) \
+                .transform('count')
+        ) \
+        .query('row_count == 4') \
+        .drop(columns=['row_count']) \
+        .groupby(covars) \
+        .apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)) \
+        .reset_index(drop=False)
 
 
 def _create_fips(df, obs_level):
@@ -438,17 +438,17 @@ def _filter_strata_totals(df, firm_char, worker_char, strata_totals):
 def _aggregate_msas(df, covars, obs_level):
     if obs_level != 'msa':
         return df
-    return df. \
-        assign(
-            msa_states=lambda x: x[['state', 'fips']].groupby('fips'). \
-                transform(lambda y: len(y.unique().tolist())),
-            time_count=lambda x: x[covars + ['msa_states']].groupby(covars). \
-                transform('count')
-        ). \
-        query('time_count == msa_states'). \
-        drop(columns=['msa_states', 'time_count']).\
-        groupby(covars).sum().\
-        reset_index(drop=False)
+    return df \
+        .assign(
+            msa_states=lambda x: x[['state', 'fips']].groupby('fips') \
+                .transform(lambda y: len(y.unique().tolist())),
+            time_count=lambda x: x[covars + ['msa_states']].groupby(covars) \
+                .transform('count')
+        ) \
+        .query('time_count == msa_states') \
+        .drop(columns=['msa_states', 'time_count']) \
+        .groupby(covars).sum() \
+        .reset_index(drop=False)
 
 
 def _state_overlap(x, state_list0):
@@ -462,13 +462,13 @@ def _remove_extra_msas(df, state_list, state_list0):
     if sorted(state_list) == sorted(state_list0):
         return df
     else:
-        return df.\
-            assign(_keep=lambda x: x['region']. \
-                apply(lambda y: _state_overlap(
+        return df \
+            .assign(_keep=lambda x: x['region'] \
+                .apply(lambda y: _state_overlap(
                     y, [c.state_fips_to_abb[fips] for fips in state_list0]
-                ))).\
-            query('_keep == 1').\
-            drop('_keep', 1)
+                ))) \
+            .query('_keep == 1') \
+            .drop('_keep', 1)
 
 
 def _create_data(
@@ -484,14 +484,14 @@ def _create_data(
             ['fips_state'].unique().tolist()
 
     if obs_level == 'us':
-        df = _led_scrape_data(private, firm_char, worker_char). \
-            assign(
+        df = _led_scrape_data(private, firm_char, worker_char) \
+            .assign(
                 time=lambda x: x['year'].astype(str) + '-Q' \
                     + x['quarter'].astype(str),
                 HirAEndRepl=np.nan,
                 HirAEndReplr=np.nan
-            ). \
-            rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
+            ) \
+            .rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
         if fips_list and obs_level == 'msa':
             df = _api_fetch_data(
@@ -516,16 +516,16 @@ def _create_data(
 
     df.drop_duplicates(inplace=True)
 
-    return df. \
-        pipe(_create_fips, obs_level).\
-        pipe(_cols_to_numeric, indicator_list). \
-        pipe(_filter_strata_totals, firm_char, worker_char, strata_totals). \
-        pipe(_aggregate_msas, covars, obs_level). \
-        pipe(_remove_extra_msas, state_list, state_list0) \
-        [covars + indicator_list].\
-        pipe(_annualize_data, annualize, covars).\
-        sort_values(covars).\
-        reset_index(drop=True)
+    return df \
+        .pipe(_create_fips, obs_level) \
+        .pipe(_cols_to_numeric, indicator_list) \
+        .pipe(_filter_strata_totals, firm_char, worker_char, strata_totals) \
+        .pipe(_aggregate_msas, covars, obs_level) \
+        .pipe(_remove_extra_msas, state_list, state_list0) \
+        [covars + indicator_list] \
+        .pipe(_annualize_data, annualize, covars) \
+        .sort_values(covars) \
+        .reset_index(drop=True)
 
 
 def _estimate_data_shape(
@@ -542,26 +542,26 @@ def _estimate_data_shape(
         if level == 'us':
             year_regions = 28
         elif level == 'state':
-            year_regions = pd.DataFrame(c.qwi_start_to_end_year()). \
-                T.reset_index(). \
-                rename(columns={'index':'state'}). \
-                astype({'start_year':'int', 'end_year':'int'}). \
-                query(f'state in {state_list}'). \
-                assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
+            year_regions = pd.DataFrame(c.qwi_start_to_end_year()) \
+                .T.reset_index() \
+                .rename(columns={'index':'state'}) \
+                .astype({'start_year':'int', 'end_year':'int'}) \
+                .query(f'state in {state_list}') \
+                .assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
                 ['n_years'].sum()
         elif fips_list or level in ['msa', 'county']:
             d = c.qwi_start_to_end_year()
             query = f"fips_{level} in {fips_list}" if fips_list \
                 else f"fips_state in {state_list}"
-            year_regions = load_CBSA_cw(). \
-                query(query) \
-                [[f'fips_{level}', 'fips_state']]. \
-                drop_duplicates(). \
-                groupby('fips_state').count(). \
-                reset_index(). \
-                assign(
-                    n_years=lambda x: x['fips_state']. \
-                        map(
+            year_regions = load_CBSA_cw() \
+                .query(query) \
+                [[f'fips_{level}', 'fips_state']] \
+                .drop_duplicates() \
+                .groupby('fips_state').count() \
+                .reset_index() \
+                .assign(
+                    n_years=lambda x: x['fips_state'] \
+                        .map(
                             lambda y: int(d[y]['end_year']) \
                             - int(d[y]['start_year']) + 1
                         ),
