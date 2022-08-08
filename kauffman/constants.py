@@ -92,12 +92,12 @@ def msa_fips_to_name():
         header=2,
         skipfooter=4,
         usecols=[0, 3],
-    ). \
-        assign(fips=lambda x: x['CBSA Code'].astype(str)). \
-        drop('CBSA Code', 1).\
-        drop_duplicates('fips').\
-        set_index(['fips']).\
-        to_dict()['CBSA Title']
+    ) \
+        .assign(fips=lambda x: x['CBSA Code'].astype(str)) \
+        .drop('CBSA Code', 1) \
+        .drop_duplicates('fips') \
+        .set_index(['fips']) \
+        .to_dict()['CBSA Title']
 
 
 all_fips_to_name = {
@@ -122,15 +122,15 @@ all_name_to_fips = dict(map(reversed, all_fips_to_name.items()))
 
 def qwi_start_to_end_year():
     return pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
-        [['State', 'Start Quarter', 'End Quarter']].\
-        assign(
+        [['State', 'Start Quarter', 'End Quarter']] \
+        .assign(
             start_year=lambda x: x['Start Quarter'].str.split().str[0],
             end_year=lambda x: x['End Quarter'].str.split().str[0],
             fips=lambda x: x['State'].map(state_abb_to_fips),
-        ).\
-        set_index('fips') \
-        [['start_year', 'end_year']].\
-        to_dict('index')
+        ) \
+        .set_index('fips') \
+        [['start_year', 'end_year']] \
+        .to_dict('index')
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -139,14 +139,14 @@ def filenamer(path):
 
 
 def fetch_msa_to_state_dic():
-    df = pd. \
-        read_excel(
+    df = pd \
+        .read_excel(
             'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
             skiprows=2, skipfooter=4,
             dtype = {'CBSA Code':'str', 'FIPS State Code':'str'}
-        ). \
-        rename(columns={"CBSA Code":"fips", "FIPS State Code":"state_fips"}). \
-        drop_duplicates(['fips', 'state_fips']) \
+        ) \
+        .rename(columns={"CBSA Code":"fips", "FIPS State Code":"state_fips"}) \
+        .drop_duplicates(['fips', 'state_fips']) \
         [['fips', 'state_fips']]
 
     df2 = df.pivot(values='state_fips', columns='fips')
@@ -549,17 +549,6 @@ state_shed_codes_to_abb = {
 }
 
 
-# recession_dates = pd.read_html('https://www.nber.org/research/data/us-business-cycle-expansions-and-contractions')[0] \
-#     ['Business Cycle Reference Dates'].\
-#     loc[lambda x: x['Peak Month'] != '-'].\
-#     loc[lambda x: x['Trough Month'] != '-'].\
-#     assign(
-#         peak_time=lambda x: pd.to_datetime(x['Peak Year'].astype(str) + x['Peak Month'], format='%Y%B'),
-#         trough_time=lambda x: pd.to_datetime(x['Trough Year'].astype(str) + x['Trough Month'], format='%Y%B'),
-#     ) \
-#     [['peak_time', 'trough_time']].\
-#     values
-
 bfs_industries = [
     'NAICS11', 'NAICS21', 'NAICS22', 'NAICS23', 'NAICS42', 'NAICS51', 'NAICS52',
     'NAICS53', 'NAICS54', 'NAICS55', 'NAICS56', 'NAICS61', 'NAICS62', 'NAICS71',
@@ -592,12 +581,12 @@ naics_to_bfsnaics = {
 
 # todo: at some point might want to include 3 and 4-digit naics codes
 def naics_code_to_abb(digits, pub_admin=False):
-    return pd.read_csv('https://www2.census.gov/programs-surveys/bds/technical-documentation/label_naics.csv').\
-        query(f'indlevel == {digits}').\
-        drop('indlevel', 1).\
-        query('name not in ["Public Administration", "Unclassified"]' if not pub_admin else '').\
-        set_index(['naics']).\
-        to_dict()['name']
+    return pd.read_csv('https://www2.census.gov/programs-surveys/bds/technical-documentation/label_naics.csv') \
+        .query(f'indlevel == {digits}') \
+        .drop('indlevel', 1) \
+        .query('name not in ["Public Administration", "Unclassified"]' if not pub_admin else '') \
+        .set_index(['naics']) \
+        .to_dict()['name']
 
 
 bds_valid_crosses = [
