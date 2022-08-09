@@ -537,20 +537,20 @@ def _estimate_data_shape(
         + ['time', 'fips', 'region', 'ownercode', 'geo_level']
     )
     row_estimate = 0
+    state_to_years = c.qwi_start_to_end_year()
 
     for level in obs_level_lst:
         if level == 'us':
-            year_regions = 28
+            year_regions = state_to_years['00']['end_year'] \
+                - state_to_years['00']['start_year'] + 1
         elif level == 'state':
-            year_regions = pd.DataFrame(c.qwi_start_to_end_year()) \
+            year_regions = pd.DataFrame(state_to_years) \
                 .T.reset_index() \
                 .rename(columns={'index':'state'}) \
-                .astype({'start_year':'int', 'end_year':'int'}) \
                 .query(f'state in {state_list}') \
                 .assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
                 ['n_years'].sum()
-        elif fips_list or level in ['msa', 'county']:
-            d = c.qwi_start_to_end_year()
+        else:
             query = f"fips_{level} in {fips_list}" if fips_list \
                 else f"fips_state in {state_list}"
             year_regions = load_CBSA_cw() \
@@ -562,8 +562,8 @@ def _estimate_data_shape(
                 .assign(
                     n_years=lambda x: x['fips_state'] \
                         .map(
-                            lambda y: int(d[y]['end_year']) \
-                            - int(d[y]['start_year']) + 1
+                            lambda state: state_to_years[state]['end_year'] \
+                                - state_to_years[state]['start_year'] + 1
                         ),
                     year_regions=lambda x: x['n_years']*x[f'fips_{level}']
                 ) \
@@ -575,7 +575,6 @@ def _estimate_data_shape(
         strata_to_nlevels = c.qwi_strata_to_nlevels
         if not strata_totals:
             strata_to_nlevels = {k:v - 1 for k,v in strata_to_nlevels.items()}
-
         for s in strata:
             strata_levels *= strata_to_nlevels[s]
         

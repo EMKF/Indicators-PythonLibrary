@@ -128,6 +128,7 @@ def qwi_start_to_end_year():
             end_year=lambda x: x['End Quarter'].str.split().str[0],
             fips=lambda x: x['State'].map(state_abb_to_fips),
         ) \
+        .astype({'start_year':'int', 'end_year':'int'}) \
         .set_index('fips') \
         [['start_year', 'end_year']] \
         .to_dict('index')
