@@ -35,11 +35,11 @@ def _fetch_data(url, session):
     if not success:
         print(
             f'\nRAN OUT OF ATTEMPTS for url: {url}', 
-            '\n*****If unexpected, please double check your census_key and other parameters.***\n'
+            '\n*****If unexpected, please double check your key and other parameters.***\n'
         )
     return df
 
-def _build_url(variables, region, strata, census_key, state_fips=None, year='*'):
+def _build_url(variables, region, strata, key, state_fips=None, year='*'):
     flag_var = [f'{var}_F' for var in variables]
     var_string = ",".join(variables + strata + flag_var)
     
@@ -52,7 +52,7 @@ def _build_url(variables, region, strata, census_key, state_fips=None, year='*')
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     
-    return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}&key={census_key}'
+    return f'https://api.census.gov/data/timeseries/bds?get={var_string}&for={region_string}&YEAR={year}{naics_string}&key={key}'
 
 
 def _mark_flagged(df, variables):
@@ -65,24 +65,24 @@ def _mark_flagged(df, variables):
     return df
 
 
-def _bds_data_create(variables, region, strata, get_flags, census_key, n_threads):
+def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
 
     if 'NAICS' not in strata or region == 'us':
-        df = _fetch_data(_build_url(variables, region, strata, census_key, '*'), s)
+        df = _fetch_data(_build_url(variables, region, strata, key, '*'), s)
     else:
         with parallel:
             df = pd.concat(
                 parallel(
-                    delayed(_fetch_data)(_build_url(variables, region, strata, census_key, '*', year), s)
+                    delayed(_fetch_data)(_build_url(variables, region, strata, key, '*', year), s)
                     for year in range(1978, 2020)
                 )
             )
             
     s.close()
 
-    if len(df) == 0: raise Exception('The data fetch returned an empty dataframe. Please double check that you have a valid census_key.')
+    if len(df) == 0: raise Exception('The data fetch returned an empty dataframe. Please double check that you have a valid key.')
 
     flags = [f'{var}_F' for var in variables] if get_flags else []
 
@@ -123,7 +123,7 @@ def check_strata_valid(obs_level, strata):
     return valid
 
 
-def bds(series_lst, obs_level='all', strata=[], get_flags=False, census_key=os.getenv('CENSUS_KEY'), n_threads=1):
+def bds(series_lst, obs_level='all', strata=[], get_flags=False, key=os.getenv('CENSUS_KEY'), n_threads=1):
     """ Create a pandas data frame with results from a BDS query. Column order: fips, region, time, series_lst.
 
     Keyword arguments:
@@ -225,7 +225,7 @@ def bds(series_lst, obs_level='all', strata=[], get_flags=False, census_key=os.g
 
     return pd.concat(
             [
-                _bds_data_create(series_lst, region, strata, get_flags, census_key, n_threads)
+                _bds_data_create(series_lst, region, strata, get_flags, key, n_threads)
                 for region in region_lst
             ],
             axis=0
