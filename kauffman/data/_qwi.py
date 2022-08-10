@@ -441,12 +441,12 @@ def _aggregate_msas(df, covars, obs_level):
     return df \
         .assign(
             msa_states=lambda x: x[['state', 'fips']].groupby('fips') \
-                .transform(lambda y: len(y.unique().tolist())),
-            time_count=lambda x: x[covars + ['msa_states']].groupby(covars) \
+                .transform('nunique'),
+            msa_row_count=lambda x: x[covars + ['msa_states']].groupby(covars) \
                 .transform('count')
         ) \
-        .query('time_count == msa_states') \
-        .drop(columns=['msa_states', 'time_count']) \
+        .query('msa_row_count == msa_states') \
+        .drop(columns=['msa_states', 'msa_row_count']) \
         .groupby(covars).sum() \
         .reset_index(drop=False)
 
@@ -493,26 +493,21 @@ def _create_data(
             ) \
             .rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        if fips_list and obs_level == 'msa':
-            df = _api_fetch_data(
-                indicator_list, obs_level, firm_char, worker_char, private, key,
-                n_threads, fips_list=[
-                    tuple(row) 
+        main_args = [
+            indicator_list, obs_level, firm_char, worker_char, private, key,
+            n_threads
+        ]
+        if fips_list:
+            if obs_level == 'county':
+                fips_pairs = list(zip([x[:2] for x in fips_list], fips_list))
+            else:
+                fips_pairs = [
+                    tuple(row)
                     for row in fips_state_cw(fips_list, obs_level).values
                 ]
-            )
-        elif fips_list and obs_level == 'county':
-            df = _api_fetch_data(
-                indicator_list, obs_level, firm_char, worker_char, private, key,
-                n_threads, fips_list=list(
-                    zip([x[:2] for x in fips_list], fips_list)
-                )
-            )
+            df = _api_fetch_data(*main_args, fips_list=fips_pairs)
         else:
-            df = _api_fetch_data(
-                indicator_list, obs_level, firm_char, worker_char, private, key,
-                n_threads, state_list=state_list
-            )
+            df = _api_fetch_data(*main_args, state_list=state_list)
 
     df.drop_duplicates(inplace=True)
 
@@ -729,7 +724,7 @@ def qwi(
 
     if 'firmage' in firm_char and 'firmsize' in firm_char:
         raise Exception(
-            'Invalid input to firm_char. Can only specify one of firmage or' \
+            'Invalid input to firm_char. Can only specify one of firmage or'
             'firmsize.'
         )
 
@@ -753,13 +748,12 @@ def qwi(
     print('QWI Dynamic API version')
 
     return pd.concat(
-            [
-                _create_data(
-                    indicator_list, level, state_list, fips_list, private, 
-                    annualize, firm_char, worker_char, strata_totals, key, 
-                    n_threads
-                )
-                for level in obs_level_lst
-            ],
-            axis=0
-        )
+        [
+            _create_data(
+                indicator_list, level, state_list, fips_list, private,
+                annualize, firm_char, worker_char, strata_totals, key, n_threads
+            )
+            for level in obs_level_lst
+        ],
+        axis=0
+    )

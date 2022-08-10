@@ -146,8 +146,10 @@ df_33_old = qwi(indicators, obs_level='state', firm_char=['firmsize'], strata_to
 df_34_old = qwi(indicators, obs_level='state', worker_char=['sex'], strata_totals=True, n_threads=30)
 
 
-for i in range(23,35):
-    if i in [16,20]:
+for i in range(5,23):
+    if i ==13:
+        print('SKIP 13: Old master version had an error with this case')
+    elif i in [16,20]:
         result = eval(f'df_{i}').equals(
             eval(f'df_{i}_old').query('ethnicity != "A0"').reset_index(drop=True)
         )
