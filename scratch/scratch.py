@@ -1,5 +1,4 @@
 from kauffman.data._qwi import qwi
-import pandas as pd
 
 
 indicators = ['Emp', 'EmpEnd', 'EmpS', 'HirAs', 'Sep', 'EarnBeg', 'FrmJbC']
@@ -146,14 +145,22 @@ df_33_old = qwi(indicators, obs_level='state', firm_char=['firmsize'], strata_to
 df_34_old = qwi(indicators, obs_level='state', worker_char=['sex'], strata_totals=True, n_threads=30)
 
 
-for i in range(5,23):
-    if i ==13:
-        print('SKIP 13: Old master version had an error with this case')
-    elif i in [16,20]:
-        result = eval(f'df_{i}').equals(
-            eval(f'df_{i}_old').query('ethnicity != "A0"').reset_index(drop=True)
-        )
-        print(i, result, '(Once we account for the defect in master handling)')
-    else:
-        result = eval(f'df_{i}').equals(eval(f'df_{i}_old'))
-        print(i, result)
+
+def test_range(i_low, i_high):
+    for i in range(i_low, i_high):
+        if i in [1,2]:
+            result = eval(f'df_{i}').round(10).equals(eval(f'df_{i}_old').round(10))
+            print(i, result, '(Once we round)')
+        elif i == 3:
+            result = len(eval(f'df_{i}').round(10).compare(eval(f'df_{i}_old').round(10))) == 0
+            print(i, result, '(Once we round)')
+        elif i == 13:
+            print('SKIP 13: Old master version had an error with this case')
+        elif i in [16,20]:
+            result = eval(f'df_{i}').equals(
+                eval(f'df_{i}_old').query('ethnicity != "A0"').reset_index(drop=True)
+            )
+            print(i, result, '(Once we account for the defect in master handling)')
+        else:
+            result = eval(f'df_{i}').equals(eval(f'df_{i}_old'))
+            print(i, result)

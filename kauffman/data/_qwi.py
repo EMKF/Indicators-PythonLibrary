@@ -31,14 +31,11 @@ https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
 
 
 def _get_year_groups(state_dict, max_years_per_call):
-    years = list(range(
-        int(state_dict['start_year']), 
-        int(state_dict['end_year']) + 1
-    ))
+    years = list(range(state_dict['start_year'], state_dict['end_year'] + 1))
     if max_years_per_call == 1:
         return years
     else:
-        n_bins = ceil(len(years) / min(max_years_per_call, len(years)))
+        n_bins = ceil(len(years) / max_years_per_call)
         return [f'from{x[0]}to{x[-1]}' for x in np.array_split(years, n_bins)]
     
 
@@ -400,8 +397,7 @@ def _annualize_data(df, annualize, covars):
         ) \
         .query('row_count == 4') \
         .drop(columns=['row_count']) \
-        .groupby(covars) \
-        .apply(lambda x: pd.DataFrame.sum(x.set_index(covars), skipna=False)) \
+        .groupby(covars).sum(min_count=4) \
         .reset_index(drop=False)
 
 
