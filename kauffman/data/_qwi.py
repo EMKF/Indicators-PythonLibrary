@@ -10,24 +10,13 @@ from webdriver_manager.chrome import ChromeDriverManager
 from joblib import Parallel, delayed
 from kauffman.tools._etl import state_msa_cross_walk as state_msa_cw
 from kauffman.tools._etl import fips_state_cross_walk as fips_state_cw
-from kauffman.tools._etl import load_CBSA_cw
+from kauffman.tools._qwi_tools import latest_releases, estimate_data_shape
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-"""
-https://lehd.ces.census.gov/applications/help/led_extraction_tool.html#!qwi
-"""
-
-# WARNING: Please ensure that QWI has consistent releases for all 50 states
-# before running. Here is a link to validate that folder containing most recent
-# release has all 50 states + D.C.: https://lehd.ces.census.gov/data/qwi/.
-# This link: https://lehd.ces.census.gov/doc/QWI_data_notices.pdf is updated
-# by the Census Bureau whenever a complete new release of QWI data are 
-# available.
 
 
 def _get_year_groups(state_dict, max_years_per_call):
@@ -349,7 +338,8 @@ def _api_fetch_data(
                 delayed(_fetch_from_url)(
                     _build_url(
                         g, non_loop_var, indicator_list, obs_level, 
-                        private, key), 
+                        private, key
+                    ), 
                     s
                 )
                 for g in _get_url_groups(
@@ -519,65 +509,11 @@ def _create_data(
         .reset_index(drop=True)
 
 
-def _estimate_data_shape(
-    indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
-    state_list, fips_list
-):
-    n_columns = len(
-        indicator_list + firm_char + worker_char \
-        + ['time', 'fips', 'region', 'ownercode', 'geo_level']
-    )
-    row_estimate = 0
-    state_to_years = c.qwi_start_to_end_year()
-
-    for level in obs_level_lst:
-        if level == 'us':
-            year_regions = state_to_years['00']['end_year'] \
-                - state_to_years['00']['start_year'] + 1
-        elif level == 'state':
-            year_regions = pd.DataFrame(state_to_years) \
-                .T.reset_index() \
-                .rename(columns={'index':'state'}) \
-                .query(f'state in {state_list}') \
-                .assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
-                ['n_years'].sum()
-        else:
-            query = f"fips_{level} in {fips_list}" if fips_list \
-                else f"fips_state in {state_list}"
-            year_regions = load_CBSA_cw() \
-                .query(query) \
-                [[f'fips_{level}', 'fips_state']] \
-                .drop_duplicates() \
-                .groupby('fips_state').count() \
-                .reset_index() \
-                .assign(
-                    n_years=lambda x: x['fips_state'] \
-                        .map(
-                            lambda state: state_to_years[state]['end_year'] \
-                                - state_to_years[state]['start_year'] + 1
-                        ),
-                    year_regions=lambda x: x['n_years']*x[f'fips_{level}']
-                ) \
-                ['year_regions'].sum()
-
-        # Get n_strata_levels
-        strata_levels = 1
-        strata = worker_char + firm_char
-        strata_to_nlevels = c.qwi_strata_to_nlevels
-        if not strata_totals:
-            strata_to_nlevels = {k:v - 1 for k,v in strata_to_nlevels.items()}
-        for s in strata:
-            strata_levels *= strata_to_nlevels[s]
-        
-        row_estimate += year_regions*strata_levels*4
-
-    return (row_estimate, n_columns)
-
-
 def qwi(
     indicator_list='all', obs_level='all', state_list='all', fips_list=[],
     private=False, annualize='January', firm_char=[], worker_char=[], 
-    strata_totals=False, key=os.getenv("CENSUS_KEY"), n_threads=1
+    strata_totals=False, enforce_release_consistency = False, 
+    key=os.getenv("CENSUS_KEY"), n_threads=1
 ):
     """
     Fetches nation-, state-, MSA-, or county-level Quarterly Workforce 
@@ -673,6 +609,18 @@ def qwi(
         Your Census Data API Key.
     """
 
+    if enforce_release_consistency:
+        df_releases = latest_releases(state_list, n_threads)
+        if df_releases.latest_release.nunique() > 1:
+            releases_dict = dict(
+                df_releases.groupby('latest_release')['state'].apply(list)
+            )
+            raise Exception(
+                'There are multiple releases currently in use:',
+                list(releases_dict.keys()), '\n',
+                f'Here are the corresponding states: {releases_dict}'     
+            )
+    
     if obs_level in ['us', 'state', 'county', 'msa']:
         obs_level_lst = [obs_level]
     elif obs_level == 'all':
@@ -731,7 +679,7 @@ def qwi(
             'If fips_list is provided, obs_level must be either msa or county.'
         )
 
-    estimated_shape = _estimate_data_shape(
+    estimated_shape = estimate_data_shape(
         indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
         state_list, fips_list
     )
