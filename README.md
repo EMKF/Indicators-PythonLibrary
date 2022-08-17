@@ -12,7 +12,7 @@ pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kcr
 ```
 
 # Requirements
-In order to run the `bds` or `qwi` functions, you will need a valid Census API key, either stored as an variable on your computer labeled "CENSUS_KEY", or passed to the function through the "key" argument. If you do not have a census key, you can submit a request at the following URL: https://api.census.gov/data/key_signup.html.
+In order to run the `bds` or `qwi` functions, you will need a valid Census API key, either stored as an environmental variable on your computer labeled "CENSUS_KEY", or passed to the function through the "key" argument. If you do not have a census key, you can submit a request at the following URL: https://api.census.gov/data/key_signup.html.
 
 
 # Library Structure
