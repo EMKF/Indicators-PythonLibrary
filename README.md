@@ -4,11 +4,11 @@
 # Installation
 In the terminal, type
 ```bash
-pip3 install git+https://github.com/EMKF/downwardata.git#egg=kcr
+pip3 install git+https://github.com/EMKF/downwardata.git#egg=kauffman
 ```
 We are still developing this library, obviously, so local updating will be necessary occasionally. To do this, type
 ```bash
-pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kcr
+pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kauffman
 ```
 
 # Requirements

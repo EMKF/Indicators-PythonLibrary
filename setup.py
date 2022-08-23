@@ -1,20 +1,17 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='kcr',
+    name='kauffman',
     url='https://github.com/EMKF/downwardata',
-    author='Travis Howe',
-    author_email='thowe@kauffman.org',
+    maintainer='Katherine Stevens Andersen',
+    maintainer_email='KAstev@gmail.com',
     packages=find_packages(),
-    # install_requires=[
-    #     'numpy', 'pandas', 'requests', 'statsmodels', 'geonamescache', 'xlrd==1.2.0', 'seaborn', 'sklearn'
-    # ],
     install_requires=[
-        'requests', 'boto3', 'geonamescache', 'joblib', 'matplotlib', 'numpy', 'pandas', 'scikit_learn', 'seaborn',
-        'selenium', 'webdriver_manager', 'xlrd'
+        'requests', 'boto3', 'geonamescache', 'joblib', 'matplotlib', 'numpy',
+        'pandas', 'scikit_learn', 'seaborn', 'selenium', 'webdriver_manager', 
+        'xlrd'
     ],
-    # descartes, geopandas
-    version='2.2.19',
+    version='2.3.0',
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
     long_description=open('README.md', encoding='utf8').read(),
