@@ -49,6 +49,24 @@ def latest_releases(state_list, n_threads):
         .reset_index(drop=True)
 
 
+def consistent_releases(state_list='all', n_threads=30, enforce=False):
+    state_list = c.states if state_list == 'all' else state_list
+
+    df_releases = latest_releases(state_list, n_threads)
+    if df_releases.latest_release.nunique() > 1:
+        if enforce:
+            releases_dict = dict(
+                df_releases.groupby('latest_release')['state'].apply(list)
+            )
+            raise Exception(
+                'There are multiple releases currently in use:',
+                list(releases_dict.keys()), '\n',
+                f'Here are the corresponding states: {releases_dict}'     
+            )
+        return False
+    return True
+
+
 def estimate_data_shape(
     indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
     state_list, fips_list
