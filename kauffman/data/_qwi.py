@@ -10,7 +10,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from joblib import Parallel, delayed
 from kauffman.tools._etl import state_msa_cross_walk as state_msa_cw
 from kauffman.tools._etl import fips_state_cross_walk as fips_state_cw
-from kauffman.tools._qwi_tools import latest_releases, estimate_data_shape
+from kauffman.tools._qwi_tools import consistent_releases, estimate_data_shape
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -610,16 +610,7 @@ def qwi(
     """
 
     if enforce_release_consistency:
-        df_releases = latest_releases(state_list, n_threads)
-        if df_releases.latest_release.nunique() > 1:
-            releases_dict = dict(
-                df_releases.groupby('latest_release')['state'].apply(list)
-            )
-            raise Exception(
-                'There are multiple releases currently in use:',
-                list(releases_dict.keys()), '\n',
-                f'Here are the corresponding states: {releases_dict}'     
-            )
+        consistent_releases(enforce=True)
     
     if obs_level in ['us', 'state', 'county', 'msa']:
         obs_level_lst = [obs_level]
@@ -688,8 +679,6 @@ def qwi(
             'Warning: You are attempting to fetch a dataframe of estimated',
             f'shape {estimated_shape}. You may experience memory errors.'
         )
-
-    print('QWI Dynamic API version')
 
     return pd.concat(
         [
