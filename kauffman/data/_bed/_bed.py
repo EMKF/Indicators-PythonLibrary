@@ -1,4 +1,3 @@
-from re import S
 import pandas as pd
 import kauffman.constants as c
 from ._firm_size import _firm_size_data_create
@@ -9,25 +8,32 @@ def bed(series, table, obs_level='all', industry='00'):
     """
        todo: go through this doc string
     'https://www.bls.gov/bdm/us_age_naics_00_table1.txt
-    'https://www.bls.gov/bdm/age_by_size/age_naics_base_ein_20201_t4.xlsx  # firm
-    'https://www.bls.gov/bdm/age_by_size/age_naics_base_20201_t4.xlsx  # establishment
+    'https://www.bls.gov/bdm/age_by_size/age_naics_base_ein_20201_t4.xlsx (firm)
+    'https://www.bls.gov/bdm/age_by_size/age_naics_base_20201_t4.xlsx 
+        (establishment)
 
 
         # todo...series and table need to be lumped together somehow
-       BED series is bdm (Establishment Age and Survival Data). Industry is 00, All.
+       BED series is bdm (Establishment Age and Survival Data). 
+       Industry is 00, All.
         series: str
             'bdm: firm size'
             'bdm: establishment age and survival'
 
         table: int,
             1: Private sector gross jobs gains and losses by establishment age
-            2: Private sector gross jobs gains and losses, as a percent of employment, by establishment age
-            3: Number of private sector establishments by direction of employment change, by establishment age
-            4: Number of private sector establishments by direction of employment change by establishment age, as a percent of total establishments
+            2: Private sector gross jobs gains and losses, as a percent of
+                employment, by establishment age
+            3: Number of private sector establishments by direction of
+                employment change, by establishment age
+            4: Number of private sector establishments by direction of
+                employment change by establishment age, as a percent of total
+                establishments
             5: Number of private sector establishments by age
             6: Private sector employment by establishment age
             7: Survival of private sector establishments by opening year
-            1bf: Annual gross job gains and gross job losses by age and base size of firm
+            1bf: Annual gross job gains and gross job losses by age and base
+                size of firm
 
         obs_level: str
             'all'
@@ -62,9 +68,13 @@ def bed(series, table, obs_level='all', industry='00'):
     Private Sector Firm-Level Job Gains and Losses
 
     table:
-        1: Seasonally Adjusted, 2: Not Seasonally Adjusted, 3: As % Employment Seasonally Adjusted, 4: As % Employment Not Seasonally Adjusted
+        1: Seasonally Adjusted
+        2: Not Seasonally Adjusted
+        3: As % Employment Seasonally Adjusted
+        4: As % Employment Not Seasonally Adjusted
     firm size: (number of employees)
-        1: 1-4 , 2: 5-9 , 3: 10-19 , 4: 20-49 , 5: 50-99, 6: 100-249 , 7: 250-499 , 8: 500-999 , 9: >1000
+        1: 1-4 , 2: 5-9 , 3: 10-19 , 4: 20-49 , 5: 50-99, 6: 100-249 ,
+        7: 250-499 , 8: 500-999 , 9: >1000
 
     """
 
