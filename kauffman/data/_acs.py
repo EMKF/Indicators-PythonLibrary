@@ -22,10 +22,8 @@ def _build_region_section(region, state_lst):
 
         msa_section = ','.join(msa_list)
 
-        return (
-            '&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:'
-            +  msa_section
-        )
+        return f'&for={c.api_msa_string}:{msa_section}'
+
 
 def _fetch_data(year, var_set, region, state_lst):
     var_lst = ','.join(var_set)
@@ -52,7 +50,9 @@ def _covar_create_fips_region(df, region):
         df['fips'] = df['msa'].astype(str)
     else:
         df = df.assign(fips='00')
-    return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name)).drop(columns=region)
+    return df \
+        .assign(region=lambda x: x['fips'].map(c.all_fips_to_name)) \
+        .drop(columns=region)
 
 
 def index_to_front(df):
@@ -62,13 +62,13 @@ def index_to_front(df):
 def _acs_data_create(series_lst, region, state_lst):
     return pd.concat(
         [
-            _fetch_data(year, series_lst, region, state_lst). \
-                pipe(_make_header). \
-                rename(columns=c.acs_code_to_var). \
-                rename(columns={'metropolitan statistical area/micropolitan statistical area':'msa'}).\
-                pipe(_covar_create_fips_region, region). \
-                assign(year=year). \
-                pipe(index_to_front)
+            _fetch_data(year, series_lst, region, state_lst) \
+                .pipe(_make_header) \
+                .rename(columns=c.acs_code_to_var) \
+                .rename(columns={c.api_msa_string:'msa'}) \
+                .pipe(_covar_create_fips_region, region) \
+                .assign(year=year) \
+                .pipe(index_to_front)
             for year in range(2005, 2019 + 1)
         ],
         axis=0
@@ -116,7 +116,8 @@ def acs(series_lst='all', obs_level='all', state_lst = 'all'):
 
     state_lst = str or list
         'all': default, includes all US states and D.C.
-        otherwise: a state or list of states, identified using postal code abbreviations
+        otherwise: a state or list of states, identified using postal code 
+            abbreviations
 
     """
     # Handle series_lst

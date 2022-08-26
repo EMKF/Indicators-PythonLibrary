@@ -115,23 +115,19 @@ def _build_url(
     state_fips, region_fips = loop_var['state_fips'], loop_var['region_fips']
 
     if obs_level == 'msa':
-        for_region = 'for=metropolitan%20statistical%20area/' \
-            + 'micropolitan%20statistical%20area:'
-        if region_fips:
-            for_region += f'{region_fips}&in=state:{state_fips}'
-        else:
-            for_region += f'*&in=state:{state_fips}'
+        region_fips = '*' if not region_fips else region_fips
+        for_region = f'{c.api_msa_string}:{region_fips}&in=state:{state_fips}'
     elif obs_level == 'county':
         if region_fips:
             if ',' not in region_fips:
                 region_fips = region_fips[-3:]
-            for_region = f'for=county:{region_fips}&in=state:{state_fips}'
+            for_region = f'county:{region_fips}&in=state:{state_fips}'
         else:
-            for_region = f'for=county:*&in=state:{state_fips}'
+            for_region = f'county:*&in=state:{state_fips}'
     else:
-        for_region = f'for=state:{state_fips}'
+        for_region = f'state:{state_fips}'
 
-    return f'{base_url}/{database}?get={get_statement}&{for_region}' \
+    return f'{base_url}/{database}?get={get_statement}&for={for_region}' \
         + f'&ownercode={ownercode}&{loop_section}&key={census_key}'
 
 
@@ -308,7 +304,7 @@ def _choose_loops(strata, obs_level, indicator_list):
         + ['geo_level', 'quarter', 'region', 'state', 'ownercode', 'time',
             'key']
     )
-    target = (c.API_CELL_LIMIT/n_columns) \
+    target = (c.api_cell_limit/n_columns) \
         / c.qwi_geo_to_max_cardinality[obs_level]
 
     winning_combo = _check_loop_group(loopable_dict, target, (None, 0))
@@ -397,9 +393,7 @@ def _create_fips(df, obs_level):
     elif obs_level == 'county':
         df['fips'] = df['state'].astype(str) + df['county'].astype(str)
     elif obs_level == 'msa':
-        df['fips'] = df \
-            ['metropolitan statistical area/micropolitan statistical area'] \
-            .astype(str)
+        df['fips'] = df[c.api_msa_string].astype(str)
     else:
         df = df.assign(fips='00')
     return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name))

@@ -1,5 +1,4 @@
 import io
-from json import load
 import boto3
 import requests
 import pandas as pd
@@ -17,11 +16,13 @@ def file_to_s3(file, s3_bucket, s3_file):
     s3_bucket: str
         Name of the S3 bucket. E.g., 'emkf.data.research'
     s3_file: str
-        Destination file location in S3. E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
+        Destination file location in S3. 
+        E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
 
     Examples:
         from kauffman.data import file_to_s3
-        file_to_s3('local_file_path.csv', 'emkf.data.research', 'indicators/nej/data_outputs/remote_file_path.csv')
+        file_to_s3('local_file_path.csv', 'emkf.data.research', 
+        'indicators/nej/data_outputs/remote_file_path.csv')
     """
     s3 = boto3.client('s3')
     with open(file, "rb") as f:
@@ -37,11 +38,13 @@ def file_from_s3(file, bucket, key):
     s3_bucket: str
         Name of the S3 bucket where file is located. E.g., 'emkf.data.research'
     s3_file: str
-        File location in S3. E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
+        File location in S3. 
+        E.g., 'indicators/nej/data_outputs/your_pickle_filename.pkl'
 
     Examples:
         from kauffman.data import file_from_s3
-        file_from_s3('local_file_path.csv', 'emkf.data.research', 'indicators/nej/data_outputs/remote_file_path.csv')
+        file_from_s3('local_file_path.csv', 'emkf.data.research', 
+        'indicators/nej/data_outputs/remote_file_path.csv')
     """
     s3 = boto3.client('s3')
     s3.download_fileobj(bucket, key, file)
@@ -57,40 +60,54 @@ def read_zip(zip_url, filename):
 
 
 def load_CBSA_cw():
+    url = 'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls'
     df_cw = pd.read_excel(
-            'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
+            url,
             header=2,
             skipfooter=4,
             usecols=[0, 3, 4, 9, 10],
             converters={
-                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 else f'0{x}',
-                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 else f'0{x}' if len(str(x)) == 2 else f'00{x}',
+                'FIPS State Code': lambda x: str(x) if len(str(x)) == 2 \
+                    else f'0{x}',
+                'FIPS County Code': lambda x: str(x) if len(str(x)) == 3 \
+                    else f'0{x}' if len(str(x)) == 2 \
+                    else f'00{x}',
             }
-        ).\
-        assign(fips_county=lambda x: x['FIPS State Code'] + x['FIPS County Code']). \
-        rename(
+        ) \
+        .assign(
+            fips_county=lambda x: x['FIPS State Code'] + x['FIPS County Code']
+        ) \
+        .rename(
             columns={
                 'FIPS State Code': 'fips_state',
                 'Metropolitan/Micropolitan Statistical Area': 'area',
                 'CBSA Code': 'fips_msa'
             }
-        ). \
-        astype({'fips_msa': 'str'}). \
-        append(
+        ) \
+        .astype({'fips_msa': 'str'}) \
+        .append(
             pd.DataFrame(
-                [['27980', 'Kahului-Wailuku-Lahaina, HI', 'Metropolitan Statistical Area', '15', '005', '15005'],
-                ['31340', 'Lynchburg, VA', 'Metropolitan Statistical Area', '51', '515', '51515']],
-                columns=['fips_msa', 'CBSA Title', 'area', 'fips_state', 'FIPS County Code', 'fips_county']
+                [
+                    ['27980', 'Kahului-Wailuku-Lahaina, HI', 
+                        'Metropolitan Statistical Area', '15', '005', '15005'],
+                    ['31340', 'Lynchburg, VA', 'Metropolitan Statistical Area',
+                        '51', '515', '51515']
+                ],
+                columns=[
+                    'fips_msa', 'CBSA Title', 'area', 'fips_state', 
+                    'FIPS County Code', 'fips_county'
+                ]
             )
-        ). \
-        reset_index(drop=True)
+        ) \
+        .reset_index(drop=True)
 
     return df_cw
 
 
 def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
     """
-    Receives county level data, and merges (on county fips) with a dataframe with CBSA codes.
+    Receives county level data, and merges (on county fips) with a dataframe 
+    with CBSA codes.
 
     fips_county: fips column name
     """
@@ -99,14 +116,15 @@ def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
 
     df_cw = load_CBSA_cw()
 
-    return df_county. \
-        rename(columns={fips_county: 'fips_county'}). \
-        merge(df_cw, how='left', on='fips_county') \
-        [['fips_msa', 'CBSA Title', 'time'] + outcomes]. \
-        groupby(['fips_msa', 'CBSA Title', 'time']).agg(agg_method). \
-        reset_index(drop=False). \
-        rename(columns={'CBSA Title': 'region', 'fips_msa':'fips'})
-# todo: I can't just groupby and sum wrt cw(), since there might be missing county values
+    return df_county \
+        .rename(columns={fips_county: 'fips_county'}) \
+        .merge(df_cw, how='left', on='fips_county') \
+        [['fips_msa', 'CBSA Title', 'time'] + outcomes] \
+        .groupby(['fips_msa', 'CBSA Title', 'time']).agg(agg_method) \
+        .reset_index(drop=False) \
+        .rename(columns={'CBSA Title': 'region', 'fips_msa':'fips'})
+# todo: I can't just groupby and sum wrt cw(), since there might be missing 
+# county values
 
 
 def state_msa_cross_walk(state_lst, area_type='metro'):
@@ -126,15 +144,18 @@ def state_msa_cross_walk(state_lst, area_type='metro'):
     elif area_type == 'micro':
         area_type = 'Micropolitan Statistical Area'
 
-    df_cw = load_CBSA_cw().\
-        pipe(lambda x: x if area_type == 'all' else x.query(f'area == "{area_type}"'))
+    df_cw = load_CBSA_cw() \
+        .pipe(
+            lambda x: x if area_type == 'all' \
+                else x.query(f'area == "{area_type}"')
+        )
     
-    return df_cw. \
-        query(f'fips_state in {state_lst}'). \
-        drop_duplicates('fips_msa') \
-        [['fips_msa']]. \
-        merge(df_cw, how='left', on='fips_msa'). \
-        drop(['CBSA Title', 'area', 'FIPS County Code'], 1)
+    return df_cw \
+        .query(f'fips_state in {state_lst}') \
+        .drop_duplicates('fips_msa') \
+        [['fips_msa']] \
+        .merge(df_cw, how='left', on='fips_msa') \
+        .drop(['CBSA Title', 'area', 'FIPS County Code'], 1)
 
 
 def fips_state_cross_walk(fips_lst, region):
@@ -149,17 +170,17 @@ def fips_state_cross_walk(fips_lst, region):
     output: dataframe with county and msa fips
     """
 
-    return load_CBSA_cw().\
-        query(f'fips_{region} in {fips_lst}').\
-        drop_duplicates([f'fips_{region}', 'fips_state']) \
+    return load_CBSA_cw() \
+        .query(f'fips_{region} in {fips_lst}') \
+        .drop_duplicates([f'fips_{region}', 'fips_state']) \
         [['fips_state', f'fips_{region}']]
 
 
 def _hispanic_create(df, covars):
-    return df.groupby(covars + ['ethnicity']).sum(). \
-        reset_index(drop=False). \
-        query('ethnicity == "A2"'). \
-        assign(race_ethnicity='Hispanic')
+    return df.groupby(covars + ['ethnicity']).sum() \
+        .reset_index(drop=False) \
+        .query('ethnicity == "A2"') \
+        .assign(race_ethnicity='Hispanic')
 
 
 def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):
@@ -170,17 +191,19 @@ def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):
         weight_var = 'weight'
         df['weight'] = 1
     
-    return df[strata + var_list].\
-        apply(lambda x: x*df[weight_var] if x.name in var_list else x).\
-        groupby(strata).sum().\
-        reset_index()
+    return df[strata + var_list] \
+        .apply(lambda x: x*df[weight_var] if x.name in var_list else x) \
+        .groupby(strata).sum() \
+        .reset_index()
 
 
 def race_ethnicity_categories_create(df, covars):
-    return df.\
-        query('ethnicity != "A2"').\
-        assign(race_ethnicity=lambda x: x['race'].map(c.mpj_covar_mapping('race'))).\
-        append(_hispanic_create(df, covars)). \
-        drop(['race', 'ethnicity'], 1).\
-        sort_values(covars + ['race_ethnicity'])
+    return df \
+        .query('ethnicity != "A2"') \
+        .assign(
+            race_ethnicity=lambda x: x['race'].map(c.mpj_covar_mapping('race'))
+        ) \
+        .append(_hispanic_create(df, covars)) \
+        .drop(['race', 'ethnicity'], 1) \
+        .sort_values(covars + ['race_ethnicity'])
 

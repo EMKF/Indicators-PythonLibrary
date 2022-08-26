@@ -1,6 +1,4 @@
-import sys
 import os
-import pandas as pd
 import kauffman.constants as c
 from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
 

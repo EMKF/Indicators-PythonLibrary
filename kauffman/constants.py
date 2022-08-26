@@ -225,7 +225,8 @@ month_to_quarter = {
 }
 
 
-API_CELL_LIMIT = 400000
+api_cell_limit = 400000
+api_msa_string = 'metropolitan statistical area/micropolitan statistical area'
 
 qwi_worker_crosses = [
     {'sex', 'agegrp'}, {'sex', 'education'}, {'education'}, 

@@ -6,7 +6,8 @@ from kauffman.tools._etl import load_CBSA_cw
 
 
 def _get_state_release_info(state, session):
-    url = f'https://lehd.ces.census.gov/data/qwi/latest_release/{state}/version_qwi.txt'
+    url = 'https://lehd.ces.census.gov/data/qwi/latest_release/' \
+        f'{state}/version_qwi.txt'
     r = session.get(url)
     if r.status_code == 200:
         content = r.text.split('\n')

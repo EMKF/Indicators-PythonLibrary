@@ -1,16 +1,8 @@
-.DS_Store
-*.idea
 *.csv 
 *.pkl
-*.pyc
 *.xls
 *.doc
 *.png
-*.xml
 __pycache__
-
-.idea/
 /scratch
-venv
-
 Desktop.ini

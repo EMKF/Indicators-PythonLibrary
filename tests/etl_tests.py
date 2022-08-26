@@ -1,8 +1,8 @@
-import sys
 import pandas as pd
 import kauffman.constants as c
 from kauffman.data import qwi
-from kauffman.tools import mpj_indicators, county_msa_cross_walk, read_zip, state_msa_cross_walk, race_ethnicity_categories_create
+from kauffman.tools import mpj_indicators, county_msa_cross_walk, read_zip, \
+    state_msa_cross_walk, race_ethnicity_categories_create
 
 
 def county_msa_cw():
