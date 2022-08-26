@@ -7,9 +7,9 @@ setup(
     maintainer_email='KAstev@gmail.com',
     packages=find_packages(),
     install_requires=[
-        'requests', 'boto3', 'geonamescache', 'joblib', 'matplotlib', 'numpy',
-        'pandas', 'scikit_learn', 'seaborn', 'selenium', 'webdriver_manager', 
-        'xlrd'
+        'pandas', 'numpy', 'os', 'requests', 'joblib', 'time', 'math',
+        'itertools', 'selenium', 'webdriver_manager', 'geonamescache', 
+        'zipfile', 'io', 'boto3', 'urllib', 'xlrd'
     ],
     version='2.3.0',
     license='MIT',
