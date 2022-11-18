@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 from kauffman import constants as c
+import os
 
 
 def _build_region_section(region, state_lst):
@@ -25,9 +26,9 @@ def _build_region_section(region, state_lst):
         return f'&for={c.api_msa_string}:{msa_section}'
 
 
-def _fetch_data(year, var_set, region, state_lst):
+def _fetch_data(year, var_set, region, state_lst, key):
     var_lst = ','.join(var_set)
-    base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}'
+    base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}&key={key}'
     url = base_url + _build_region_section(region, state_lst)
     r = requests.get(url)
     
@@ -59,10 +60,10 @@ def index_to_front(df):
     index_cols = ['fips', 'region', 'year']
     return df[index_cols + [col for col in df.columns if col not in index_cols]]
 
-def _acs_data_create(series_lst, region, state_lst):
+def _acs_data_create(series_lst, region, state_lst, key):
     return pd.concat(
         [
-            _fetch_data(year, series_lst, region, state_lst) \
+            _fetch_data(year, series_lst, region, state_lst, key) \
                 .pipe(_make_header) \
                 .rename(columns=c.acs_code_to_var) \
                 .rename(columns={c.api_msa_string:'msa'}) \
@@ -75,7 +76,7 @@ def _acs_data_create(series_lst, region, state_lst):
     )
 
 
-def acs(series_lst='all', obs_level='all', state_lst = 'all'):
+def acs(series_lst='all', obs_level='all', state_lst = 'all', key=os.getenv("CENSUS_KEY")):
     """
         https://api.census.gov/data/2019/acs/acs1/variables.html
 
@@ -143,7 +144,7 @@ def acs(series_lst='all', obs_level='all', state_lst = 'all'):
 
     return pd.concat(
             [
-                _acs_data_create(series_lst, region, state_lst)
+                _acs_data_create(series_lst, region, state_lst, key)
                 for region in region_lst
             ],
             axis=0
