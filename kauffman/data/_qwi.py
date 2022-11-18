@@ -161,7 +161,7 @@ def _led_scrape_data(private, firm_char, worker_char):
     pause2 = 3
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
     chrome_options.add_argument("window-size=1920x1080")
 
     driver = webdriver.Chrome(
@@ -169,6 +169,10 @@ def _led_scrape_data(private, firm_char, worker_char):
         options=chrome_options
     )
     driver.get('https://ledextract.ces.census.gov/static/data.html')
+
+    time.sleep(pause1)
+    driver.find_element(By.LINK_TEXT, 'All QWI Measures').click()
+    time.sleep(pause1)
 
     # Reset selected states
     # For some reason, the default right now is to select Wisconsin, so this
@@ -186,7 +190,7 @@ def _led_scrape_data(private, firm_char, worker_char):
         '//input[@aria-label="National (50 States + DC) 00"]'
     ).click()
     time.sleep(pause1)
-    driver.find_element(By.ID, 'continue_with_selection_label').click()
+    driver.find_element(By.XPATH, '//*[text()="Continue to Firm Characteristics"]').click()
 
     # Firm Characteristics
     if not private:
@@ -211,7 +215,7 @@ def _led_scrape_data(private, firm_char, worker_char):
         driver.find_element(By.XPATH, '//input[@name="industries_list_all"]') \
             .click()
 
-    driver.find_element(By.ID, 'continue_to_worker_char').click()
+    driver.find_element(By.XPATH, '//*[text()="Continue to Worker Characteristics"]').click()
 
     # Worker Characteristics
     if set(worker_char) in [{'sex', 'agegrp'}, {'sex'}, {'agegrp'}]:
@@ -245,27 +249,29 @@ def _led_scrape_data(private, firm_char, worker_char):
                 By.XPATH, '//input[@name="worker_rh_ethnicity_all"]'
             ).click()
 
-    driver.find_element(By.ID, 'continue_to_indicators').click()
+    driver.find_element(By.XPATH, '//*[text()="Continue to Indicators"]').click()
 
     # Indicators
-    for _ in range(0, 3):
-        driver.find_element(By.CLASS_NAME, 'ClosedGroup').click()
-        time.sleep(pause2)
-    for box in range(1,32):
-        driver.find_elements(By.NAME, 'indicator')[box].click()
-        # time.sleep(pause1)
-    driver.find_element(By.ID, 'continue_to_quarters').click()
+    driver.find_element(By.NAME, 'indicators_all').click()
+    driver.find_element(By.XPATH, f'//*[text()="Employment Change, Individual"]').click()
+    driver.find_element(By.XPATH, '//*[@data-part="indicators_employment_change_individual"]//*[@name="indicators_all"]').click()
+    driver.find_element(By.XPATH, f'//*[text()="Employment Change, Firm"]').click()
+    driver.find_element(By.XPATH, '//*[@data-part="indicators_employment_change_firm"]//*[@name="indicators_all"]').click()
+    driver.find_element(By.XPATH, f'//*[text()="Earnings"]').click()
+    driver.find_element(By.XPATH, '//*[@data-part="indicators_earnings"]//*[@name="indicators_all"]').click()
+
+    driver.find_element(By.XPATH, '//*[text()="Continue to Quarters"]').click()
 
     # Quarters
     for quarter in range(1, 5):
         driver.find_element(
             By.XPATH, '//*[@title="Check All Q{}"]'.format(quarter)
         ).click()
-    driver.find_element(By.ID, 'continue_to_export').click()
+    driver.find_element(By.XPATH, '//*[text()="Continue to Summary and Export"]').click()
 
     # Summary and Export
     time.sleep(pause2)
-    driver.find_element(By.ID, 'submit_request').click()
+    driver.find_element(By.XPATH, '//*[text()="Submit Request"]').click()
 
     try:
         element = WebDriverWait(driver, 60) \
@@ -506,7 +512,7 @@ def _create_data(
 def qwi(
     indicator_list='all', obs_level='all', state_list='all', fips_list=[],
     private=False, annualize='January', firm_char=[], worker_char=[], 
-    strata_totals=False, enforce_release_consistency = False, 
+    strata_totals=False, enforce_release_consistency=False, 
     key=os.getenv("CENSUS_KEY"), n_threads=1
 ):
     """
