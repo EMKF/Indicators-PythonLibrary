@@ -118,7 +118,7 @@ def _county_1990_1999():
 def _county_2000_2009():
     base_url = 'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_DESC&for=county:*&DATE_='
     return pd.concat([
-            pd.DataFrame(requests.get(base_url + date).json()) \
+            pd.DataFrame(requests.get(base_url + str(date)).json()) \
                 .pipe(_make_header) \
                 .query('state != "72"') \
                 .assign(
