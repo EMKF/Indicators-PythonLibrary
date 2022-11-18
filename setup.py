@@ -7,7 +7,7 @@ setup(
     maintainer_email='KAstev@gmail.com',
     packages=find_packages(),
     install_requires=[
-        'pandas', 'numpy', 'os', 'requests', 'joblib', 'time', 'math',
+        'pandas', 'numpy', 'requests', 'joblib', 'time', 'math',
         'itertools', 'selenium', 'webdriver_manager', 'geonamescache', 
         'zipfile', 'io', 'boto3', 'urllib', 'xlrd'
     ],
