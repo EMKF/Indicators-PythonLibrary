@@ -7,9 +7,9 @@ import numpy as np
 
 
 def _county_fips(df):
-    return df.\
-        assign(county=lambda x: x['state'] + x['county']).\
-        drop('state', 1)
+    return df \
+        .assign(county=lambda x: x['state'] + x['county']) \
+        .drop('state', 1)
 
 
 def _fetch_data(url, session):
@@ -57,11 +57,11 @@ def _build_url(variables, region, strata, key, state_fips=None, year='*'):
 
 
 def _mark_flagged(df, variables):
-    df[variables] = df[variables]. \
-        apply(
-            lambda x: df[f'{x.name}_F']. \
-                where(df[f'{x.name}_F'].isin(['D', 'S', 'X']), x). \
-                replace(['D', 'S', 'X'], np.NaN)
+    df[variables] = df[variables] \
+        .apply(
+            lambda x: df[f'{x.name}_F'] \
+                .where(df[f'{x.name}_F'].isin(['D', 'S', 'X']), x) \
+                .replace(['D', 'S', 'X'], np.NaN)
         )
     return df
 
@@ -94,26 +94,26 @@ def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
 
     flags = [f'{var}_F' for var in variables] if get_flags else []
 
-    return df. \
-        pipe(lambda x: _county_fips(x) if region == 'county' else x). \
-        rename(columns={
+    return df \
+        .pipe(lambda x: _county_fips(x) if region == 'county' else x) \
+        .rename(columns={
             **{c.api_msa_string:'fips'},
             **{region: 'fips', 'YEAR': 'time', 'NAICS':'naics'}, 
             **{x:x.lower() for x in strata}
             }
-        ).\
-        assign(
+        ) \
+        .assign(
             fips=lambda x: '00' if region == 'us' else x['fips'],
             region=lambda x: x['fips'].map(c.all_fips_to_name),
             industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))
-        ). \
-        apply(
+        ) \
+        .apply(
             lambda x: pd.to_numeric(x, errors='ignore') \
                 if x.name in variables + ['time'] else x
-        ).\
-        pipe(_mark_flagged, variables).\
-        sort_values(['fips', 'time']).\
-        reset_index(drop=True) \
+        ) \
+        .pipe(_mark_flagged, variables) \
+        .sort_values(['fips', 'time'] + strata) \
+        .reset_index(drop=True) \
         [
             ['fips', 'region', 'time'] \
             + [x.lower() for x in strata] \
