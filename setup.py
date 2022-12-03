@@ -8,7 +8,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pandas', 'numpy', 'requests', 'joblib', 'selenium', 'openpyxl',
-        'webdriver_manager', 'geonamescache', 'boto3', 'lxml'
+        'webdriver_manager', 'geonamescache', 'boto3', 'lxml', 'xlrd'
     ],
     version='2.3.0',
     license='MIT',
