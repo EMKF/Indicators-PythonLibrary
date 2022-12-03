@@ -7,8 +7,8 @@ setup(
     maintainer_email='KAstev@gmail.com',
     packages=find_packages(),
     install_requires=[
-        'pandas', 'numpy', 'requests', 'joblib', 'selenium', 
-        'webdriver_manager', 'geonamescache', 'boto3', 'xlrd'
+        'pandas', 'numpy', 'requests', 'joblib', 'selenium', 'openpyxl'
+        'webdriver_manager', 'geonamescache', 'boto3', 'lxml'
     ],
     version='2.3.0',
     license='MIT',
