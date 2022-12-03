@@ -4,7 +4,7 @@ import pandas as pd
 import kauffman.constants as c
 
 
-def _data_lines(table, region, industry):
+def _data_lines_survival(table, region, industry):
     if region == 'us':
         url = 'https://www.bls.gov/bdm/us_age_naics_' \
             + f'{industry}_table{table}.txt'
@@ -203,16 +203,16 @@ def table1bf(df, age=0, size=7):
 
 def _est_age_surv_data_create(table, region, industry):
     if table in range(1, 5):
-        df = table1(_data_lines(table, region, industry))
+        df = table1(_data_lines_survival(table, region, industry))
     if table in [5, 6]:
-        df = table5(_data_lines(table, region, industry))
+        df = table5(_data_lines_survival(table, region, industry))
     if table == 7:
-        df = table7(_data_lines(table, region, industry))
+        df = table7(_data_lines_survival(table, region, industry))
     if table == '1bf':
         url = 'https://www.bls.gov/bdm/age_by_size/' \
-            + "" if region == "us" else f"{region}_" \
+            + ("" if region == "us" else f"{region}_") \
             + 'age_naics_base_ein_20211_t1.xlsx'
-        df = table1bf(pd.read_excel(url, engine='xlrd'))
+        df = table1bf(pd.read_excel(url, engine='openpyxl'))
 
     covars = df.columns.tolist()[1:]
     return df \

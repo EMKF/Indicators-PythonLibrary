@@ -3,7 +3,7 @@ import pandas as pd
 import kauffman.constants as c
 
 
-def _data_lines(table, firm_size):
+def _data_lines_firmsize(table, firm_size):
     url = f'https://www.bls.gov/web/cewbd/f.0{firm_size}.table{table}_d.txt'
     lines = requests.get(url).text.split('\n')
     return lines
@@ -32,7 +32,7 @@ def df_create(lines):
 
 
 def _firm_size_data_create(table, firm_size):
-    return df_create(_data_lines(table, firm_size)) \
+    return df_create(_data_lines_firmsize(table, firm_size)) \
         .assign(
             size=c.size_code_to_label2[firm_size],
             fips='00',
