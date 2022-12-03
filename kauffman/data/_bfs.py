@@ -13,7 +13,7 @@ def _format_df(df):
 
 	
 def _fetch_data():
-    link = 'https://www.census.gov/econ/currentdata/clutch/getzippedfile?program=BFS&filename=BFS-mf.zip'
+    link = 'https://www.census.gov/econ_getzippedfile/?programCode=BFS'
     r = urllib2.urlopen(link).read()
     file = ZipFile(BytesIO(r)) 
     bfs_file = file.open("BFS-mf.csv")
@@ -34,6 +34,9 @@ def _fetch_data():
     ]
     data = _format_df(df[row_splits[-1]:])
 
+    # Patch fix for mistake in the Census file--hopefully this line is temporary
+    region_key.columns = ['geo_idx', 'geo_code', 'geo_desc']
+
     return data, industry_key, series_key, region_key, time_key
 	
 
@@ -42,12 +45,12 @@ def clean_data(df, industry_key, series_key, region_key, time_key):
         .merge(
             industry_key.drop(columns='cat_indent'), on='cat_idx', how='left'
         ) \
-        .merge(series_key[['dt_idx', 'dt_code']], on='dt_idx', how='left') \
+        .merge(series_key[['dt_idx', 'dat_code']], on='dt_idx', how='left') \
         .merge(region_key, on='geo_idx', how='left') \
         .merge(time_key, on='per_idx', how='left') \
         .rename(
             columns={
-                'cat_code':'naics', 'cat_desc':'industry', 'dt_code':'series', 
+                'cat_code':'naics', 'cat_desc':'industry', 'dat_code':'series', 
                 'geo_code':'region_code', 'geo_desc':'region', 'per_name':'time'
             }
         ) \
@@ -178,7 +181,7 @@ def _bfs_data_create(
             seasonally_adj
         ) \
         .assign(
-            time=lambda x: pd.to_datetime(x['time'], format='%b%Y'),
+            time=lambda x: pd.to_datetime(x['time'], format='%b-%Y'),
             fips=lambda x: x.region_code.map(c.state_abb_to_fips)
         ) \
         .pipe(_annualize, annualize, bf_helper_lst, march_shift) \
