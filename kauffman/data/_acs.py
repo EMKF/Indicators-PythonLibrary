@@ -73,7 +73,7 @@ def _acs_data_create(series_lst, region, state_lst, key):
             for year in range(2005, 2019 + 1)
         ],
         axis=0
-    )
+    ).sort_values(['fips', 'region', 'year'])
 
 
 def acs(series_lst='all', obs_level='all', state_lst = 'all', key=os.getenv("CENSUS_KEY")):
