@@ -161,7 +161,7 @@ def _led_scrape_data(private, firm_char, worker_char):
     pause2 = 3
 
     chrome_options = Options()
-    #chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--headless')
     chrome_options.add_argument("window-size=1920x1080")
 
     driver = webdriver.Chrome(
