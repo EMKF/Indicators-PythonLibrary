@@ -112,7 +112,7 @@ def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
                 if x.name in variables + ['time'] else x
         ) \
         .pipe(_mark_flagged, variables) \
-        .sort_values(['fips', 'time'] + strata) \
+        .sort_values(['fips', 'time'] + [x.lower() for x in strata]) \
         .reset_index(drop=True) \
         [
             ['fips', 'region', 'time'] \
