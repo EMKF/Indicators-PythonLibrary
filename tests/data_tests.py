@@ -151,8 +151,3 @@ qwi33 = "qwi(indicator_list=indicators, obs_level='state', firm_char=['industry'
 # Strata totals examples
 qwi34 = "qwi(indicator_list=indicators, obs_level='state', firm_char=['firmsize'], strata_totals=True, n_threads=30)"
 qwi35 = "qwi(indicator_list=indicators, obs_level='state', worker_char=['sex'], strata_totals=True, n_threads=30)"
-
-
-############### SHED tests ###################
-shed1 = "shed('us', ['gender', 'race_ethnicity'], ['med_exp_12_months', 'man_financially'])"
-shed2 = "shed(['med_exp_12_months', 'man_financially'], 'us',)"

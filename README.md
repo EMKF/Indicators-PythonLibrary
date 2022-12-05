@@ -29,7 +29,6 @@ Function | Source Dataset Title                   | Source Organization        |
 `bfs`    | Business Formation Statistics          | U.S. Census Bureau         |
 `pep`    | Population Estimates Program           | U.S. Census Bureau         |
 `qwi`    | Quarterly Workforce Indicators         | U.S. Census Bureau         |
-`shed`   | Survey of Household Economics and Decisionmaking | Federal Reserve  |
 
 
 ### 2. `tools`
