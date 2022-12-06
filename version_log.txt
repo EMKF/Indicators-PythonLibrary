@@ -1,0 +1,2 @@
+(12/6/22) Version 2.3.0
+	Major restructure of library. Removed unused files, fixed broken modules, removed SHED module, updated setup.py's install_requires and author information, reformatted all files to follow consistent pattern.
