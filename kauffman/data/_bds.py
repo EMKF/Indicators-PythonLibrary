@@ -2,44 +2,11 @@ import requests
 import pandas as pd
 import kauffman.constants as c
 import os
-from joblib import Parallel, delayed
 import numpy as np
+from kauffman.tools import api_tools
 
 
-def _county_fips(df):
-    return df \
-        .assign(county=lambda x: x['state'] + x['county']) \
-        .drop('state', 1)
-
-
-def _fetch_data(url, session):
-    success = False
-    attempts = 0
-    while not success and attempts < 5:
-        try:
-            r = session.get(url)
-            if r.status_code == 200:
-                df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
-                success = True
-            elif r.status_code == 204:
-                df = pd.DataFrame()
-                success = True
-            else:
-                attempts += 1
-                print(f'ERROR. Code: {r}. Attempt #{attempts}/5. URL: {url}')
-                df = pd.DataFrame()
-        except Exception as e:
-            attempts += 1
-            print(f'ERROR. Attempt #{attempts}/5. URL: {url}. Error: {e}')
-            df = pd.DataFrame()
-    if not success:
-        print(
-            f'\nRAN OUT OF ATTEMPTS for url: {url}', 
-            '\n**If unexpected, please check your key and other parameters.**\n'
-        )
-    return df
-
-def _build_url(variables, region, strata, key, state_fips=None, year='*'):
+def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
     flag_var = [f'{var}_F' for var in variables]
     var_string = ",".join(variables + strata + flag_var)
     
@@ -56,6 +23,11 @@ def _build_url(variables, region, strata, key, state_fips=None, year='*'):
         f'&for={region_string}&YEAR={year}{naics_string}&key={key}'
 
 
+def _bds_fetch_data(year, variables, region, strata, key, s):
+    url = _bds_build_url(variables, region, strata, key, '*', year)
+    return api_tools.fetch_from_url(url, s)
+
+
 def _mark_flagged(df, variables):
     df[variables] = df[variables] \
         .apply(
@@ -67,24 +39,14 @@ def _mark_flagged(df, variables):
 
 
 def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
-    s = requests.Session()
-    parallel = Parallel(n_jobs=n_threads, backend='threading')
-
     if 'NAICS' not in strata or region == 'us':
-        df = _fetch_data(_build_url(variables, region, strata, key, '*'), s)
+        url = _bds_build_url(variables, region, strata, key, '*')
+        df = api_tools.fetch_from_url(url, requests)
     else:
-        with parallel:
-            df = pd.concat(
-                parallel(
-                    delayed(_fetch_data)(
-                        _build_url(variables, region, strata, key, '*', year),
-                        s
-                    )
-                    for year in range(1978, 2020)
-                )
-            )
-            
-    s.close()
+        years = list(range(1978, 2020))
+        df = api_tools.run_in_parallel(
+            _bds_fetch_data, years, [variables, region, strata, key], n_threads
+        )            
 
     if len(df) == 0: 
         raise Exception(
@@ -95,18 +57,13 @@ def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
     flags = [f'{var}_F' for var in variables] if get_flags else []
 
     return df \
-        .pipe(lambda x: _county_fips(x) if region == 'county' else x) \
+        .pipe(api_tools.create_fips, region) \
         .rename(columns={
-            **{c.api_msa_string:'fips'},
-            **{region: 'fips', 'YEAR': 'time', 'NAICS':'naics'}, 
+            **{'YEAR': 'time', 'NAICS':'naics'}, 
             **{x:x.lower() for x in strata}
             }
         ) \
-        .assign(
-            fips=lambda x: '00' if region == 'us' else x['fips'],
-            region=lambda x: x['fips'].map(c.all_fips_to_name),
-            industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))
-        ) \
+        .assign(industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))) \
         .apply(
             lambda x: pd.to_numeric(x, errors='ignore') \
                 if x.name in variables + ['time'] else x

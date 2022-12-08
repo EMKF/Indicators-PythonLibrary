@@ -1,18 +1,20 @@
-import requests
+import os
 import pandas as pd
 from kauffman import constants as c
-import os
+from kauffman.tools import api_tools
 
 
-def _build_region_section(region, state_lst):
+def _acs_fetch_data(year, var_set, region, state_lst, key, s):
+    var_lst = ','.join(var_set)
+    base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}&key={key}'
     state_section = ','.join(state_lst)
     
     if region == 'us':
-        return f'&for={region}:*'
+        region_section = f'&for={region}:*'
     elif region == 'state':
-        return f'&for={region}:{state_section}'
+        region_section = f'&for={region}:{state_section}'
     elif region == 'county':
-        return f'&for={region}:*&in=state:{state_section}'
+        region_section = f'&for={region}:*&in=state:{state_section}'
     else:
         msa_list = []
         for state in state_lst:
@@ -20,63 +22,31 @@ def _build_region_section(region, state_lst):
                 msa_list.extend(c.state_to_msa_fips[state])
             except:
                 pass
+        region_section = f'&for={c.api_msa_string}:{",".join(msa_list)}'
 
-        msa_section = ','.join(msa_list)
-
-        return f'&for={c.api_msa_string}:{msa_section}'
-
-
-def _fetch_data(year, var_set, region, state_lst, key):
-    var_lst = ','.join(var_set)
-    base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}&key={key}'
-    url = base_url + _build_region_section(region, state_lst)
-    r = requests.get(url)
-    
-    return pd.DataFrame(r.json())
+    url = base_url + region_section
+    return api_tools.fetch_from_url(url, s) \
+        .assign(year=year)
 
 
-# todo: I think this can be replaced with a parameter in pd.DataFrame()
-def _make_header(df):
-    df.columns = df.iloc[0]
-    return df.iloc[1:, :]
+def _acs_data_create(series_lst, region, state_lst, key, n_threads):
+    years = list(range(2005, 2019 + 1))
+    return api_tools.run_in_parallel(
+        _acs_fetch_data,
+        years,
+        [series_lst, region, state_lst, key], 
+        n_threads
+    ) \
+        .pipe(api_tools.create_fips, region) \
+        [['fips', 'region', 'year'] + series_lst] \
+        .rename(columns=c.acs_code_to_var) \
+        .sort_values(['fips', 'region', 'year'])
 
 
-def _covar_create_fips_region(df, region):
-    if region == 'state':
-        df['fips'] = df['state'].astype(str)
-    elif region == 'county':
-        df['fips'] = df['state'].astype(str) + df['county'].astype(str)
-        df = df.drop(columns='state')
-    elif region == 'msa':
-        df['fips'] = df['msa'].astype(str)
-    else:
-        df = df.assign(fips='00')
-    return df \
-        .assign(region=lambda x: x['fips'].map(c.all_fips_to_name)) \
-        .drop(columns=region)
-
-
-def index_to_front(df):
-    index_cols = ['fips', 'region', 'year']
-    return df[index_cols + [col for col in df.columns if col not in index_cols]]
-
-def _acs_data_create(series_lst, region, state_lst, key):
-    return pd.concat(
-        [
-            _fetch_data(year, series_lst, region, state_lst, key) \
-                .pipe(_make_header) \
-                .rename(columns=c.acs_code_to_var) \
-                .rename(columns={c.api_msa_string:'msa'}) \
-                .pipe(_covar_create_fips_region, region) \
-                .assign(year=year) \
-                .pipe(index_to_front)
-            for year in range(2005, 2019 + 1)
-        ],
-        axis=0
-    ).sort_values(['fips', 'region', 'year'])
-
-
-def acs(series_lst='all', obs_level='all', state_lst = 'all', key=os.getenv("CENSUS_KEY")):
+def acs(
+    series_lst='all', obs_level='all', state_lst = 'all',
+    key=os.getenv("CENSUS_KEY"), n_threads=1
+):
     """
         https://api.census.gov/data/2019/acs/acs1/variables.html
 
@@ -144,7 +114,7 @@ def acs(series_lst='all', obs_level='all', state_lst = 'all', key=os.getenv("CEN
 
     return pd.concat(
             [
-                _acs_data_create(series_lst, region, state_lst, key)
+                _acs_data_create(series_lst, region, state_lst, key, n_threads)
                 for region in region_lst
             ],
             axis=0

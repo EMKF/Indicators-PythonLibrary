@@ -1,16 +1,15 @@
 import os
 import time
-import requests
 import numpy as np
 import pandas as pd
 from math import ceil
 from itertools import product
 from kauffman import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
-from joblib import Parallel, delayed
 from kauffman.tools._etl import state_msa_cross_walk as state_msa_cw
 from kauffman.tools._etl import fips_state_cross_walk as fips_state_cw
 from kauffman.tools._qwi_tools import consistent_releases, estimate_data_shape
+from kauffman.tools import api_tools
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -129,31 +128,6 @@ def _build_url(
 
     return f'{base_url}/{database}?get={get_statement}&for={for_region}' \
         + f'&ownercode={ownercode}&{loop_section}&key={census_key}'
-
-
-def _fetch_from_url(url, session):
-    success = False
-    retries = 0
-    while not success and retries < 5:
-        try:
-            r = session.get(url)
-            if r.status_code == 200:
-                df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
-                success = True
-            elif r.status_code == 204:
-                df = pd.DataFrame()
-                success = True
-            else:
-               print(f'Fail. Retry #{retries}', 'Status code:', r, url)
-               retries += 1
-               df = pd.DataFrame()
-        except Exception as e:
-            print(f'Fail. Retry #{retries}', e)
-            retries += 1
-            df = pd.DataFrame()
-    if not success:
-        raise Exception(f'Maxed out retries with url: {url}')
-    return df
 
 
 def _led_scrape_data(private, firm_char, worker_char):
@@ -323,37 +297,13 @@ def _choose_loops(strata, obs_level, indicator_list):
     return loop_over_list, winning_combo[0], max_years_per_call
 
 
-def _api_fetch_data(
-    indicator_list, obs_level, firm_char, worker_char, private, key, n_threads,
-    state_list=[], fips_list=[]
+def _qwi_api_fetch(
+    loop_var, non_loop_var, indicator_list, obs_level, private, key, s
 ):
-    looped_strata, non_loop_var, max_years_per_call = _choose_loops(
-        firm_char + worker_char, obs_level, indicator_list
+    url = _build_url(
+        loop_var, non_loop_var, indicator_list, obs_level, private, key
     )
-
-    s = requests.Session()
-    parallel = Parallel(n_jobs=n_threads, backend='threading')
-
-    with parallel:
-        df = pd.concat(
-            parallel(
-                delayed(_fetch_from_url)(
-                    _build_url(
-                        g, non_loop_var, indicator_list, obs_level, 
-                        private, key
-                    ), 
-                    s
-                )
-                for g in _get_url_groups(
-                    obs_level, looped_strata, max_years_per_call, private, 
-                    state_list, fips_list
-                )
-            )
-        )
-
-    s.close()
-
-    return df
+    return api_tools.fetch_from_url(url, s)
 
 
 def _cols_to_numeric(df, var_lst):
@@ -391,18 +341,6 @@ def _annualize_data(df, annualize, covars):
         .drop(columns=['row_count']) \
         .groupby(covars).sum(min_count=4) \
         .reset_index(drop=False)
-
-
-def _create_fips(df, obs_level):
-    if obs_level == 'state':
-        df['fips'] = df['state'].astype(str)
-    elif obs_level == 'county':
-        df['fips'] = df['state'].astype(str) + df['county'].astype(str)
-    elif obs_level == 'msa':
-        df['fips'] = df[c.api_msa_string].astype(str)
-    else:
-        df = df.assign(fips='00')
-    return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name))
 
 
 def _filter_strata_totals(df, firm_char, worker_char, strata_totals):
@@ -479,26 +417,32 @@ def _create_data(
             ) \
             .rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        main_args = [
-            indicator_list, obs_level, firm_char, worker_char, private, key,
-            n_threads
-        ]
+        looped_strata, non_loop_var, max_years_per_call = _choose_loops(
+            firm_char + worker_char, obs_level, indicator_list
+        )
         if fips_list:
             if obs_level == 'county':
-                fips_pairs = list(zip([x[:2] for x in fips_list], fips_list))
+                fips_list = list(zip([x[:2] for x in fips_list], fips_list))
             else:
-                fips_pairs = [
+                fips_list = [
                     tuple(row)
                     for row in fips_state_cw(fips_list, obs_level).values
                 ]
-            df = _api_fetch_data(*main_args, fips_list=fips_pairs)
-        else:
-            df = _api_fetch_data(*main_args, state_list=state_list)
+        groups = _get_url_groups(
+                obs_level, looped_strata, max_years_per_call, private, 
+                state_list, fips_list
+            )
+        df = api_tools.run_in_parallel(
+            _qwi_api_fetch, 
+            groups,
+            [non_loop_var, indicator_list, obs_level, private, key],
+            n_threads
+        )
 
     df.drop_duplicates(inplace=True)
 
     return df \
-        .pipe(_create_fips, obs_level) \
+        .pipe(api_tools.create_fips, obs_level) \
         .pipe(_cols_to_numeric, indicator_list) \
         .pipe(_filter_strata_totals, firm_char, worker_char, strata_totals) \
         .pipe(_aggregate_msas, covars, obs_level) \
