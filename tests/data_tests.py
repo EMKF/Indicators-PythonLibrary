@@ -103,7 +103,7 @@ msas = [
     '39150', '23780', '38860'    
 ]
 
-# MPJ Usage
+# EJI Usage
 qwi1 = "qwi(obs_level='county', firm_char=['firmage'], n_threads=30)"
 qwi2 = "qwi(obs_level='msa', firm_char=['firmage'], n_threads=30)"
 qwi3 = "qwi(obs_level='state', firm_char=['firmage'], n_threads=30)"
