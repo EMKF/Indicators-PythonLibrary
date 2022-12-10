@@ -82,9 +82,9 @@ def bed(series, table, obs_level='all', industry='00'):
         region_lst = obs_level
     else:
         if obs_level.lower() == 'state':
-            region_lst = c.states
+            region_lst = c.STATES
         elif obs_level.lower() == 'all':
-            region_lst = ['us'] + c.states
+            region_lst = ['us'] + c.STATES
         else:
             region_lst = [obs_level.lower()]
 

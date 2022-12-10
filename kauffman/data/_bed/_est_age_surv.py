@@ -178,7 +178,7 @@ def _remove_trailing_rows(df):
 
 
 def _column_headers(df):
-    df.columns = c.table1bf_cols
+    df.columns = c.TABLE1BF_COLS
     return df
 
 
@@ -188,7 +188,7 @@ def _values_fix(df):
         .replace('N', np.nan, regex=True) \
         .replace(',', '', regex=True) \
         .astype(dict(
-            zip(c.table1bf_cols[1:], [float] * len(c.table1bf_cols[1:]))
+            zip(c.TABLE1BF_COLS[1:], [float] * len(c.TABLE1BF_COLS[1:]))
         ))
 
 
@@ -217,8 +217,8 @@ def _est_age_surv_data_create(table, region, industry):
     covars = df.columns.tolist()[1:]
     return df \
         .assign(
-            region=c.state_abb_to_name[region.upper()],
-            fips=c.state_abb_to_fips[region.upper()]
+            region=c.STATE_ABB_TO_NAME[region.upper()],
+            fips=c.STATE_ABB_TO_FIPS[region.upper()]
         ) \
         .sort_values(['fips', 'time']) \
         .reset_index(drop=True) \

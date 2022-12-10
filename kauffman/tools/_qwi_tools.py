@@ -51,7 +51,7 @@ def latest_releases(state_list, n_threads):
 
 
 def consistent_releases(state_list='all', n_threads=30, enforce=False):
-    state_list = c.states if state_list == 'all' else state_list
+    state_list = c.STATES if state_list == 'all' else state_list
 
     df_releases = latest_releases(state_list, n_threads)
     if df_releases.latest_release.nunique() > 1:
@@ -77,7 +77,7 @@ def estimate_data_shape(
         + ['time', 'fips', 'region', 'ownercode', 'geo_level']
     )
     row_estimate = 0
-    state_to_years = c.qwi_start_to_end_year()
+    state_to_years = c.QWI_START_TO_END_YEAR()
 
     for level in obs_level_lst:
         if level == 'us':
@@ -112,7 +112,7 @@ def estimate_data_shape(
         # Get n_strata_levels
         strata_levels = 1
         strata = worker_char + firm_char
-        strata_to_nlevels = c.qwi_strata_to_nlevels
+        strata_to_nlevels = c.QWI_STRATA_TO_NLEVELS
         if not strata_totals:
             strata_to_nlevels = {k:v - 1 for k,v in strata_to_nlevels.items()}
         for s in strata:

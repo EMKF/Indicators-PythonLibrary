@@ -51,7 +51,7 @@ def create_fips(df, obs_level):
     elif obs_level == 'county':
         df['fips'] = df['state'].astype(str) + df['county'].astype(str)
     elif obs_level == 'msa':
-        df['fips'] = df[c.api_msa_string].astype(str)
+        df['fips'] = df[c.API_MSA_STRING].astype(str)
     else:
         df = df.assign(fips='00')
-    return df.assign(region=lambda x: x['fips'].map(c.all_fips_to_name))
+    return df.assign(region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME))

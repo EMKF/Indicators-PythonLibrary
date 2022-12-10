@@ -19,10 +19,10 @@ def _acs_fetch_data(year, var_set, region, state_lst, key, s):
         msa_list = []
         for state in state_lst:
             try:
-                msa_list.extend(c.state_to_msa_fips[state])
+                msa_list.extend(c.STATE_TO_MSA_FIPS[state])
             except:
                 pass
-        region_section = f'&for={c.api_msa_string}:{",".join(msa_list)}'
+        region_section = f'&for={c.API_MSA_STRING}:{",".join(msa_list)}'
 
     url = base_url + region_section
     return api_tools.fetch_from_url(url, s) \
@@ -39,7 +39,7 @@ def _acs_data_create(series_lst, region, state_lst, key, n_threads):
     ) \
         .pipe(api_tools.create_fips, region) \
         [['fips', 'region', 'year'] + series_lst] \
-        .rename(columns=c.acs_code_to_var) \
+        .rename(columns=c.ACS_CODE_TO_VAR) \
         .sort_values(['fips', 'region', 'year'])
 
 
@@ -93,7 +93,7 @@ def acs(
     """
     # Handle series_lst
     if series_lst == 'all':
-        series_lst = [k for k,v in c.acs_code_to_var.items()]
+        series_lst = [k for k,v in c.ACS_CODE_TO_VAR.items()]
 
     # Create region_lst
     if type(obs_level) == list:
@@ -105,12 +105,12 @@ def acs(
             region_lst = ['us', 'state', 'msa', 'county']
 
     if state_lst == 'all':
-        state_lst = [c.state_abb_to_fips[s] for s in c.states]
+        state_lst = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
     elif type(state_lst) == list:
         if obs_level != 'msa':
-            state_lst = [c.state_abb_to_fips[s] for s in state_lst]
+            state_lst = [c.STATE_ABB_TO_FIPS[s] for s in state_lst]
         else:
-            state_lst = [c.state_abb_to_fips[s] for s in c.states]
+            state_lst = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
 
     return pd.concat(
             [

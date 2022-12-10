@@ -182,7 +182,7 @@ def _bfs_data_create(
         ) \
         .assign(
             time=lambda x: pd.to_datetime(x['time'], format='%b-%Y'),
-            fips=lambda x: x.region_code.map(c.state_abb_to_fips)
+            fips=lambda x: x.region_code.map(c.STATE_ABB_TO_FIPS)
         ) \
         .pipe(_annualize, annualize, bf_helper_lst, march_shift) \
         [['fips', 'region', 'naics', 'industry', 'time'] + series_lst] \
@@ -259,15 +259,15 @@ def bfs(
         if obs_level == 'us':
             region_lst = ['US']
         elif obs_level == 'state':
-            region_lst = c.states
+            region_lst = c.STATES
         else:
-            region_lst = ['US'] + c.states
+            region_lst = ['US'] + c.STATES
 
     if type(industry) == list:
         industry_lst = industry
     else:
         if industry == 'all':
-            industry_lst = list(c.naics_code_to_abb(2).keys())
+            industry_lst = list(c.NAICS_CODE_TO_ABB(2).keys())
         else:
             industry_lst = [industry]
 

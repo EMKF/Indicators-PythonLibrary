@@ -176,13 +176,6 @@ def fips_state_cross_walk(fips_lst, region):
         [['fips_state', f'fips_{region}']]
 
 
-def _hispanic_create(df, covars):
-    return df.groupby(covars + ['ethnicity']).sum() \
-        .reset_index(drop=False) \
-        .query('ethnicity == "A2"') \
-        .assign(race_ethnicity='Hispanic')
-
-
 def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):
     strata = [strata] if type(strata) == str else strata
     if var_list == 'all':
@@ -195,15 +188,3 @@ def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):
         .apply(lambda x: x*df[weight_var] if x.name in var_list else x) \
         .groupby(strata).sum() \
         .reset_index()
-
-
-def race_ethnicity_categories_create(df, covars):
-    return df \
-        .query('ethnicity != "A2"') \
-        .assign(
-            race_ethnicity=lambda x: x['race'].map(c.mpj_covar_mapping('race'))
-        ) \
-        .append(_hispanic_create(df, covars)) \
-        .drop(['race', 'ethnicity'], 1) \
-        .sort_values(covars + ['race_ethnicity'])
-

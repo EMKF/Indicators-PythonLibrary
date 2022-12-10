@@ -13,7 +13,7 @@ def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
     region_string = {
         'us':'us:*',
         'state':f'state:{state_fips}',
-        'msa':f'{c.api_msa_string}:*',
+        'msa':f'{c.API_MSA_STRING}:*',
         'county':f'county:*&in=state:{state_fips}'
     }[region]
 
@@ -63,7 +63,7 @@ def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
             **{x:x.lower() for x in strata}
             }
         ) \
-        .assign(industry=lambda x: x['naics'].map(c.naics_code_to_abb(2))) \
+        .assign(industry=lambda x: x['naics'].map(c.NAICS_CODE_TO_ABB(2))) \
         .apply(
             lambda x: pd.to_numeric(x, errors='ignore') \
                 if x.name in variables + ['time'] else x
@@ -79,7 +79,7 @@ def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
 
 
 def check_strata_valid(obs_level, strata):
-    valid_crosses = c.bds_valid_crosses
+    valid_crosses = c.BDS_VALID_CROSSES
 
     if not strata:
         valid = True

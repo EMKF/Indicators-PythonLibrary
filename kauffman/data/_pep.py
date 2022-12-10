@@ -68,7 +68,7 @@ def _county_1980_1989():
     return df_1980 \
         .merge(df_1985, how='left', on='fips') \
         .pipe(pd.wide_to_long, 'time', i='fips', j='year') \
-        .query(f'region not in {list(c.state_name_to_abb.keys())}') \
+        .query(f'region not in {list(c.STATE_NAME_TO_ABB.keys())}') \
         .assign(
             region=lambda x: x['region'].replace(r'Co\.', 'County', regex=True)
         ) \
@@ -105,7 +105,7 @@ def _county_1990_1999():
                 + ['region']
         ) \
         .pipe(pd.wide_to_long, 'time', i='fips', j='year') \
-        .query(f'region not in {list(c.state_name_to_abb.keys())}') \
+        .query(f'region not in {list(c.STATE_NAME_TO_ABB.keys())}') \
         .reset_index() \
         .assign(
             population=lambda x: x['time'].replace(',', '', regex=True)
@@ -181,8 +181,8 @@ def _format(df, astype_arg=None, query_arg=None, format_pop=True):
             POP=lambda x: x['POP'] \
                 .replace(',', '', regex=True) \
                 .astype(int) * 1000 if format_pop else x['POP'],
-            region=lambda x: x['region'].map(c.state_abb_to_name),
-            fips=lambda x: x['region'].map(c.all_name_to_fips)
+            region=lambda x: x['region'].map(c.STATE_ABB_TO_NAME),
+            fips=lambda x: x['region'].map(c.ALL_NAME_TO_FIPS)
         ) \
         [['fips', 'region', 'time', 'POP']]
 
@@ -290,7 +290,7 @@ def _state_2000_2009():
         .query('region not in ["Puerto Rico"]') \
         .assign(
             time=lambda x: '200' + (x['date'] - 2).astype(str),
-            fips=lambda x: x['region'].map(c.all_name_to_fips),
+            fips=lambda x: x['region'].map(c.ALL_NAME_TO_FIPS),
         ) \
         [['fips', 'region', 'time', 'POP']]
 
@@ -306,7 +306,7 @@ def _state_2010_2019():
         .query('region not in ["Puerto Rico"]') \
         .assign(
             time=lambda x: '20' + (x['date'] + 7).astype(str),
-            fips=lambda x: x['region'].map(c.all_name_to_fips),
+            fips=lambda x: x['region'].map(c.ALL_NAME_TO_FIPS),
         ) \
         [['fips', 'region', 'time', 'POP']]
 
@@ -366,7 +366,7 @@ def _us_2000_2009():
         .query('region not in ["Puerto Rico"]') \
         .assign(
             time=lambda x: '200' + (x['date'] - 2).astype(str),
-            fips=lambda x: x['region'].map(c.all_name_to_fips),
+            fips=lambda x: x['region'].map(c.ALL_NAME_TO_FIPS),
         ) \
         [['fips', 'region', 'time', 'POP']]
 
@@ -382,7 +382,7 @@ def _us_2010_2019():
         .query('region not in ["Puerto Rico"]') \
         .assign(
             time=lambda x: '20' + (x['date'] + 7).astype(str),
-            fips=lambda x: x['region'].map(c.all_name_to_fips),
+            fips=lambda x: x['region'].map(c.ALL_NAME_TO_FIPS),
         ) \
         [['fips', 'region', 'time', 'POP']]
 
@@ -423,7 +423,7 @@ def _pep_data_create(region):
                     _county_2010_2019, _county_2020
                 ]
             ]) \
-            .assign(region=lambda x: x['fips'].map(c.all_fips_to_name))  # todo: 
+            .assign(region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME))  # todo: 
             # can clean region up in the above functions, and also the functions 
             # at the return statement below: put those in _county fucntions or
             # below?

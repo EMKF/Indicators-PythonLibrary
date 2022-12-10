@@ -31,10 +31,10 @@ def _get_url_groups(
     obs_level, looped_strata, max_years_per_call, private, state_list, fips_list
 ):
     out_lst = []
-    d = c.qwi_start_to_end_year()
+    d = c.QWI_START_TO_END_YEAR()
 
     var_to_levels = {
-        **c.qwi_strata_to_levels,
+        **c.QWI_STRATA_TO_LEVELS,
         **{'quarter':[x for x in range(1,5)]}
     }
     if private and 'industry' in looped_strata:
@@ -54,8 +54,8 @@ def _get_url_groups(
             for year in _get_year_groups(d[state], max_years_per_call)
         ]
         if obs_level in ['county', 'msa']:
-            missing_dict = c.qwi_missing_counties if obs_level == 'county' \
-                else c.qwi_missing_msas
+            missing_dict = c.QWI_MISSING_COUNTIES if obs_level == 'county' \
+                else c.QWI_MISSING_MSAS
             region_years += [
                 (state, ','.join(missing_dict[state]), year)
                 for state in set(missing_dict) & set(state_list)
@@ -97,7 +97,7 @@ def _build_url(
     # Including this code to only include the 2-digit level industries for now
     if 'industry' in non_loop_var:
         non_loop_var = [x for x in non_loop_var if x != 'industry']
-        industries = c.qwi_strata_to_levels['industry']
+        industries = c.QWI_STRATA_TO_LEVELS['industry']
         if private:
             industries = [x for x in industries if x != "92"]
         loop_var['industry'] = '&industry='.join(industries)
@@ -115,7 +115,7 @@ def _build_url(
 
     if obs_level == 'msa':
         region_fips = '*' if not region_fips else region_fips
-        for_region = f'{c.api_msa_string}:{region_fips}&in=state:{state_fips}'
+        for_region = f'{c.API_MSA_STRING}:{region_fips}&in=state:{state_fips}'
     elif obs_level == 'county':
         if region_fips:
             if ',' not in region_fips:
@@ -276,7 +276,7 @@ def _check_loop_group(group, target, winning_combo):
 
 def _choose_loops(strata, obs_level, indicator_list):
     loopable_dict = {
-        **{k:v for k,v in c.qwi_strata_to_nlevels.items() if k in strata},
+        **{k:v for k,v in c.QWI_STRATA_TO_NLEVELS.items() if k in strata},
         **{'quarter':4}
     }
     n_columns = len(
@@ -284,8 +284,8 @@ def _choose_loops(strata, obs_level, indicator_list):
         + ['geo_level', 'quarter', 'region', 'state', 'ownercode', 'time',
             'key']
     )
-    target = (c.api_cell_limit/n_columns) \
-        / c.qwi_geo_to_max_cardinality[obs_level]
+    target = (c.API_CELL_LIMIT/n_columns) \
+        / c.QWI_GEO_TO_MAX_CARDINALITY[obs_level]
 
     winning_combo = _check_loop_group(loopable_dict, target, (None, 0))
     loop_over_list = [
@@ -348,7 +348,7 @@ def _filter_strata_totals(df, firm_char, worker_char, strata_totals):
     df = df.astype(dict(zip(strata, ['string'] * len(strata))))
 
     if not strata_totals and strata:
-        strata_to_total_cat = {s:c.qwi_strata_to_levels[s][0] for s in strata}
+        strata_to_total_cat = {s:c.QWI_STRATA_TO_LEVELS[s][0] for s in strata}
         df = df.query(
             'and '.join([
                 f'{stratum} != "{strata_to_total_cat[stratum]}"'
@@ -389,7 +389,7 @@ def _remove_extra_msas(df, state_list, state_list0):
         return df \
             .assign(_keep=lambda x: x['region'] \
                 .apply(lambda y: _state_overlap(
-                    y, [c.state_fips_to_abb[fips] for fips in state_list0]
+                    y, [c.STATE_FIPS_TO_ABB[fips] for fips in state_list0]
                 ))) \
             .query('_keep == 1') \
             .drop('_keep', 1)
@@ -565,12 +565,12 @@ def qwi(
 
 
     if state_list == 'all':
-        state_list = [c.state_abb_to_fips[s] for s in c.states]
+        state_list = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
     else:
-        state_list = [c.state_abb_to_fips[s] for s in state_list]
+        state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
 
     if indicator_list == 'all':
-        indicator_list = c.qwi_outcomes
+        indicator_list = c.QWI_OUTCOMES
     elif type(indicator_list) == str:
         indicator_list = [indicator_list]
 
@@ -595,7 +595,7 @@ def qwi(
 
     worker_char = [worker_char] if type(worker_char) == str else worker_char
 
-    if set(worker_char) not in c.qwi_worker_crosses:
+    if set(worker_char) not in c.QWI_WORKER_CROSSES:
         raise Exception(
             'Invalid input to worker_char. See function documentation for' 
             'valid groups.'

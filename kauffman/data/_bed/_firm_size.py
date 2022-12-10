@@ -24,9 +24,9 @@ def df_create(lines):
             ]:
                 row.append([year] + line_list)
 
-    df = pd.DataFrame(row, columns=c.table_firm_size_cols) \
+    df = pd.DataFrame(row, columns=c.TABLE_FIRM_SIZE_COLS) \
         .replace(',', '', regex=True) \
-        .astype({col: 'float' for col in c.table_firm_size_cols[2:]})
+        .astype({col: 'float' for col in c.TABLE_FIRM_SIZE_COLS[2:]})
     df.iloc[:, 2:9] = df.iloc[:, 2:9] * 1000
     return df
 
@@ -37,9 +37,9 @@ def _firm_size_data_create(table, firm_size):
             size=c.size_code_to_label2[firm_size],
             fips='00',
             region='US',
-            quarter=lambda x: x['quarter'].map(c.month_to_quarter)
+            quarter=lambda x: x['quarter'].map(c.MONTH_TO_QUARTER)
         ) \
         [
             ['fips', 'region', 'time', 'quarter', 'size']
-            + c.table_firm_size_cols[2:]
+            + c.TABLE_FIRM_SIZE_COLS[2:]
         ]
