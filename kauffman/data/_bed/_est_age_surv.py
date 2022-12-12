@@ -164,7 +164,7 @@ def _extract_rows(df, age, size):
     ind_lst = df.index[mask].tolist()
 
     num_rows = ind_lst[1] - ind_lst[0] - 1
-    ind = ind_lst[c.age_size_lst.index((age, size))]
+    ind = ind_lst[c.BED_AGE_SIZE_LIST.index((age, size))]
 
     return df.iloc[(ind - num_rows) + 4:ind]
 
@@ -178,7 +178,7 @@ def _remove_trailing_rows(df):
 
 
 def _column_headers(df):
-    df.columns = c.TABLE1BF_COLS
+    df.columns = c.BED_TABLE1BF_COLS
     return df
 
 
@@ -188,7 +188,7 @@ def _values_fix(df):
         .replace('N', np.nan, regex=True) \
         .replace(',', '', regex=True) \
         .astype(dict(
-            zip(c.TABLE1BF_COLS[1:], [float] * len(c.TABLE1BF_COLS[1:]))
+            zip(c.BED_TABLE1BF_COLS[1:], [float] * len(c.BED_TABLE1BF_COLS[1:]))
         ))
 
 

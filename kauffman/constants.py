@@ -149,7 +149,7 @@ def fetch_msa_to_state_dic():
     names = df2.columns
     values = [list(df2[col].dropna().values) for col in df2]
     return dict(zip(names, values))
-    
+
 MSA_TO_STATE_FIPS = fetch_msa_to_state_dic()
 
 STATE_TO_MSA_FIPS = {}
@@ -166,7 +166,7 @@ AGE_CODE_TO_LABEL = {
     4: 'All'
 }
 
-SIZE_CODE_TO_LABEL = {
+BED_SIZE_CODE_TO_LABEL = {
     0: '1 to 4 employees',
     1: '5 to 9 employees',
     2: '10 to 19 employees',
@@ -176,21 +176,21 @@ SIZE_CODE_TO_LABEL = {
     6: '500 or more employees',
     7: 'All'
 }
-AGE_SIZE_LIST = list(product(AGE_CODE_TO_LABEL.keys(), SIZE_CODE_TO_LABEL.keys()))
+BED_AGE_SIZE_LIST = list(product(AGE_CODE_TO_LABEL.keys(), BED_SIZE_CODE_TO_LABEL.keys()))
 
-TABLE1BF_COLS = [
+BED_TABLE1BF_COLS = [
     'time', 'firms', 'establishments', 'net_change', 'total_job_gains',
     'expanding_job_gains', 'opening_job_gains', 'total_job_losses',
     'contracting_job_losses', 'closing_job_losses'
 ]
 
-TABLE_FIRM_SIZE_COLS = [
+BED_TABLE_FIRM_SIZE_COLS = [
     'time', 'quarter', 'net_change', 'total_job_gains',
     'expanding_firms_job_gains', 'opening_firms_job_gains', 'total_job_losses',
     'contracting_firms_job_losses', 'closing_firms_job_losses'
 ]
 
-SIZE_CODE_TO_LABEL2 = {
+BED_SIZE_CODE_TO_LABEL2 = {
     1: '1 to 4 employees',
     2: '5 to 9 employees',
     3: '10 to 19 employees',
