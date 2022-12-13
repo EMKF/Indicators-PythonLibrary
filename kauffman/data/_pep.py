@@ -2,7 +2,7 @@ import requests
 import numpy as np
 import pandas as pd
 import kauffman.constants as c
-from kauffman.tools._etl import county_msa_cross_walk as cw
+from kauffman.tools._etl import aggregate_county_to_msa as cw
 
 # https://www.census.gov/programs-surveys/popest.html
 
