@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from joblib import Parallel, delayed
 from kauffman import constants as c
-from kauffman.tools._etl import load_CBSA_cw
+from kauffman.tools._etl import CBSA_crosswalk
 
 
 def _get_state_release_info(state, session):
@@ -93,7 +93,7 @@ def estimate_data_shape(
         else:
             query = f"fips_{level} in {fips_list}" if fips_list \
                 else f"fips_state in {state_list}"
-            year_regions = load_CBSA_cw() \
+            year_regions = CBSA_crosswalk() \
                 .query(query) \
                 [[f'fips_{level}', 'fips_state']] \
                 .drop_duplicates() \

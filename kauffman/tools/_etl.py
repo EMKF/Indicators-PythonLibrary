@@ -4,7 +4,6 @@ import requests
 import pandas as pd
 from kauffman import constants as c
 from zipfile import ZipFile
-import kauffman.constants as c
 
 
 def file_to_s3(file, s3_bucket, s3_file):
@@ -59,7 +58,7 @@ def read_zip(zip_url, filename):
     return pd.read_csv(z.open(filename), encoding='cp1252', low_memory=False)
 
 
-def load_CBSA_cw():
+def CBSA_crosswalk():
     url = 'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls'
     df_cw = pd.read_excel(
             url,
@@ -104,7 +103,7 @@ def load_CBSA_cw():
     return df_cw
 
 
-def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
+def aggregate_county_to_msa(df_county, fips_county, outcomes, agg_method=sum):
     """
     Receives county level data, and merges (on county fips) with a dataframe 
     with CBSA codes.
@@ -114,7 +113,7 @@ def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
     outcomes = list(outcomes)
     df_county[outcomes] = df_county[outcomes].apply(pd.to_numeric)
 
-    df_cw = load_CBSA_cw()
+    df_cw = CBSA_crosswalk()
 
     return df_county \
         .rename(columns={fips_county: 'fips_county'}) \
@@ -127,53 +126,56 @@ def county_msa_cross_walk(df_county, fips_county, outcomes, agg_method=sum):
 # county values
 
 
-def state_msa_cross_walk(state_lst, area_type='metro'):
+def geolevel_crosswalk(
+    from_geo, to_geo, from_fips_list, msa_coidentify_state=False
+):
+    """A crosswalk from one geographic level to another, or to multiple others.
+
+    Parameters
+    ----------
+    from_geo : str ('state', 'msa', or 'county')
+        The geographic level to map from
+    to_geo : str, list ('state', 'msa', 'county', or combination)
+        The geographic level(s) to map to
+    from_fips_list : list
+        The list of fips codes to map from
+    msa_coidentify_state : bool, optional, by default False
+        Whether to identify MSAs by both the MSA code and the state code, as 
+        opposed to just the MSA code--ie: If MSA "M" goes across states "s1" 
+        and "s2", msa_coidentify_state=True would result in that msa taking up 
+        two rows (identified by fips_msa = "M" + fips_state = "s1", and fips_msa
+        = "M" + fips_state = "s2"), whereas msa_coidentify_state=False would
+        cause it to take up one row (identified by fips_msa = "M").
+
+    Returns
+    -------
+    DataFrame
+        Crosswalk between geographic levels
     """
-    state_lst: list of states
+    to_geo = [to_geo] if type(to_geo) == str else to_geo
+    if msa_coidentify_state and ('msa' in to_geo or from_geo == 'msa'):
+        to_geo = to_geo + ['state'] if 'state' not in to_geo else to_geo
 
-    area_type: str
-        metro: default, metro areas
-        micro: all micro areas
-        all: all micro and metro areas
+    cw = CBSA_crosswalk()
 
-    output: dataframe with county and msa fips
-    """
+    if msa_coidentify_state and from_geo == 'state' and set(to_geo) == {'msa', 'state'}:
+        cw = cw \
+            .query(f'fips_state in {from_fips_list}') \
+            .drop_duplicates('fips_msa') \
+            [['fips_msa']] \
+            .merge(cw, how='left', on='fips_msa') \
+            [['fips_state', 'fips_msa']]
+    else:
+        cw = cw \
+            [
+                [f'fips_{from_geo}'] \
+                + [f'fips_{geo}' for geo in to_geo if geo != from_geo]
+            ] \
+            .query(f'fips_{from_geo} in {from_fips_list}')
 
-    if area_type == 'metro':
-        area_type = 'Metropolitan Statistical Area'
-    elif area_type == 'micro':
-        area_type = 'Micropolitan Statistical Area'
-
-    df_cw = load_CBSA_cw() \
-        .pipe(
-            lambda x: x if area_type == 'all' \
-                else x.query(f'area == "{area_type}"')
-        )
-    
-    return df_cw \
-        .query(f'fips_state in {state_lst}') \
-        .drop_duplicates('fips_msa') \
-        [['fips_msa']] \
-        .merge(df_cw, how='left', on='fips_msa') \
-        .drop(['CBSA Title', 'area', 'FIPS County Code'], 1)
-
-
-def fips_state_cross_walk(fips_lst, region):
-    """
-    state_lst: list of states
-
-    area_type: str
-        metro: default, metro areas
-        micro: all micro areas
-        all: all micro and metro areas
-
-    output: dataframe with county and msa fips
-    """
-
-    return load_CBSA_cw() \
-        .query(f'fips_{region} in {fips_lst}') \
-        .drop_duplicates([f'fips_{region}', 'fips_state']) \
-        [['fips_state', f'fips_{region}']]
+    return cw \
+        .drop_duplicates() \
+        .reset_index(drop=True)
 
 
 def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):

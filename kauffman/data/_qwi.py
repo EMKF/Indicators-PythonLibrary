@@ -6,8 +6,7 @@ from math import ceil
 from itertools import product
 from kauffman import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
-from kauffman.tools._etl import state_msa_cross_walk as state_msa_cw
-from kauffman.tools._etl import fips_state_cross_walk as fips_state_cw
+from kauffman.tools._etl import geolevel_crosswalk as geolevel_cw
 from kauffman.tools._qwi_tools import consistent_releases, estimate_data_shape
 from kauffman.tools import api_tools
 
@@ -404,7 +403,10 @@ def _create_data(
 
     state_list0 = state_list
     if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
-        state_list = state_msa_cw(state_list, 'all') \
+        state_list = geolevel_cw(
+                from_geo='state', to_geo='msa', 
+                from_fips_list=state_list, msa_coidentify_state=True
+            ) \
             ['fips_state'].unique().tolist()
 
     if obs_level == 'us':
@@ -426,7 +428,8 @@ def _create_data(
             else:
                 fips_list = [
                     tuple(row)
-                    for row in fips_state_cw(fips_list, obs_level).values
+                    for row in geolevel_cw('msa', 'state', fips_list) \
+                        [['fips_state', 'fips_msa']].values
                 ]
         groups = _get_url_groups(
                 obs_level, looped_strata, max_years_per_call, private, 
