@@ -125,8 +125,10 @@ def _build_url(
     else:
         for_region = f'state:{state_fips}'
 
+    key_section = f'&key={census_key}' if census_key else ''
+
     return f'{base_url}/{database}?get={get_statement}&for={for_region}' \
-        + f'&ownercode={ownercode}&{loop_section}&key={census_key}'
+        + f'&ownercode={ownercode}&{loop_section}{key_section}'
 
 
 def _led_scrape_data(private, firm_char, worker_char):
@@ -626,6 +628,11 @@ def qwi(
             'Warning: You are attempting to fetch a dataframe of estimated',
             f'shape {estimated_shape}. You may experience memory errors.'
         )
+
+    # Warn users if they didn't provide a key
+    if key == None:
+        print('WARNING: You did not provide a key. Too many requests will ' \
+            'result in an error.')
 
     return pd.concat(
         [

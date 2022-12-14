@@ -1,3 +1,4 @@
+import os
 import requests
 import numpy as np
 import pandas as pd
@@ -115,10 +116,12 @@ def _county_1990_1999():
         .astype({'time': 'int', 'population': 'float'})
 
 
-def _county_2000_2009():
+def _county_2000_2009(key):
     base_url = 'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_DESC&for=county:*&DATE_='
+    key_section = f'&key={key}' if key else base_url
+
     return pd.concat([
-            pd.DataFrame(requests.get(base_url + str(date)).json()) \
+            pd.DataFrame(requests.get(base_url + str(date) + key_section).json()) \
                 .pipe(_make_header) \
                 .query('state != "72"') \
                 .assign(
@@ -134,8 +137,10 @@ def _county_2000_2009():
         .reset_index(drop=True)
 
 
-def _county_2010_2019():
+def _county_2010_2019(key):
     url = 'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=county:*'
+    url = url + f'&key={key}' if key else url
+
     return pd.DataFrame(requests.get(url).json()) \
         .pipe(_make_header) \
         .query('state != "72"') \
@@ -279,8 +284,9 @@ def _state_1990_1999():
         [['fips', 'region', 'time', 'POP']]
 
 
-def _state_2000_2009():
+def _state_2000_2009(key):
     url = 'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for=state:*'
+    url = url + f'&key={key}' if key else url
 
     return pd.DataFrame(requests.get(url).json()) \
         .pipe(_make_header) \
@@ -295,8 +301,9 @@ def _state_2000_2009():
         [['fips', 'region', 'time', 'POP']]
 
 
-def _state_2010_2019():
+def _state_2010_2019(key):
     url = 'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=state:*'
+    url = url + f'&key={key}' if key else url
 
     return pd.DataFrame(requests.get(url).json()) \
         .pipe(_make_header) \
@@ -355,8 +362,9 @@ def _us_1900_1999():
         )
 
 
-def _us_2000_2009():
+def _us_2000_2009(key):
     url = 'https://api.census.gov/data/2000/pep/int_population?get=GEONAME,POP,DATE_&for=us:1'
+    url = url + f'&key={key}' if key else url
 
     return pd.DataFrame(requests.get(url).json()) \
         .pipe(_make_header) \
@@ -371,8 +379,9 @@ def _us_2000_2009():
         [['fips', 'region', 'time', 'POP']]
 
 
-def _us_2010_2019():
+def _us_2010_2019(key):
     url = 'https://api.census.gov/data/2019/pep/population?get=NAME,POP,DATE_CODE&for=us:*'
+    url = url + f'&key={key}' if key else url
 
     return pd.DataFrame(requests.get(url).json()) \
         .pipe(_make_header) \
@@ -415,41 +424,30 @@ def _us_2021():
         .reset_index(drop=True)
 
 
-def _pep_data_create(region):
+def _pep_data_create(region, key):
     if region == 'county':
-        df = pd.concat([
-                f() for f in [
-                    _county_1980_1989, _county_1990_1999, _county_2000_2009, 
-                    _county_2010_2019, _county_2020
-                ]
-            ]) \
+        df = pd.concat(
+                [f() for f in [_county_1980_1989, _county_1990_1999, _county_2020]]
+                + [f(key) for f in [_county_2000_2009, _county_2010_2019]]
+            ) \
             .assign(region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME))  # todo: 
             # can clean region up in the above functions, and also the functions 
             # at the return statement below: put those in _county fucntions or
             # below?
     elif region == 'msa':
-        df = _pep_data_create('county') \
+        df = _pep_data_create('county', key) \
             .pipe(cw, 'fips', ['population']) \
             [['fips', 'region', 'time', 'population']]
     elif region == 'state':
         df = pd.concat(
                 [_state_1900_1989(year) for year in range(1900,1981,10)]
-                + [
-                    f() for f in [
-                        _state_1990_1999, _state_2000_2009, _state_2010_2019, 
-                        _state_2020, _state_2021
-                    ]
-                ]
+                + [f() for f in [_state_1990_1999, _state_2020, _state_2021]]
+                + [f(key) for f in [_state_2000_2009, _state_2010_2019]]
             )
     else:
         df = pd.concat(
-            [
-                f() for f in [
-                    _us_1900_1999, _us_2000_2009, _us_2010_2019, _us_2020, 
-                    _us_2021
-                ]
-            ],
-            sort=True
+            [f() for f in [_us_1900_1999, _us_2020, _us_2021]]
+            + [f(key) for f in [_us_2000_2009, _us_2010_2019]]
         )
 
     return df \
@@ -460,7 +458,7 @@ def _pep_data_create(region):
         [['fips', 'region', 'time', 'population']]
 
 
-def pep(obs_level='all'):
+def pep(obs_level='all', key=os.getenv("CENSUS_KEY")):
     """ 
     Create a pandas data frame with results from a PEP query. 
     Column order: fips, region, time, POP.
@@ -486,7 +484,12 @@ def pep(obs_level='all'):
         else:
             region_lst = ['us', 'state', 'msa', 'county']
 
+    # Warn users if they didn't provide a key
+    if key == None:
+        print('WARNING: You did not provide a key. Too many requests will ' \
+            'result in an error.')
+
     return pd.concat([
-        _pep_data_create(region)
+        _pep_data_create(region, key)
         for region in region_lst
     ])

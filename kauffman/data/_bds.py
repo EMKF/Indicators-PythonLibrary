@@ -18,9 +18,10 @@ def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
     }[region]
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
+    key_section = f'&key={key}' if key else ''
     
     return f'https://api.census.gov/data/timeseries/bds?get={var_string}' \
-        f'&for={region_string}&YEAR={year}{naics_string}&key={key}'
+        f'&for={region_string}&YEAR={year}{naics_string}{key_section}'
 
 
 def _bds_fetch_data(year, variables, region, strata, key, s):
@@ -234,6 +235,11 @@ def bds(
     
     # Convert coded variables to their labeled versions
     strata = strata + [f'{var}_LABEL' for var in strata if var != 'GEOCOMP']
+
+    # Warn users if they didn't provide a key
+    if key == None:
+        print('WARNING: You did not provide a key. Too many requests will ' \
+            'result in an error.')
 
     return pd.concat(
             [

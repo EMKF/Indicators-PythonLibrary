@@ -6,7 +6,7 @@ from kauffman.tools import api_tools
 
 def _acs_fetch_data(year, var_set, region, state_lst, key, s):
     var_lst = ','.join(var_set)
-    base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}&key={key}'
+    base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}'
     state_section = ','.join(state_lst)
     
     if region == 'us':
@@ -24,7 +24,8 @@ def _acs_fetch_data(year, var_set, region, state_lst, key, s):
                 pass
         region_section = f'&for={c.API_MSA_STRING}:{",".join(msa_list)}'
 
-    url = base_url + region_section
+    key_section = f'&key={key}' if key else ''
+    url = base_url + region_section + key_section
     return api_tools.fetch_from_url(url, s) \
         .assign(year=year)
 
@@ -111,6 +112,11 @@ def acs(
             state_lst = [c.STATE_ABB_TO_FIPS[s] for s in state_lst]
         else:
             state_lst = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
+
+    # Warn users if they didn't provide a key
+    if key == None:
+        print('WARNING: You did not provide a key. Too many requests will ' \
+            'result in an error.')
 
     return pd.concat(
             [
