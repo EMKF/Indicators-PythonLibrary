@@ -2,3 +2,9 @@
 	Major restructure of library. Removed unused files, fixed broken modules, removed SHED module, updated setup.py's install_requires and author information, reformatted all files to follow consistent pattern.
 (12/8/22) Version 2.3.1
 	Minor restructure to API data fetch portion of acs, bds, qwi. Has them share functions stored in api_tools.
+(12/15/22) Version 2.3.2
+	Minor backwards-compatible changes to clean up the code--mostly formatting, some function restructuring. Includes the following changes:
+	--Clean up constants file formatting
+	--Combine crosswalk functions
+	--Update in key handling (added key option to pep, allowed key=None to all other API modules)
+	--Bolstered error handling for fetch_from_url (in tools > api_tools)
