@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import re
 from kauffman import constants as c
 from joblib import Parallel, delayed
 
@@ -11,19 +12,29 @@ def fetch_from_url(url, session):
         try:
             r = session.get(url)
             if r.status_code == 200:
-                df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
-                success = True
+                try:
+                    df = pd.DataFrame(r.json()[1:], columns=r.json()[0])
+                    success = True
+                except:
+                    print('Fail for url', url)
+                    title = re.compile(r'<title>(.*?)</title>', re.UNICODE) \
+                        .search(r.text).group(1)
+                    raise Exception(f'error: {title}')
             elif r.status_code == 204:
                 df = pd.DataFrame()
                 success = True
+            elif r.status_code == 400:
+                print('Fail. Status code: 400 for url', url)
+                raise Exception(r.text)
             else:
-               print(f'Fail. Retry #{retries}', 'Status code:', r, url)
+               print(f'Fail. Attempt #{retries + 1}/5', 'Status code:', r, url)
                retries += 1
-               df = pd.DataFrame()
         except Exception as e:
-            print(f'Fail. Retry #{retries}', e)
-            retries += 1
-            df = pd.DataFrame()
+            if str(e).startswith('error'):
+                raise e
+            else:
+                print(f'Fail. Attempt #{retries + 1}/5', e)
+                retries += 1
     if not success:
         raise Exception(f'Maxed out retries with url: {url}')
     return df
