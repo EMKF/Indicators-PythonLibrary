@@ -45,12 +45,12 @@ def clean_data(df, industry_key, series_key, region_key, time_key):
         .merge(
             industry_key.drop(columns='cat_indent'), on='cat_idx', how='left'
         ) \
-        .merge(series_key[['dt_idx', 'dat_code']], on='dt_idx', how='left') \
+        .merge(series_key[['dt_idx', 'dt_code']], on='dt_idx', how='left') \
         .merge(region_key, on='geo_idx', how='left') \
         .merge(time_key, on='per_idx', how='left') \
         .rename(
             columns={
-                'cat_code':'naics', 'cat_desc':'industry', 'dat_code':'series', 
+                'cat_code':'naics', 'cat_desc':'industry', 'dt_code':'series', 
                 'geo_code':'region_code', 'geo_desc':'region', 'per_name':'time'
             }
         ) \
