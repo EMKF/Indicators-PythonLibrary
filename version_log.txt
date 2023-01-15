@@ -8,3 +8,8 @@
 	--Combine crosswalk functions
 	--Update in key handling (added key option to pep, allowed key=None to all other API modules)
 	--Bolstered error handling for fetch_from_url (in tools > api_tools)
+(1/14/23) Version 2.3.3
+	Minor backwards-compatible changes to clean up the code again and fix errors.
+	--Condense pep functions
+	--Remove Puerto Rico from pep output, which had mistakenly been included for 2020-2021
+	--Fix bfs error from census update: update column name
