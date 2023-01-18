@@ -402,6 +402,14 @@ def _create_data(
     covars = ['time', 'fips', 'region', 'ownercode', 'geo_level'] \
         + firm_char + worker_char
 
+    state_list_orig = state_list
+    if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
+        state_list = geolevel_cw(
+                from_geo='state', to_geo='msa', 
+                from_fips_list=state_list, msa_coidentify_state=True
+            ) \
+            ['fips_state'].unique().tolist()
+
     if obs_level == 'us':
         df = _scrape_led_data(private, firm_char, worker_char) \
             .assign(
@@ -412,13 +420,6 @@ def _create_data(
             ) \
             .rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        state_list_orig = state_list
-        if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
-            state_list = geolevel_cw(
-                    from_geo='state', to_geo='msa', 
-                    from_fips_list=state_list, msa_coidentify_state=True
-                ) \
-                ['fips_state'].unique().tolist()
         looped_strata, non_loop_var, max_years_per_call = _loops_info(
             firm_char + worker_char, obs_level, indicator_list
         )
