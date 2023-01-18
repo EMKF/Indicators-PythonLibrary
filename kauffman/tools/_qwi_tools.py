@@ -121,3 +121,15 @@ def estimate_data_shape(
         row_estimate += year_regions*strata_levels*4
 
     return (row_estimate, n_columns)
+
+
+def is_complete(df, geo_level, strata, state_list=None, fips_list=None):
+    """
+    Tests whether qwi output has all of the observations that we would expect,
+    given the inputs (geographical level of the data, strata)
+
+    Parameters
+    ----------
+    df : _type_
+        _description_
+    """

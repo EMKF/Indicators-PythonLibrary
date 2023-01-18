@@ -9,6 +9,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from kauffman.tools._etl import geolevel_crosswalk as geolevel_cw
 from kauffman.tools._qwi_tools import consistent_releases, estimate_data_shape
 from kauffman.tools import api_tools
+from kauffman.tools import _shared_tools as s
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -17,7 +18,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-def _get_year_groups(state_dict, max_years_per_call):
+def _year_groups(state_dict, max_years_per_call):
     years = list(range(state_dict['start_year'], state_dict['end_year'] + 1))
     if max_years_per_call == 1:
         return years
@@ -26,7 +27,7 @@ def _get_year_groups(state_dict, max_years_per_call):
         return [f'from{x[0]}to{x[-1]}' for x in np.array_split(years, n_bins)]
     
 
-def _get_url_groups(
+def _url_groups(
     obs_level, looped_strata, max_years_per_call, private, state_list, fips_list
 ):
     out_lst = []
@@ -45,12 +46,12 @@ def _get_url_groups(
         region_years = [
             (state, region, year) 
             for state, region in fips_list
-            for year in _get_year_groups(d[state], max_years_per_call)
+            for year in _year_groups(d[state], max_years_per_call)
         ]
     else:
         region_years = [
             (state, None, year) for state in state_list
-            for year in _get_year_groups(d[state], max_years_per_call)
+            for year in _year_groups(d[state], max_years_per_call)
         ]
         if obs_level in ['county', 'msa']:
             missing_dict = c.QWI_MISSING_COUNTIES if obs_level == 'county' \
@@ -58,20 +59,20 @@ def _get_url_groups(
             region_years += [
                 (state, ','.join(missing_dict[state]), year)
                 for state in set(missing_dict) & set(state_list)
-                for year in _get_year_groups(d[state], max_years_per_call)
+                for year in _year_groups(d[state], max_years_per_call)
             ]
 
     out_lst += [{
         **{
-            'state_fips':value[0][0], 
-            'region_fips':value[0][1], 
-            'time':value[0][2]
+            'state_fips':group[0][0], 
+            'region_fips':group[0][1], 
+            'time':group[0][2]
         },
         **{
-            f'{label}':value[i + 1]
-            for i,label in enumerate(looped_strata) 
-        }   
-    } for value in product(
+            f'{strata}':group[i + 1]
+            for i,strata in enumerate(looped_strata) 
+        }
+    } for group in product(
         region_years, 
         *[var_to_levels[s] for s in looped_strata]
     )]
@@ -79,7 +80,7 @@ def _get_url_groups(
     return out_lst
 
 
-def _get_database_name(worker_char):
+def _database_name(worker_char):
     if 'education' in worker_char:
         return 'se'
     elif 'race' in worker_char or 'ethnicity' in worker_char:
@@ -88,9 +89,7 @@ def _get_database_name(worker_char):
         return 'sa'
 
 
-def _build_url(
-        loop_var, non_loop_var, indicator_list, obs_level, private, census_key
-    ):
+def _qwi_url(loop_var, non_loop_var, indicator_list, obs_level, private, key):
     # API has started including all industry 3-digit subsectors and 4-digit 
     # groups in calls--howevever, it doesn't allow for filtering by ind_level
     # Including this code to only include the 2-digit level industries for now
@@ -102,7 +101,7 @@ def _build_url(
         loop_var['industry'] = '&industry='.join(industries)
     
     base_url = 'https://api.census.gov/data/timeseries/qwi'
-    database = _get_database_name(list(loop_var) + non_loop_var)
+    database = _database_name(list(loop_var) + non_loop_var)
     get_statement = ','.join(indicator_list + non_loop_var + ['geo_level'])
     loop_section = f'&'.join([
         f'{k}={loop_var[k]}' 
@@ -125,13 +124,13 @@ def _build_url(
     else:
         for_region = f'state:{state_fips}'
 
-    key_section = f'&key={census_key}' if census_key else ''
+    key_section = f'&key={key}' if key else ''
 
     return f'{base_url}/{database}?get={get_statement}&for={for_region}' \
         + f'&ownercode={ownercode}&{loop_section}{key_section}'
 
 
-def _led_scrape_data(private, firm_char, worker_char):
+def _scrape_led_data(private, firm_char, worker_char):
     pause1 = 1
     pause2 = 3
 
@@ -256,7 +255,7 @@ def _led_scrape_data(private, firm_char, worker_char):
         return pd.read_csv(href)
 
 
-def _check_loop_group(group, target, winning_combo):
+def _optimal_loops(group, target, winning_combo):
     product = 1
     for c in group.values():
         product *= c
@@ -270,12 +269,12 @@ def _check_loop_group(group, target, winning_combo):
     for k in group.keys():
         combo_subset = group.copy()
         combo_subset.pop(k)
-        winning_combo = _check_loop_group(combo_subset, target, winning_combo)
+        winning_combo = _optimal_loops(combo_subset, target, winning_combo)
         
     return winning_combo
 
 
-def _choose_loops(strata, obs_level, indicator_list):
+def _loops_info(strata, obs_level, indicator_list):
     loopable_dict = {
         **{k:v for k,v in c.QWI_STRATA_TO_NLEVELS.items() if k in strata},
         **{'quarter':4}
@@ -288,7 +287,7 @@ def _choose_loops(strata, obs_level, indicator_list):
     target = (c.API_CELL_LIMIT/n_columns) \
         / c.QWI_GEO_TO_MAX_CARDINALITY[obs_level]
 
-    winning_combo = _check_loop_group(loopable_dict, target, (None, 0))
+    winning_combo = _optimal_loops(loopable_dict, target, (None, 0))
     loop_over_list = [
         l for l in loopable_dict.keys() 
         if l not in winning_combo[0]
@@ -298,10 +297,10 @@ def _choose_loops(strata, obs_level, indicator_list):
     return loop_over_list, winning_combo[0], max_years_per_call
 
 
-def _qwi_api_fetch(
+def _qwi_fetch_api_data(
     loop_var, non_loop_var, indicator_list, obs_level, private, key, s
 ):
-    url = _build_url(
+    url = _qwi_url(
         loop_var, non_loop_var, indicator_list, obs_level, private, key
     )
     return api_tools.fetch_from_url(url, s)
@@ -376,43 +375,35 @@ def _aggregate_msas(df, covars, obs_level):
         .reset_index(drop=False)
 
 
-def _state_overlap(x, state_list0):
-    if list(set(x.split(', ')[1].split('-')) & set(state_list0)):
+def _state_overlap(x, state_list_orig):
+    if list(set(x.split(', ')[1].split('-')) & set(state_list_orig)):
         return 1
     else:
         return 0
 
 
-def _remove_extra_msas(df, state_list, state_list0):
-    if sorted(state_list) == sorted(state_list0):
+def _remove_extra_msas(df, state_list, state_list_orig):
+    if sorted(state_list) == sorted(state_list_orig):
         return df
     else:
         return df \
             .assign(_keep=lambda x: x['region'] \
                 .apply(lambda y: _state_overlap(
-                    y, [c.STATE_FIPS_TO_ABB[fips] for fips in state_list0]
+                    y, [c.STATE_FIPS_TO_ABB[fips] for fips in state_list_orig]
                 ))) \
             .query('_keep == 1') \
-            .drop('_keep', 1)
+            .drop(columns='_keep')
 
 
 def _create_data(
     indicator_list, obs_level, state_list, fips_list, private, annualize, 
-    firm_char, worker_char, strata_totals, key, n_threads, state_list0=None
+    firm_char, worker_char, strata_totals, key, n_threads, state_list_orig=None
 ):
     covars = ['time', 'fips', 'region', 'ownercode', 'geo_level'] \
         + firm_char + worker_char
 
-    state_list0 = state_list
-    if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
-        state_list = geolevel_cw(
-                from_geo='state', to_geo='msa', 
-                from_fips_list=state_list, msa_coidentify_state=True
-            ) \
-            ['fips_state'].unique().tolist()
-
     if obs_level == 'us':
-        df = _led_scrape_data(private, firm_char, worker_char) \
+        df = _scrape_led_data(private, firm_char, worker_char) \
             .assign(
                 time=lambda x: x['year'].astype(str) + '-Q' \
                     + x['quarter'].astype(str),
@@ -421,7 +412,14 @@ def _create_data(
             ) \
             .rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
     else:
-        looped_strata, non_loop_var, max_years_per_call = _choose_loops(
+        state_list_orig = state_list
+        if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
+            state_list = geolevel_cw(
+                    from_geo='state', to_geo='msa', 
+                    from_fips_list=state_list, msa_coidentify_state=True
+                ) \
+                ['fips_state'].unique().tolist()
+        looped_strata, non_loop_var, max_years_per_call = _loops_info(
             firm_char + worker_char, obs_level, indicator_list
         )
         if fips_list:
@@ -433,12 +431,12 @@ def _create_data(
                     for row in geolevel_cw('msa', 'state', fips_list) \
                         [['fips_state', 'fips_msa']].values
                 ]
-        groups = _get_url_groups(
-                obs_level, looped_strata, max_years_per_call, private, 
-                state_list, fips_list
-            )
+        groups = _url_groups(
+            obs_level, looped_strata, max_years_per_call, private, state_list, 
+            fips_list
+        )
         df = api_tools.run_in_parallel(
-            _qwi_api_fetch, 
+            _qwi_fetch_api_data, 
             groups,
             [non_loop_var, indicator_list, obs_level, private, key],
             n_threads
@@ -451,7 +449,7 @@ def _create_data(
         .pipe(_cols_to_numeric, indicator_list) \
         .pipe(_filter_strata_totals, firm_char, worker_char, strata_totals) \
         .pipe(_aggregate_msas, covars, obs_level) \
-        .pipe(_remove_extra_msas, state_list, state_list0) \
+        .pipe(_remove_extra_msas, state_list, state_list_orig) \
         [covars + indicator_list] \
         .pipe(_annualize_data, annualize, covars) \
         .sort_values(covars) \
@@ -568,11 +566,8 @@ def qwi(
     else:
         raise Exception('Invalid input to obs_level.')
 
-
-    if state_list == 'all':
-        state_list = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
-    else:
-        state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
+    state_list = c.STATES if state_list == 'all' else state_list
+    state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
 
     if indicator_list == 'all':
         indicator_list = c.QWI_OUTCOMES
@@ -581,10 +576,11 @@ def qwi(
 
     # todo: keep this?
     # if annualize and any(x in c.qwi_averaged_outcomes for x in indicator_lst):
-    #     raise Exception('indicator_lst not compatible with annualize==True')
+    #     raise Exception('indicator_list not compatible with annualize==True')
 
 
-    firm_char = [firm_char] if type(firm_char) == str else firm_char
+    firm_char, worker_char = s.as_list(firm_char), s.as_list(worker_char)
+
     if any(x in ['firmage', 'firmsize'] for x in firm_char):
         private = True
         print(
@@ -597,8 +593,6 @@ def qwi(
             'Warning: US-level data is only available when private=True.',
             'Variable "private" has been set to True.'
         )
-
-    worker_char = [worker_char] if type(worker_char) == str else worker_char
 
     if set(worker_char) not in c.QWI_WORKER_CROSSES:
         raise Exception(
