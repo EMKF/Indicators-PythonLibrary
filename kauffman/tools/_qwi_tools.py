@@ -123,13 +123,82 @@ def estimate_data_shape(
     return (row_estimate, n_columns)
 
 
-def is_complete(df, geo_level, strata, state_list=None, fips_list=None):
+def _map_state_to_years(state, d):
+    return list(range(d[state]['start_year'], d[state]['end_year'] + 1))
+
+
+def missing_obs(df, geo_level, state_list, fips_list, worker_char, firm_char, 
+annualize, strata_totals):
     """
-    Tests whether qwi output has all of the observations that we would expect,
-    given the inputs (geographical level of the data, strata)
+    Finds the observations that are expected in the QWI data but not present.
 
     Parameters
     ----------
-    df : _type_
-        _description_
+    df : DataFrame
+        The QWI data
+    geo_level : {'county', 'msa', 'state', 'us'}
+        The geographical level of the data
+    worker_char : list
+        The worker characteristics the data is stratified by
+    firm_char : list
+        The firm characteristics the data is stratified by
+
+    Returns
+    -------
+    DataFrame
+        The index of the missing observations
     """
+    if geo_level == 'us':
+        expected_index = pd.DataFrame({'time':list(range(1990, 2021))}) \
+            .assign(fips='01')
+    else:
+        state_to_years = get_state_to_years(annualize)
+        state_list = c.STATES if state_list == 'all' else state_list
+        state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
+        fips_cols = list({'fips_state', f'fips_{geo_level}'})
+
+        expected_index = CBSA_crosswalk() \
+            [fips_cols] \
+            .query(f'fips_state in {state_list}')
+        if fips_list:
+            expected_index = expected_index \
+                .query(f'fips_{geo_level} in {fips_list}')
+            
+        expected_index = expected_index \
+            .drop_duplicates() \
+            .assign(
+                time=lambda x: x.fips_state.apply(
+                    _map_state_to_years, 
+                    args=[state_to_years]
+                )
+            ) \
+            .explode('time')
+
+        strata = worker_char + firm_char
+        strata_dict = c.QWI_STRATA_TO_LEVELS if strata_totals else {
+            k:v[1:] for k,v in c.QWI_STRATA_TO_LEVELS.items()
+        }
+        for s in strata:
+            expected_index[s] = [strata_dict[s]] * len(expected_index)
+            expected_index = expected_index.explode(s)
+
+        expected_index = expected_index \
+            .assign(fips=lambda x:x[f'fips_{geo_level}']) \
+            .drop(columns=fips_cols)
+
+    if not annualize:
+        expected_index = expected_index.assign(
+                quarter=[[1,2,3,4]]*len(expected_index)
+            ) \
+            .explode('quarter')
+
+    var_to_dtypes = {**{'time':int, 'fips':str}, **{var:str for var in strata}}
+    expected_index = expected_index \
+        .astype(var_to_dtypes) \
+        .reset_index(drop=True)
+
+    return df[[c for c in expected_index.columns]] \
+            .merge(expected_index, how='right', indicator=True) \
+            .query('_merge != "both"') \
+            .drop(columns='_merge') \
+            .reset_index(drop=True)
