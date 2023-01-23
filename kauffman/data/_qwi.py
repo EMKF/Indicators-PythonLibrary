@@ -307,7 +307,7 @@ def _qwi_fetch_api_data(
 
 
 def _cols_to_numeric(df, var_lst):
-    df[var_lst] = df[var_lst].apply(pd.to_numeric, errors='ignore')
+    df[var_lst] = df[var_lst].apply(pd.to_numeric, downcast='integer')
     return df
 
 
@@ -324,7 +324,6 @@ def _annualize_data(df, annualize, covars):
                     axis=1
                 )
             ) \
-            .astype({'time': 'str'}) \
             .drop('quarter', 1)
     else:
         df = df \
