@@ -68,6 +68,31 @@ def consistent_releases(state_list='all', n_threads=30, enforce=False):
     return True
 
 
+def get_state_to_years(annualize=None):
+    df = pd.read_html('https://ledextract.ces.census.gov/loading_status.html') \
+        [0][['State', 'Start Quarter', 'End Quarter']] \
+        .assign(
+            start_quarter=lambda x: x['Start Quarter'].str[-1:].astype(int),
+            end_quarter=lambda x: x['End Quarter'].str[-1:].astype(int),
+            start_year=lambda x: x['Start Quarter'].str.split().str[0] \
+                .astype(int),
+            end_year=lambda x: x['End Quarter'].str.split().str[0].astype(int),
+            fips=lambda x: x['State'].map(c.STATE_ABB_TO_FIPS)
+        )
+    if annualize:
+        start_of_year, end_of_year = (1,4) if annualize == 'January' else (2,1)
+        df = df.assign(
+            start_year=lambda x: x.start_year \
+                .where(x.start_quarter <= start_of_year, x.start_year + 1),
+            end_year=lambda x: x.end_year \
+                .where(x.end_quarter >= end_of_year, x.end_year - 1)
+        )
+    return df \
+        .set_index('fips') \
+        [['start_year', 'end_year']] \
+        .to_dict('index')
+
+
 def estimate_data_shape(
     indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
     state_list, fips_list
@@ -77,7 +102,7 @@ def estimate_data_shape(
         + ['time', 'fips', 'region', 'ownercode', 'geo_level']
     )
     row_estimate = 0
-    state_to_years = c.QWI_START_TO_END_YEAR()
+    state_to_years = get_state_to_years(False)
 
     for level in obs_level_lst:
         if level == 'us':

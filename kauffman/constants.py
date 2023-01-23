@@ -120,19 +120,6 @@ ALL_FIPS_TO_NAME = {
 }
 ALL_NAME_TO_FIPS = dict(map(reversed, ALL_FIPS_TO_NAME.items()))
 
-def QWI_START_TO_END_YEAR():
-    return pd.read_html('https://ledextract.ces.census.gov/loading_status.html')[0] \
-        [['State', 'Start Quarter', 'End Quarter']] \
-        .assign(
-            start_year=lambda x: x['Start Quarter'].str.split().str[0],
-            end_year=lambda x: x['End Quarter'].str.split().str[0],
-            fips=lambda x: x['State'].map(STATE_ABB_TO_FIPS),
-        ) \
-        .astype({'start_year':'int', 'end_year':'int'}) \
-        .set_index('fips') \
-        [['start_year', 'end_year']] \
-        .to_dict('index')
-
 
 def fetch_msa_to_state_dic():
     df = pd \

@@ -28,10 +28,11 @@ def _year_groups(state_dict, max_years_per_call):
     
 
 def _url_groups(
-    obs_level, looped_strata, max_years_per_call, private, state_list, fips_list
+    obs_level, looped_strata, max_years_per_call, private, state_list, 
+    fips_list, annualize
 ):
     out_lst = []
-    d = c.QWI_START_TO_END_YEAR()
+    d = t.get_state_to_years(annualize)
 
     var_to_levels = {
         **c.QWI_STRATA_TO_LEVELS,
@@ -433,7 +434,7 @@ def _create_data(
                 ]
         groups = _url_groups(
             obs_level, looped_strata, max_years_per_call, private, state_list, 
-            fips_list
+            fips_list, annualize
         )
         df = api_tools.run_in_parallel(
             _qwi_fetch_api_data, 
