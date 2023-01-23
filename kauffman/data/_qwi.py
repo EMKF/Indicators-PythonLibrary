@@ -7,7 +7,7 @@ from itertools import product
 from kauffman import constants as c
 from webdriver_manager.chrome import ChromeDriverManager
 from kauffman.tools._etl import geolevel_crosswalk as geolevel_cw
-from kauffman.tools._qwi_tools import consistent_releases, estimate_data_shape
+from kauffman.tools import _qwi_tools as t
 from kauffman.tools import api_tools
 from kauffman.tools import _shared_tools as s
 
@@ -557,7 +557,7 @@ def qwi(
     """
 
     if enforce_release_consistency:
-        consistent_releases(enforce=True)
+        t.consistent_releases(enforce=True)
     
     if obs_level in ['us', 'state', 'county', 'msa']:
         obs_level_lst = [obs_level]
@@ -613,7 +613,7 @@ def qwi(
             'If fips_list is provided, obs_level must be either msa or county.'
         )
 
-    estimated_shape = estimate_data_shape(
+    estimated_shape = t.estimate_data_shape(
         indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
         state_list, fips_list
     )
