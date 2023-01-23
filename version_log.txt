@@ -13,3 +13,8 @@
 	--Condense pep functions
 	--Remove Puerto Rico from pep output, which had mistakenly been included for 2020-2021
 	--Fix bfs error from census update: update column name
+(1/23/23) Version 2.3.4
+	Minor changes to qwi. Almost identical output, just with slightly different dtypes under certain circumstances.
+	--Introduce _shared_tools.py
+	--Add missing_obs() function to _qwi_tools.py
+	--Various minor cleanup adjustments to qwi (standardize function naming conventions, improve certain variable names, etc.)
