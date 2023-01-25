@@ -66,3 +66,8 @@ def create_fips(df, obs_level):
     else:
         df = df.assign(fips='00')
     return df.assign(region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME))
+
+
+def _fips_section(obs_level, fips, state_fips, in_state=False):
+    return f'{c.API_MSA_STRING if obs_level == "msa" else obs_level}:{fips}' \
+        + (f'&in=state:{state_fips}' if in_state else '')

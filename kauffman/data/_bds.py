@@ -10,18 +10,15 @@ def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
     flag_var = [f'{var}_F' for var in variables]
     var_string = ",".join(variables + strata + flag_var)
     
-    region_string = {
-        'us':'us:*',
-        'state':f'state:{state_fips}',
-        'msa':f'{c.API_MSA_STRING}:*',
-        'county':f'county:*&in=state:{state_fips}'
-    }[region]
+    fips = state_fips if region == 'state' else '*'
+    in_state = True if region == 'county' else False
+    fips_section = api_tools._fips_section(region, fips, state_fips, in_state)
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     key_section = f'&key={key}' if key else ''
     
     return f'https://api.census.gov/data/timeseries/bds?get={var_string}' \
-        f'&for={region_string}&YEAR={year}{naics_string}{key_section}'
+        f'&for={fips_section}&YEAR={year}{naics_string}{key_section}'
 
 
 def _bds_fetch_data(year, variables, region, strata, key, s):

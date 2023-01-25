@@ -51,8 +51,9 @@ def _url_groups(
         ]
     else:
         region_years = [
-            (state, None, year) for state in state_list
-            for year in _year_groups(d[state], max_years_per_call)
+            (state, state if obs_level == 'state' else '*', year)
+            for state in state_list
+            for year in _year_groups(state_to_years[state], max_years_per_call)
         ]
         if obs_level in ['county', 'msa']:
             missing_dict = c.QWI_MISSING_COUNTIES if obs_level == 'county' \
@@ -66,7 +67,7 @@ def _url_groups(
     out_lst += [{
         **{
             'state_fips':group[0][0], 
-            'region_fips':group[0][1], 
+            'fips':group[0][1], 
             'time':group[0][2]
         },
         **{
@@ -107,27 +108,19 @@ def _qwi_url(loop_var, non_loop_var, indicator_list, obs_level, private, key):
     loop_section = f'&'.join([
         f'{k}={loop_var[k]}' 
         for k in loop_var
-        if k != 'state_fips' and k != 'region_fips'
+        if k != 'state_fips' and k != 'fips'
     ])
     ownercode = 'A05' if private == True else 'A00'
-    state_fips, region_fips = loop_var['state_fips'], loop_var['region_fips']
+    state_fips, fips = loop_var['state_fips'], loop_var['fips']
 
-    if obs_level == 'msa':
-        region_fips = '*' if not region_fips else region_fips
-        for_region = f'{c.API_MSA_STRING}:{region_fips}&in=state:{state_fips}'
-    elif obs_level == 'county':
-        if region_fips:
-            if ',' not in region_fips:
-                region_fips = region_fips[-3:]
-            for_region = f'county:{region_fips}&in=state:{state_fips}'
-        else:
-            for_region = f'county:*&in=state:{state_fips}'
-    else:
-        for_region = f'state:{state_fips}'
+    in_state = True if obs_level != 'state' else False
+    if obs_level == 'county' and fips != '*' and ',' not in fips:
+        fips = fips[-3:]
+    fips_section = api_tools._fips_section(obs_level, fips, state_fips, in_state)
 
     key_section = f'&key={key}' if key else ''
 
-    return f'{base_url}/{database}?get={get_statement}&for={for_region}' \
+    return f'{base_url}/{database}?get={get_statement}&for={fips_section}' \
         + f'&ownercode={ownercode}&{loop_section}{key_section}'
 
 

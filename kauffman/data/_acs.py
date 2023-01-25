@@ -9,23 +9,19 @@ def _acs_fetch_data(year, var_set, region, state_lst, key, s):
     base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}'
     state_section = ','.join(state_lst)
     
-    if region == 'us':
-        region_section = f'&for={region}:*'
-    elif region == 'state':
-        region_section = f'&for={region}:{state_section}'
-    elif region == 'county':
-        region_section = f'&for={region}:*&in=state:{state_section}'
+    in_state = True if region == 'county' else False
+    if region == 'state':
+        fips = state_section
+    elif region == 'msa':
+        msas = [m for state in state_lst for m in c.STATE_TO_MSA_FIPS[state]]
+        fips = ",".join(msas)
     else:
-        msa_list = []
-        for state in state_lst:
-            try:
-                msa_list.extend(c.STATE_TO_MSA_FIPS[state])
-            except:
-                pass
-        region_section = f'&for={c.API_MSA_STRING}:{",".join(msa_list)}'
+        fips = '*'
+    fips_section = '&for=' \
+        + api_tools._fips_section(region, fips, state_section, in_state)
 
     key_section = f'&key={key}' if key else ''
-    url = base_url + region_section + key_section
+    url = base_url + fips_section + key_section
     return api_tools.fetch_from_url(url, s) \
         .assign(year=year)
 
