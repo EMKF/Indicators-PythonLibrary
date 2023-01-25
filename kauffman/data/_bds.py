@@ -55,7 +55,7 @@ def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
     flags = [f'{var}_F' for var in variables] if get_flags else []
 
     return df \
-        .pipe(api_tools.create_fips, region) \
+        .pipe(api_tools._create_fips, region) \
         .rename(columns={
             **{'YEAR': 'time', 'NAICS':'naics'}, 
             **{x:x.lower() for x in strata}
@@ -244,6 +244,5 @@ def bds(
                     series_lst, region, strata, get_flags, key, n_threads
                 )
                 for region in region_lst
-            ],
-            axis=0
+            ]
         )

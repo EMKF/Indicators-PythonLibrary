@@ -56,7 +56,7 @@ def run_in_parallel(data_fetch_function, groups, constant_inputs, n_threads):
     return df
 
 
-def create_fips(df, obs_level):
+def _create_fips(df, obs_level):
     if obs_level == 'state':
         df['fips'] = df['state'].astype(str)
     elif obs_level == 'county':

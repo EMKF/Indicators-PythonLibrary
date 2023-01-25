@@ -34,14 +34,14 @@ def _acs_data_create(series_lst, region, state_lst, key, n_threads):
         [series_lst, region, state_lst, key], 
         n_threads
     ) \
-        .pipe(api_tools.create_fips, region) \
+        .pipe(api_tools._create_fips, region) \
         [['fips', 'region', 'year'] + series_lst] \
         .rename(columns=c.ACS_CODE_TO_VAR) \
         .sort_values(['fips', 'region', 'year'])
 
 
 def acs(
-    series_lst='all', obs_level='all', state_lst = 'all',
+    series_lst='all', obs_level='all', state_lst='all',
     key=os.getenv("CENSUS_KEY"), n_threads=1
 ):
     """
@@ -118,6 +118,5 @@ def acs(
             [
                 _acs_data_create(series_lst, region, state_lst, key, n_threads)
                 for region in region_lst
-            ],
-            axis=0
+            ]
         ).reset_index(drop=True)

@@ -32,7 +32,7 @@ def _url_groups(
     fips_list, annualize
 ):
     out_lst = []
-    d = t.get_state_to_years(annualize)
+    state_to_years = t.get_state_to_years(annualize)
 
     var_to_levels = {
         **c.QWI_STRATA_TO_LEVELS,
@@ -47,7 +47,7 @@ def _url_groups(
         region_years = [
             (state, region, year) 
             for state, region in fips_list
-            for year in _year_groups(d[state], max_years_per_call)
+            for year in _year_groups(state_to_years[state], max_years_per_call)
         ]
     else:
         region_years = [
@@ -61,7 +61,7 @@ def _url_groups(
             region_years += [
                 (state, ','.join(missing_dict[state]), year)
                 for state in set(missing_dict) & set(state_list)
-                for year in _year_groups(d[state], max_years_per_call)
+                for year in _year_groups(state_to_years[state], max_years_per_call)
             ]
 
     out_lst += [{
@@ -439,7 +439,7 @@ def _create_data(
     df.drop_duplicates(inplace=True)
 
     return df \
-        .pipe(api_tools.create_fips, obs_level) \
+        .pipe(api_tools._create_fips, obs_level) \
         .pipe(_cols_to_numeric, indicator_list) \
         .pipe(_filter_strata_totals, firm_char, worker_char, strata_totals) \
         .pipe(_aggregate_msas, covars, obs_level) \
