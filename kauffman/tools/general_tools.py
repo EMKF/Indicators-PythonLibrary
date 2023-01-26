@@ -190,3 +190,10 @@ def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):
         .apply(lambda x: x*df[weight_var] if x.name in var_list else x) \
         .groupby(strata).sum() \
         .reset_index()
+
+
+def as_list(object):
+    if type(object) == list:
+        return object
+    else:
+        return [object]

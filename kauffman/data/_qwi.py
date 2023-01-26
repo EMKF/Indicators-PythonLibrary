@@ -5,11 +5,10 @@ import pandas as pd
 from math import ceil
 from itertools import product
 from kauffman import constants as c
+from kauffman.tools import qwi_tools as q
+from kauffman.tools import general_tools as g
+from kauffman.tools import api_tools as api
 from webdriver_manager.chrome import ChromeDriverManager
-from kauffman.tools._etl import geolevel_crosswalk as geolevel_cw
-from kauffman.tools import _qwi_tools as t
-from kauffman.tools import api_tools
-from kauffman.tools import _shared_tools as s
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -32,7 +31,7 @@ def _url_groups(
     fips_list, annualize
 ):
     out_lst = []
-    state_to_years = t.get_state_to_years(annualize)
+    state_to_years = q._get_state_to_years(annualize)
 
     var_to_levels = {
         **c.QWI_STRATA_TO_LEVELS,
@@ -116,7 +115,7 @@ def _qwi_url(loop_var, non_loop_var, indicator_list, obs_level, private, key):
     in_state = True if obs_level != 'state' else False
     if obs_level == 'county' and fips != '*' and ',' not in fips:
         fips = fips[-3:]
-    fips_section = api_tools._fips_section(obs_level, fips, state_fips, in_state)
+    fips_section = api._fips_section(obs_level, fips, state_fips, in_state)
 
     key_section = f'&key={key}' if key else ''
 
@@ -297,7 +296,7 @@ def _qwi_fetch_api_data(
     url = _qwi_url(
         loop_var, non_loop_var, indicator_list, obs_level, private, key
     )
-    return api_tools.fetch_from_url(url, s)
+    return api.fetch_from_url(url, s)
 
 
 def _cols_to_numeric(df, var_lst):
@@ -397,7 +396,7 @@ def _create_data(
 
     state_list_orig = state_list
     if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
-        state_list = geolevel_cw(
+        state_list = g.geolevel_crosswalk(
                 from_geo='state', to_geo='msa', 
                 from_fips_list=state_list, msa_coidentify_state=True
             ) \
@@ -422,14 +421,14 @@ def _create_data(
             else:
                 fips_list = [
                     tuple(row)
-                    for row in geolevel_cw('msa', 'state', fips_list) \
+                    for row in g.geolevel_crosswalk('msa', 'state', fips_list) \
                         [['fips_state', 'fips_msa']].values
                 ]
         groups = _url_groups(
             obs_level, looped_strata, max_years_per_call, private, state_list, 
             fips_list, annualize
         )
-        df = api_tools.run_in_parallel(
+        df = api.run_in_parallel(
             _qwi_fetch_api_data, 
             groups,
             [non_loop_var, indicator_list, obs_level, private, key],
@@ -439,7 +438,7 @@ def _create_data(
     df.drop_duplicates(inplace=True)
 
     return df \
-        .pipe(api_tools._create_fips, obs_level) \
+        .pipe(api._create_fips, obs_level) \
         .pipe(_cols_to_numeric, indicator_list) \
         .pipe(_filter_strata_totals, firm_char, worker_char, strata_totals) \
         .pipe(_aggregate_msas, covars, obs_level) \
@@ -551,7 +550,7 @@ def qwi(
     """
 
     if enforce_release_consistency:
-        t.consistent_releases(enforce=True)
+        q.consistent_releases(enforce=True)
     
     if obs_level in ['us', 'state', 'county', 'msa']:
         obs_level_lst = [obs_level]
@@ -573,7 +572,7 @@ def qwi(
     #     raise Exception('indicator_list not compatible with annualize==True')
 
 
-    firm_char, worker_char = s.as_list(firm_char), s.as_list(worker_char)
+    firm_char, worker_char = g.as_list(firm_char), g.as_list(worker_char)
 
     if any(x in ['firmage', 'firmsize'] for x in firm_char):
         private = True
@@ -607,7 +606,7 @@ def qwi(
             'If fips_list is provided, obs_level must be either msa or county.'
         )
 
-    estimated_shape = t.estimate_data_shape(
+    estimated_shape = q.estimate_data_shape(
         indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
         state_list, fips_list
     )

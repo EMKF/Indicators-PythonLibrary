@@ -3,8 +3,8 @@ import requests
 import numpy as np
 import pandas as pd
 from kauffman import constants as c
-from kauffman.tools import api_tools
-from kauffman.tools._etl import aggregate_county_to_msa as cw
+from kauffman.tools import api_tools as api
+from kauffman.tools import general_tools as g
 
 # https://www.census.gov/programs-surveys/popest.html
 
@@ -32,7 +32,7 @@ def _fetch_from_api(
     pop_var, key
 ):
     url = url + f'&key={key}' if key else url
-    return api_tools.fetch_from_url(url, requests) \
+    return api.fetch_from_url(url, requests) \
         .rename(columns={pop_var:'population'}) \
         .pipe(
             _fips_region_time, geo_level, date_var, date_code_shift, region_var
@@ -287,7 +287,7 @@ def _pep_data_create(region, key):
             .assign(region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME))
     elif region == 'msa':
         df = _pep_data_create('county', key) \
-            .pipe(cw, 'fips', ['population']) \
+            .pipe(g.aggregate_county_to_msa, 'fips', ['population']) \
             [['fips', 'region', 'time', 'population']]
     elif region == 'state':
         df = pd.concat(

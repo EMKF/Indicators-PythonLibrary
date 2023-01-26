@@ -3,7 +3,7 @@ import pandas as pd
 import kauffman.constants as c
 import os
 import numpy as np
-from kauffman.tools import api_tools
+from kauffman.tools import api_tools as api
 
 
 def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
@@ -12,7 +12,7 @@ def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
     
     fips = state_fips if region == 'state' else '*'
     in_state = True if region == 'county' else False
-    fips_section = api_tools._fips_section(region, fips, state_fips, in_state)
+    fips_section = api._fips_section(region, fips, state_fips, in_state)
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     key_section = f'&key={key}' if key else ''
@@ -23,7 +23,7 @@ def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
 
 def _bds_fetch_data(year, variables, region, strata, key, s):
     url = _bds_build_url(variables, region, strata, key, '*', year)
-    return api_tools.fetch_from_url(url, s)
+    return api.fetch_from_url(url, s)
 
 
 def _mark_flagged(df, variables):
@@ -39,10 +39,10 @@ def _mark_flagged(df, variables):
 def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
     if 'NAICS' not in strata or region == 'us':
         url = _bds_build_url(variables, region, strata, key, '*')
-        df = api_tools.fetch_from_url(url, requests)
+        df = api.fetch_from_url(url, requests)
     else:
         years = list(range(1978, 2020))
-        df = api_tools.run_in_parallel(
+        df = api.run_in_parallel(
             _bds_fetch_data, years, [variables, region, strata, key], n_threads
         )            
 
@@ -55,7 +55,7 @@ def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
     flags = [f'{var}_F' for var in variables] if get_flags else []
 
     return df \
-        .pipe(api_tools._create_fips, region) \
+        .pipe(api._create_fips, region) \
         .rename(columns={
             **{'YEAR': 'time', 'NAICS':'naics'}, 
             **{x:x.lower() for x in strata}

@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from kauffman import constants as c
-from kauffman.tools import api_tools
+from kauffman.tools import api_tools as api
 
 
 def _acs_fetch_data(year, var_set, region, state_lst, key, s):
@@ -18,23 +18,22 @@ def _acs_fetch_data(year, var_set, region, state_lst, key, s):
     else:
         fips = '*'
     fips_section = '&for=' \
-        + api_tools._fips_section(region, fips, state_section, in_state)
+        + api._fips_section(region, fips, state_section, in_state)
 
     key_section = f'&key={key}' if key else ''
     url = base_url + fips_section + key_section
-    return api_tools.fetch_from_url(url, s) \
-        .assign(year=year)
+    return api.fetch_from_url(url, s).assign(year=year)
 
 
 def _acs_data_create(series_lst, region, state_lst, key, n_threads):
     years = list(range(2005, 2019 + 1))
-    return api_tools.run_in_parallel(
+    return api.run_in_parallel(
         _acs_fetch_data,
         years,
         [series_lst, region, state_lst, key], 
         n_threads
     ) \
-        .pipe(api_tools._create_fips, region) \
+        .pipe(api._create_fips, region) \
         [['fips', 'region', 'year'] + series_lst] \
         .rename(columns=c.ACS_CODE_TO_VAR) \
         .sort_values(['fips', 'region', 'year'])

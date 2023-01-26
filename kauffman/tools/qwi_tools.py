@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from joblib import Parallel, delayed
 from kauffman import constants as c
-from kauffman.tools._etl import CBSA_crosswalk
+from kauffman.tools.general_tools import CBSA_crosswalk
 
 
 def _get_state_release_info(state, session):
@@ -68,7 +68,7 @@ def consistent_releases(state_list='all', n_threads=30, enforce=False):
     return True
 
 
-def get_state_to_years(annualize=None):
+def _get_state_to_years(annualize=None):
     df = pd.read_html('https://ledextract.ces.census.gov/loading_status.html') \
         [0][['State', 'Start Quarter', 'End Quarter']] \
         .assign(
@@ -102,7 +102,7 @@ def estimate_data_shape(
         + ['time', 'fips', 'region', 'ownercode', 'geo_level']
     )
     row_estimate = 0
-    state_to_years = get_state_to_years(False)
+    state_to_years = _get_state_to_years(False)
 
     for level in obs_level_lst:
         if level == 'us':
@@ -177,7 +177,7 @@ annualize, strata_totals):
         expected_index = pd.DataFrame({'time':list(range(1990, 2021))}) \
             .assign(fips='01')
     else:
-        state_to_years = get_state_to_years(annualize)
+        state_to_years = _get_state_to_years(annualize)
         state_list = c.STATES if state_list == 'all' else state_list
         state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
         fips_cols = list({'fips_state', f'fips_{geo_level}'})
