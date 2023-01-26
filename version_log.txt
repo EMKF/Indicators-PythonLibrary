@@ -18,3 +18,8 @@
 	--Introduce _shared_tools.py
 	--Add missing_obs() function to _qwi_tools.py
 	--Various minor cleanup adjustments to qwi (standardize function naming conventions, improve certain variable names, etc.)
+(1/24/23) Version 2.3.5
+	Backwards-compatible restructure of the tools folder.
+	--Renamed files to follow consistent formatting
+	--Reorganized the tools to better fit within their respective files
+	--Updated and consolidated import methods for tools
