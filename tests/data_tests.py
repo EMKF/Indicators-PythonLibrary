@@ -1,5 +1,6 @@
 import kauffman.constants as c
-from kauffman.data import acs, bfs, bds, pep, bed, qwi, shed
+from kauffman.data import acs, bfs, bds, pep, bed, qwi
+from datetime import datetime as dt
 
 
 ############### ACS tests ###################
@@ -14,7 +15,6 @@ acs5 = "acs(obs_level='msa', state_lst=['HI', 'VT'])"
 acs6 = "acs(obs_level='msa', state_lst='all')"
 acs7 = "acs(obs_level='state', state_lst=['CO', 'UT'])"
 acs8 = "acs(obs_level='state', state_lst='all')"
-
 
 
 ############### BED tests ###################
@@ -51,7 +51,6 @@ bds9 = "bds(series_lst=['JOB_CREATION_BIRTHS', 'JOB_CREATION_CONTINUERS'], obs_l
 bds10 = "bds(series_lst=['REALLOCATION_RATE'], obs_level='county', strata = ['EMPSZFI'])"
 
 
-
 ############### BFS tests ###################
 # NEB Usage
 bfs1 = "bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level='us', annualize=True)"
@@ -82,7 +81,6 @@ bfs16 = "bfs(['BF_DUR4Q'], obs_level='state', march_shift=False)"
 # Combinations
 bfs17 = "bfs(['BA_BA'], obs_level='us', industry='48-49', seasonally_adj=False, annualize=True, march_shift=True)"
 bfs18 = "bfs(['BA_BA'], obs_level='state', annualize=True, march_shift=True)"
-
 
 
 ############### PEP tests ###################
@@ -151,3 +149,92 @@ qwi33 = "qwi(indicator_list=indicators, obs_level='state', firm_char=['industry'
 # Strata totals examples
 qwi34 = "qwi(indicator_list=indicators, obs_level='state', firm_char=['firmsize'], strata_totals=True, n_threads=30)"
 qwi35 = "qwi(indicator_list=indicators, obs_level='state', worker_char=['sex'], strata_totals=True, n_threads=30)"
+
+
+module_to_ntests = {
+    'acs': range(1,9),
+    'bed': range(1,11),
+    'bds': range(1,11),
+    'bfs': range(1,19),
+    'pep': range(1,5),
+    'qwi': range(1,36)
+}
+
+
+def _log(text, output_location, write_type='a'):
+    """Helper fn for run_tests"""
+    if output_location:
+        text += '\n'
+        with open(output_location, write_type) as f:
+            f.write(text)
+    else:
+        print(text)
+
+
+def run_tests(tests, output_location=None, num_retries=1):
+    """
+    Run tests of the kauffman library, saves output to a folder if desired.
+
+    Parameters
+    ----------
+    tests: str or list
+        The test or tests you would like to perform, referred to by the string
+        of variable the holds the test.
+        Examples: 'qwi10', 'qwi', ['acs1', 'acs2'], 'all'
+    output_location: str, optional
+        The file location of the output
+    num_retries : int, default 1
+        If the test fails, how many times to retry
+    """
+    # Allow list or string
+    if type(tests) != list and tests not in list(module_to_ntests) + ['all']:
+        tests = [tests]
+
+    # test ids
+    if type(tests) == str and tests in module_to_ntests:
+        ids = [f'{tests}{i}' for i in module_to_ntests[tests]]
+    elif tests == 'all':
+        ids = [f'{m}{i}' for m in module_to_ntests for i in module_to_ntests[m]]
+    else:
+        ids = tests
+
+    # test strings
+    if type(tests) == str and tests in module_to_ntests:
+        tests = [eval(f'{tests}{n}') for n in module_to_ntests[tests]] 
+    elif tests == 'all':
+        tests = [eval(f'{m}{i}') for m in module_to_ntests for i in module_to_ntests[m]]
+    else:
+        tests = [eval(test) for test in tests]
+    
+    # start log
+    log_path = output_location + '\log.txt' if output_location else None
+    start_text = f'Started tests at {dt.now().time()}'
+    _log(start_text, log_path, write_type='w')
+
+    # perform tests
+    for test, test_id in zip(tests, ids):
+        success = False
+        tries = 1
+        _log(f'Testing: {test_id} at time {dt.now().time()}', log_path)
+        while not success and tries <= num_retries + 1:
+            try:
+                df = eval(test)
+
+                if output_location:
+                    out_path = output_location + '/' + test_id + '.csv'
+                    df.to_csv(out_path, index=False)
+                success = True
+                _log(f'Success at time {dt.now().time()}', log_path)
+
+            except:
+                _log(
+                    f'[Try: {tries}]. FAIL at time {dt.now().time()}', 
+                    log_path
+                )
+                tries += 1
+
+    # end log
+    _log(f'Ended testing at time {dt.now().time()}', log_path)
+
+
+# run_tests('pep1')
