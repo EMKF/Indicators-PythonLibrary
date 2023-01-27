@@ -34,9 +34,6 @@ def _fetch_data():
     ]
     data = _format_df(df[row_splits[-1]:])
 
-    # Patch fix for mistake in the Census file--hopefully this line is temporary
-    region_key.columns = ['geo_idx', 'geo_code', 'geo_desc']
-
     return data, industry_key, series_key, region_key, time_key
 	
 
