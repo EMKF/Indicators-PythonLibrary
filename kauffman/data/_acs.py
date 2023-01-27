@@ -28,10 +28,10 @@ def _acs_fetch_data(year, var_set, region, state_lst, key, s):
 def _acs_data_create(series_lst, region, state_lst, key, n_threads):
     years = list(range(2005, 2019 + 1))
     return api.run_in_parallel(
-        _acs_fetch_data,
-        years,
-        [series_lst, region, state_lst, key], 
-        n_threads
+        data_fetch_fn = _acs_fetch_data,
+        groups = years,
+        constant_inputs = [series_lst, region, state_lst, key],
+        n_threads = n_threads
     ) \
         .pipe(api._create_fips, region) \
         [['fips', 'region', 'year'] + series_lst] \

@@ -6,7 +6,7 @@ import numpy as np
 from kauffman.tools import api_tools as api
 
 
-def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
+def _bds_url(variables, region, strata, key, state_fips=None, year='*'):
     flag_var = [f'{var}_F' for var in variables]
     var_string = ",".join(variables + strata + flag_var)
     
@@ -22,7 +22,7 @@ def _bds_build_url(variables, region, strata, key, state_fips=None, year='*'):
 
 
 def _bds_fetch_data(year, variables, region, strata, key, s):
-    url = _bds_build_url(variables, region, strata, key, '*', year)
+    url = _bds_url(variables, region, strata, key, '*', year)
     return api.fetch_from_url(url, s)
 
 
@@ -38,13 +38,16 @@ def _mark_flagged(df, variables):
 
 def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
     if 'NAICS' not in strata or region == 'us':
-        url = _bds_build_url(variables, region, strata, key, '*')
+        url = _bds_url(variables, region, strata, key, '*')
         df = api.fetch_from_url(url, requests)
     else:
         years = list(range(1978, 2020))
         df = api.run_in_parallel(
-            _bds_fetch_data, years, [variables, region, strata, key], n_threads
-        )            
+            data_fetch_fn = _bds_fetch_data,
+            groups = years,
+            constant_inputs = [variables, region, strata, key],
+            n_threads = n_threads
+        )
 
     if len(df) == 0: 
         raise Exception(

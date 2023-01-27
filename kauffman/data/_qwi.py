@@ -429,10 +429,12 @@ def _create_data(
             fips_list, annualize
         )
         df = api.run_in_parallel(
-            _qwi_fetch_api_data, 
-            groups,
-            [non_loop_var, indicator_list, obs_level, private, key],
-            n_threads
+            data_fetch_fn = _qwi_fetch_api_data, 
+            groups = groups,
+            constant_inputs = [
+                non_loop_var, indicator_list, obs_level, private, key
+            ],
+            n_threads=n_threads
         )
 
     df.drop_duplicates(inplace=True)
@@ -628,6 +630,5 @@ def qwi(
                 annualize, firm_char, worker_char, strata_totals, key, n_threads
             )
             for level in obs_level_lst
-        ],
-        axis=0
+        ]
     )

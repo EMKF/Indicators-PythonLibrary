@@ -40,18 +40,16 @@ def fetch_from_url(url, session):
     return df
 
 
-def run_in_parallel(data_fetch_function, groups, constant_inputs, n_threads):
+def run_in_parallel(data_fetch_fn, groups, constant_inputs, n_threads):
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
-
     with parallel:
         df = pd.concat(
             parallel(
-                delayed(data_fetch_function)(g, *constant_inputs, s)
+                delayed(data_fetch_fn)(g, *constant_inputs, s)
                 for g in groups
             )
         )
-
     s.close()
     return df
 
