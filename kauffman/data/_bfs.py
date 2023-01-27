@@ -190,7 +190,7 @@ def _bfs_data_create(
 
 
 def bfs(
-    series_lst, obs_level='all', industry='00', seasonally_adj=True, 
+    series_lst='all', obs_level='all', industry='00', seasonally_adj=True, 
     annualize=False, march_shift=False
 ):
     """ 
@@ -252,7 +252,8 @@ def bfs(
     march_shift--When True: year end is March; False: year end is December. 
         (True or False)
     """
-
+    series_lst = c.BFS_SERIES if series_lst == 'all' else series_lst
+    
     if type(obs_level) == list:
         region_lst = obs_level
     else:

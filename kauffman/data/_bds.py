@@ -97,7 +97,7 @@ def check_strata_valid(obs_level, strata):
 
 
 def bds(
-    series_lst, obs_level='all', strata=[], get_flags=False, 
+    series_lst='all', obs_level='all', strata=[], get_flags=False, 
     key=os.getenv('CENSUS_KEY'), n_threads=1
 ):
     """ 
@@ -198,6 +198,8 @@ def bds(
 
     first year available is 1978, last year is 2018
     """
+    series_lst = c.BDS_SERIES if series_lst == 'all' else series_lst
+
     if type(obs_level) == list:
         region_lst = obs_level
     elif obs_level in ['us', 'state', 'county', 'msa']:

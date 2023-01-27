@@ -41,14 +41,14 @@ bds1 = "bds(['FIRM'], obs_level='us')"
 bds2 = "bds(['FIRM'], obs_level='state')"
 
 # Strata examples
-bds3 = "bds(series_lst=['ESTAB'], obs_level='us', strata=[])"
+bds3 = "bds(series_lst='all', obs_level='us', strata=[])"
 bds4 = "bds(series_lst=['FIRM', 'DENOM'], obs_level='us', strata=['NAICS'])"
 bds5 = "bds(series_lst=['JOB_CREATION', 'FIRMDEATH_EMP'], obs_level='us', strata=['FAGE', 'GEOCOMP', 'METRO'])"
-bds6 = "bds(series_lst=['EMP'], obs_level='state', strata=['FAGE'])"
+bds6 = "bds(series_lst='all', obs_level='state', strata=['FAGE'])"
 bds7 = "bds(series_lst=['ESTABS_ENTRY'], obs_level='state', strata=['GEOCOMP', 'METRO'])"
-bds8 = "bds(series_lst=['JOB_DESTRUCTION_DEATHS'], obs_level='msa', strata = ['EMPSZFI', 'NAICS'])"
+bds8 = "bds(series_lst='all', obs_level='msa', strata = ['EMPSZFI', 'NAICS'])"
 bds9 = "bds(series_lst=['JOB_CREATION_BIRTHS', 'JOB_CREATION_CONTINUERS'], obs_level='msa', strata = ['EMPSZFII'])"
-bds10 = "bds(series_lst=['REALLOCATION_RATE'], obs_level='county', strata = ['EMPSZFI'])"
+bds10 = "bds(series_lst=['REALLOCATION_RATE'], obs_level='county', strata = ['FAGE'])"
 
 
 ############### BFS tests ###################
@@ -64,12 +64,12 @@ bfs6 = "bfs(['BF_SBF4Q', 'BF_PBF8Q'], obs_level='us', industry='44-45')"
 bfs7 = "bfs(['BA_BA'], obs_level='us', industry='all')"
 
 # Seasonally_adj examples
-bfs8 = "bfs(['BF_PBF4Q', 'BF_BF8Q'], obs_level='us', seasonally_adj=False)"
+bfs8 = "bfs('all', obs_level='us', seasonally_adj=False)"
 bfs9 = "bfs(['BA_WBA', 'BA_HBA'], obs_level='state', seasonally_adj=False)"
 bfs10 = "bfs(['BA_BA', 'BF_SBF8Q', 'BF_DUR8Q'], obs_level='us', seasonally_adj=True)"
 
 # Annualize examples
-bfs11 = "bfs(['BF_BF4Q', 'BA_CBA'], obs_level='state', annualize=True)"
+bfs11 = "bfs(obs_level='state', annualize=True)"
 bfs12 = "bfs(['BF_SBF8Q', 'BA_WBA'], obs_level='us', annualize=True)"
 bfs13 = "bfs(['BF_DUR4Q', 'BA_WBA'], obs_level='us', annualize=False)"
 
@@ -79,7 +79,7 @@ bfs15 = "bfs(['BA_HBA'], obs_level='state', march_shift=True)"
 bfs16 = "bfs(['BF_DUR4Q'], obs_level='state', march_shift=False)"
 
 # Combinations
-bfs17 = "bfs(['BA_BA'], obs_level='us', industry='48-49', seasonally_adj=False, annualize=True, march_shift=True)"
+bfs17 = "bfs('all', obs_level='us', industry='48-49', seasonally_adj=False, annualize=True, march_shift=True)"
 bfs18 = "bfs(['BA_BA'], obs_level='state', annualize=True, march_shift=True)"
 
 
