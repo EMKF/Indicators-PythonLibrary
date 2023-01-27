@@ -23,3 +23,5 @@
 	--Renamed files to follow consistent formatting
 	--Reorganized the tools to better fit within their respective files
 	--Updated and consolidated import methods for tools
+(1/24/23) Version 2.3.6
+	Added option 'all' for series_lst to bfs and bds
