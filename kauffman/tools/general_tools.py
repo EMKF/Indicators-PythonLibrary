@@ -49,15 +49,6 @@ def file_from_s3(file, bucket, key):
     s3.download_fileobj(bucket, key, file)
 
 
-def read_zip(zip_url, filename):
-    """
-    Reads a csv file from a zip file online. Example: 'public2018.csv' from
-    'https://www.federalreserve.gov/consumerscommunities/files/SHED_public_use_data_2018_(CSV).zip'
-    """
-    z = ZipFile(io.BytesIO(requests.get(zip_url).content))
-    return pd.read_csv(z.open(filename), encoding='cp1252', low_memory=False)
-
-
 def CBSA_crosswalk():
     url = 'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls'
     df_cw = pd.read_excel(
