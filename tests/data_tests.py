@@ -46,7 +46,7 @@ bds4 = "bds(series_lst=['FIRM', 'DENOM'], obs_level='us', strata=['NAICS'])"
 bds5 = "bds(series_lst=['JOB_CREATION', 'FIRMDEATH_EMP'], obs_level='us', strata=['FAGE', 'GEOCOMP', 'METRO'])"
 bds6 = "bds(series_lst='all', obs_level='state', strata=['FAGE'])"
 bds7 = "bds(series_lst=['ESTABS_ENTRY'], obs_level='state', strata=['GEOCOMP', 'METRO'])"
-bds8 = "bds(series_lst='all', obs_level='msa', strata = ['EMPSZFI', 'NAICS'])"
+bds8 = "bds(series_lst='all', obs_level='msa', strata = ['EMPSZFI'])"
 bds9 = "bds(series_lst=['JOB_CREATION_BIRTHS', 'JOB_CREATION_CONTINUERS'], obs_level='msa', strata = ['EMPSZFII'])"
 bds10 = "bds(series_lst=['REALLOCATION_RATE'], obs_level='county', strata = ['FAGE'])"
 
@@ -180,7 +180,7 @@ def run_tests(tests, output_location=None, num_retries=1):
     tests: str or list
         The test or tests you would like to perform, referred to by the string
         of variable the holds the test.
-        Examples: 'qwi10', 'qwi', ['acs1', 'acs2'], 'all'
+        Examples: ['qwi10'], 'qwi', ['acs1', 'acs2'], 'all'
     output_location: str, optional
         The file location of the output
     num_retries : int, default 1
