@@ -1,5 +1,5 @@
 # Overview
-`kauffman` is a Python library for fetching and cleaning commonly used publicly available datasets related to entrepreneurship.
+`kauffman` is a Python library for fetching and cleaning commonly used publicly available datasets related to entrepreneurship. It is the source of the data used in the creation of the Kauffman Indicators, which are found within the kese (https://github.com/EMKF/kese), neb (https://github.com/EMKF/neb), and eji (https://github.com/EMKF/eji) repositories.
 
 # Installation
 In the terminal, type:
@@ -11,9 +11,8 @@ We are still developing this library, so local updating will be necessary occasi
 pip3 install --upgrade git+https://github.com/EMKF/downwardata.git#egg=kauffman
 ```
 
-# Requirements
-In order to run the `bds` or `qwi` functions, you will need a valid Census API key, either stored as an environmental variable on your computer labeled "CENSUS_KEY", or passed to the function through the "key" argument. If you do not have a census key, you can submit a request at the following URL: https://api.census.gov/data/key_signup.html.
-
+# Census Key
+A few of the functions (`acs`, `qwi`, `bds`, and `pep`) obtain data through the Census's API. The Census limits the amount of data that a user can obtain without a key, so these functions have an option to pass a key through the "key" argument. The default for these functions is to assume you have a key, stored as an environmental variable on your computer labeled "CENSUS_KEY". If you do not have a census key, you can submit a request at the following URL: https://api.census.gov/data/key_signup.html. If you do not have a key and do not wish to obtain one, you can simply pass key=None. Finally, if you have a key and do not wish to store it as an environmental variable, you can pass your key manually to the "key" argument, in string form.
 
 # Library Structure
 The kauffman library contains two packages:
