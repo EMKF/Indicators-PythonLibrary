@@ -6,13 +6,12 @@ import numpy as np
 from kauffman.tools import api_tools as api
 
 
-def _bds_url(variables, region, strata, key, state_fips=None, year='*'):
+def _bds_url(variables, obs_level, strata, key, year='*'):
     flag_var = [f'{var}_F' for var in variables]
     var_string = ",".join(variables + strata + flag_var)
     
-    fips = state_fips if region == 'state' else '*'
-    in_state = True if region == 'county' else False
-    fips_section = api._fips_section(region, fips, state_fips, in_state)
+    in_state = True if obs_level == 'county' else False
+    fips_section = api._fips_section(obs_level, '*', '*', in_state)
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     key_section = f'&key={key}' if key else ''
@@ -21,8 +20,8 @@ def _bds_url(variables, region, strata, key, state_fips=None, year='*'):
         f'&for={fips_section}&YEAR={year}{naics_string}{key_section}'
 
 
-def _bds_fetch_data(year, variables, region, strata, key, s):
-    url = _bds_url(variables, region, strata, key, '*', year)
+def _bds_fetch_data(year, variables, obs_level, strata, key, s):
+    url = _bds_url(variables, obs_level, strata, key, year)
     return api.fetch_from_url(url, s)
 
 
@@ -33,50 +32,7 @@ def _mark_flagged(df, variables):
                 .where(df[f'{x.name}_F'].isin(['D', 'S', 'X']), x) \
                 .replace(['D', 'S', 'X'], np.NaN)
         )
-    return df
-
-
-def _bds_data_create(variables, region, strata, get_flags, key, n_threads):
-    if 'NAICS' not in strata or region == 'us':
-        url = _bds_url(variables, region, strata, key, '*')
-        df = api.fetch_from_url(url, requests)
-    else:
-        years = list(range(1978, 2020))
-        df = api.run_in_parallel(
-            data_fetch_fn = _bds_fetch_data,
-            groups = years,
-            constant_inputs = [variables, region, strata, key],
-            n_threads = n_threads
-        )
-
-    if len(df) == 0: 
-        raise Exception(
-            'The data fetch returned an empty dataframe. Please double check' \
-            'that you have a valid key.'
-        )
-
-    flags = [f'{var}_F' for var in variables] if get_flags else []
-
-    return df \
-        .pipe(api._create_fips, region) \
-        .rename(columns={
-            **{'YEAR': 'time', 'NAICS':'naics'}, 
-            **{x:x.lower() for x in strata}
-            }
-        ) \
-        .assign(industry=lambda x: x['naics'].map(c.NAICS_CODE_TO_ABB(2))) \
-        .apply(
-            lambda x: pd.to_numeric(x, errors='ignore') \
-                if x.name in variables + ['time'] else x
-        ) \
-        .pipe(_mark_flagged, variables) \
-        .sort_values(['fips', 'time'] + [x.lower() for x in strata]) \
-        .reset_index(drop=True) \
-        [
-            ['fips', 'region', 'time'] \
-            + [x.lower() for x in strata] \
-            + variables + flags
-        ]
+    return df  
 
 
 def check_strata_valid(obs_level, strata):
@@ -100,7 +56,7 @@ def check_strata_valid(obs_level, strata):
 
 
 def bds(
-    series_lst='all', obs_level='all', strata=[], get_flags=False, 
+    series_lst='all', obs_level='us', strata=[], get_flags=False, 
     key=os.getenv('CENSUS_KEY'), n_threads=1
 ):
     """ 
@@ -192,23 +148,14 @@ def bds(
             110 26+ Years (1) Firms twenty six or more years old
             150 Left Censored (0) "Firms of unknown age (born before 1977)"
 
-    obs_level--str or lst of the level of observation(s) to pull at.
-        all:
-        us:
-        state:
-        county:
-        list of regions according to fips code
+    obs_level--str
+        us
+        state
+        county
 
     first year available is 1978, last year is 2018
     """
-    series_lst = c.BDS_SERIES if series_lst == 'all' else series_lst
-
-    if type(obs_level) == list:
-        region_lst = obs_level
-    elif obs_level in ['us', 'state', 'county', 'msa']:
-        region_lst = [obs_level]
-    else:
-        region_lst = ['us', 'state', 'county', 'msa']
+    series_list = c.BDS_SERIES if series_lst == 'all' else series_lst
 
     invalid_strata = set(strata) \
         - {'GEOCOMP', 'EAGE', 'EMPSZES', 'EMPSZESI', 'EMPSZFI', 'EMPSZFII', 
@@ -243,11 +190,38 @@ def bds(
         print('WARNING: You did not provide a key. Too many requests will ' \
             'result in an error.')
 
-    return pd.concat(
-            [
-                _bds_data_create(
-                    series_lst, region, strata, get_flags, key, n_threads
-                )
-                for region in region_lst
-            ]
+    # Data fetch
+    if 'NAICS' not in strata or obs_level == 'us':
+        url = _bds_url(series_list, obs_level, strata, key, '*')
+        df = api.fetch_from_url(url, requests)
+    else:
+        years = list(range(1978, 2020))
+        df = api.run_in_parallel(
+            data_fetch_fn = _bds_fetch_data,
+            groups = years,
+            constant_inputs = [series_list, obs_level, strata, key],
+            n_threads = n_threads
         )
+
+    flags = [f'{var}_F' for var in series_list] if get_flags else []
+
+    return df \
+        .pipe(api._create_fips, obs_level) \
+        .rename(columns={
+            **{'YEAR': 'time', 'NAICS':'naics'}, 
+            **{x:x.lower() for x in strata}
+            }
+        ) \
+        .assign(industry=lambda x: x['naics'].map(c.NAICS_CODE_TO_ABB(2))) \
+        .apply(
+            lambda x: pd.to_numeric(x, errors='ignore') \
+                if x.name in series_list + ['time'] else x
+        ) \
+        .pipe(_mark_flagged, series_list) \
+        .sort_values(['fips', 'time'] + [x.lower() for x in strata]) \
+        .reset_index(drop=True) \
+        [
+            ['fips', 'region', 'time'] \
+            + [x.lower() for x in strata] \
+            + series_list + flags
+        ]

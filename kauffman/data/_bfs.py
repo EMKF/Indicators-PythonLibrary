@@ -157,38 +157,9 @@ def _annualize(df, annualize, bf_helper_lst, march_shift):
     return df
 
 
-def _bfs_data_create(
-    region_lst, series_lst, industry_lst, seasonally_adj, annualize, march_shift
-):
-    if march_shift: annualize = True
-
-    bf_helper_lst = []
-    if annualize:
-        if ('BF_DUR4Q' in series_lst) and ('BF_BF4Q' not in series_lst): 
-            bf_helper_lst.append('BF_BF4Q')
-        if ('BF_DUR8Q' in series_lst) and ('BF_BF8Q' not in series_lst): 
-            bf_helper_lst.append('BF_BF8Q')
-
-    df, industry_key, series_key, region_key, time_key = _fetch_data()
-
-    return df \
-        .pipe(clean_data, industry_key, series_key, region_key, time_key) \
-        .pipe(
-            _query_data, region_lst, series_lst, bf_helper_lst, industry_lst, 
-            seasonally_adj
-        ) \
-        .assign(
-            time=lambda x: pd.to_datetime(x['time'], format='%b-%Y'),
-            fips=lambda x: x.region_code.map(c.STATE_ABB_TO_FIPS)
-        ) \
-        .pipe(_annualize, annualize, bf_helper_lst, march_shift) \
-        [['fips', 'region', 'naics', 'industry', 'time'] + series_lst] \
-        .reset_index(drop=True)
-
-
 def bfs(
-    series_lst='all', obs_level='all', industry='00', seasonally_adj=True, 
-    annualize=False, march_shift=False
+    series_lst='all', obs_level='us', state_list='all', industry='00', 
+    seasonally_adj=True, annualize=False, march_shift=False
 ):
     """ 
     Create a pandas data frame with results from a BFS query. 
@@ -213,7 +184,11 @@ def bfs(
             BF_DUR8Q: Average Duration (in Quarters) from Business Application 
                 to Formation within Eight Quarters
 
-    obs_level-- The level to pull observations for. ('state', 'us', or 'all')
+    obs_level--The level to pull observations for. ('state', 'us')
+
+    state_list: 'all' or list
+        When obs_level is state, the list of states (in postal code
+        abbreviation format) to include in the data pull
 
     industry
         Variables:
@@ -251,25 +226,37 @@ def bfs(
     """
     series_lst = c.BFS_SERIES if series_lst == 'all' else series_lst
     
-    if type(obs_level) == list:
-        region_lst = obs_level
-    else:
-        if obs_level == 'us':
-            region_lst = ['US']
-        elif obs_level == 'state':
-            region_lst = c.STATES
-        else:
-            region_lst = ['US'] + c.STATES
+    state_list = c.STATES if state_list == 'all' else state_list    
+    region_list = state_list if obs_level == 'state' else ['US']
 
     if type(industry) == list:
-        industry_lst = industry
+        industry_list = industry
+    elif industry == 'all':
+        industry_list = list(c.NAICS_CODE_TO_ABB(2).keys())
     else:
-        if industry == 'all':
-            industry_lst = list(c.NAICS_CODE_TO_ABB(2).keys())
-        else:
-            industry_lst = [industry]
+        industry_list = [industry]
 
-    return _bfs_data_create(
-        region_lst, series_lst, industry_lst, seasonally_adj, annualize, 
-        march_shift
-    )
+    if march_shift: annualize = True
+
+    bf_helper_lst = []
+    if annualize:
+        if ('BF_DUR4Q' in series_lst) and ('BF_BF4Q' not in series_lst): 
+            bf_helper_lst.append('BF_BF4Q')
+        if ('BF_DUR8Q' in series_lst) and ('BF_BF8Q' not in series_lst): 
+            bf_helper_lst.append('BF_BF8Q')
+
+    df, industry_key, series_key, region_key, time_key = _fetch_data()
+
+    return df \
+        .pipe(clean_data, industry_key, series_key, region_key, time_key) \
+        .pipe(
+            _query_data, region_list, series_lst, bf_helper_lst, industry_list, 
+            seasonally_adj
+        ) \
+        .assign(
+            time=lambda x: pd.to_datetime(x['time'], format='%b-%Y'),
+            fips=lambda x: x.region_code.map(c.STATE_ABB_TO_FIPS)
+        ) \
+        .pipe(_annualize, annualize, bf_helper_lst, march_shift) \
+        [['fips', 'region', 'naics', 'industry', 'time'] + series_lst] \
+        .reset_index(drop=True)

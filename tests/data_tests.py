@@ -5,7 +5,7 @@ from datetime import datetime as dt
 
 ############### ACS tests ###################
 # Series_lst examples
-acs1 = "acs(series_lst=['B24092_004E', 'B24092_013E'])"
+acs1 = "acs(series_lst=['B24092_004E', 'B24092_013E'], obs_level='state')"
 acs2 = "acs(series_lst=['B24081_001E'], obs_level='state', state_lst='all')"
 acs3 = "acs(series_lst='all', obs_level='us')"
 
@@ -26,13 +26,13 @@ bed4 = "bed(series='establishment age and survival', table=7, obs_level='state')
 
 # Firm size series examples
 bed5 = "bed(series='firm size', table=1)"
-bed6 = "bed(series='firm size', table=2, obs_level='state')"
-bed7 = "bed(series='firm size', table=3, obs_level='us')"
+bed6 = "bed(series='firm size', table=2)"
+bed7 = "bed(series='firm size', table=3)"
 bed8 = "bed(series='firm size', table=4)"
 
 # Industry examples
-bed9 = "bed(series='firm size', table=5, industry='54')"
-bed10 = "bed(series='firm size', table=6 , industry='81')"
+bed9 = "bed(series='establishment age and survival', obs_level='us', table=5, industry='54')"
+bed10 = "bed(series='establishment age and survival', obs_level='state', table=2, industry='81')"
 
 
 ############### BDS tests ###################

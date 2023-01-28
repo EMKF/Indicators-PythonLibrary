@@ -277,19 +277,38 @@ def _us_1900_1999():
             .dropna()
 
 
-def _pep_data_create(region, key):
-    if region == 'county':
+def pep(obs_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
+    """ 
+    Create a pandas data frame with results from a PEP query. 
+    Column order: fips, region, time, POP.
+
+    Collects nation- and state-level population data, similar to 
+    https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
+    register here: https://research.stlouisfed.org/useraccount/apikey.
+
+    Keyword arguments:
+
+    obs_level-- str of the level of observation to pull from.
+        'state': resident population of state from 1990 through 2019
+        'us': resident population in the united states from 1959 through 2019
+    """
+    # Warn users if they didn't provide a key
+    if key == None:
+        print('WARNING: You did not provide a key. Too many requests will ' \
+            'result in an error.')
+
+    if obs_level in ['county', 'msa']:
         df = pd.concat(
                 [_county_1980_1989(), _county_1990_1999()]
                 + [f('county', key) for f in [_2000_2009, _2010_2019]]
                 + [_2020('county')]
             ) \
             .assign(region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME))
-    elif region == 'msa':
-        df = _pep_data_create('county', key) \
-            .pipe(g.aggregate_county_to_msa, 'fips', ['population']) \
-            [['fips', 'region', 'time', 'population']]
-    elif region == 'state':
+        if obs_level == 'msa':
+            df = df \
+                .pipe(g.aggregate_county_to_msa, 'fips', ['population']) \
+                [['fips', 'region', 'time', 'population']]
+    elif obs_level == 'state':
         df = pd.concat(
             [_state_1900_1989(year) for year in range(1900,1981,10)]
             + [_state_1990_1999(), _2020('state')]
@@ -306,40 +325,3 @@ def _pep_data_create(region, key):
         .sort_values(['fips', 'time']) \
         .reset_index(drop=True) \
         [['fips', 'region', 'time', 'population']]
-
-
-def pep(obs_level='all', key=os.getenv("CENSUS_KEY")):
-    """ 
-    Create a pandas data frame with results from a PEP query. 
-    Column order: fips, region, time, POP.
-
-    Collects nation- and state-level population data, similar to 
-    https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
-    register here: https://research.stlouisfed.org/useraccount/apikey.
-
-    Keyword arguments:
-
-    obs_level-- str of the level of observation to pull from.
-        'state': resident population of state from 1990 through 2019
-        'us': resident population in the united states from 1959 through 2019
-    """
-    # todo: do we want to allow user to filter by year? if not, remove these two
-    # parameters.
-
-    if type(obs_level) == list:
-        region_lst = obs_level
-    else:
-        if obs_level in ['us', 'state', 'msa', 'county']:
-            region_lst = [obs_level]
-        else:
-            region_lst = ['us', 'state', 'msa', 'county']
-
-    # Warn users if they didn't provide a key
-    if key == None:
-        print('WARNING: You did not provide a key. Too many requests will ' \
-            'result in an error.')
-
-    return pd.concat([
-        _pep_data_create(region, key)
-        for region in region_lst
-    ])

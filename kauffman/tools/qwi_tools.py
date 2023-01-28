@@ -94,7 +94,7 @@ def _get_state_to_years(annualize=None):
 
 
 def estimate_data_shape(
-    indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
+    indicator_list, obs_level, firm_char, worker_char, strata_totals, 
     state_list, fips_list
 ):
     n_columns = len(
@@ -104,46 +104,45 @@ def estimate_data_shape(
     row_estimate = 0
     state_to_years = _get_state_to_years(False)
 
-    for level in obs_level_lst:
-        if level == 'us':
-            year_regions = state_to_years['00']['end_year'] \
-                - state_to_years['00']['start_year'] + 1
-        elif level == 'state':
-            year_regions = pd.DataFrame(state_to_years) \
-                .T.reset_index() \
-                .rename(columns={'index':'state'}) \
-                .query(f'state in {state_list}') \
-                .assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
-                ['n_years'].sum()
-        else:
-            query = f"fips_{level} in {fips_list}" if fips_list \
-                else f"fips_state in {state_list}"
-            year_regions = CBSA_crosswalk() \
-                .query(query) \
-                [[f'fips_{level}', 'fips_state']] \
-                .drop_duplicates() \
-                .groupby('fips_state').count() \
-                .reset_index() \
-                .assign(
-                    n_years=lambda x: x['fips_state'] \
-                        .map(
-                            lambda state: state_to_years[state]['end_year'] \
-                                - state_to_years[state]['start_year'] + 1
-                        ),
-                    year_regions=lambda x: x['n_years']*x[f'fips_{level}']
-                ) \
-                ['year_regions'].sum()
+    if obs_level == 'us':
+        year_regions = state_to_years['00']['end_year'] \
+            - state_to_years['00']['start_year'] + 1
+    elif obs_level == 'state':
+        year_regions = pd.DataFrame(state_to_years) \
+            .T.reset_index() \
+            .rename(columns={'index':'state'}) \
+            .query(f'state in {state_list}') \
+            .assign(n_years=lambda x: x['end_year'] - x['start_year'] + 1) \
+            ['n_years'].sum()
+    else:
+        query = f"fips_{obs_level} in {fips_list}" if fips_list \
+            else f"fips_state in {state_list}"
+        year_regions = CBSA_crosswalk() \
+            .query(query) \
+            [[f'fips_{obs_level}', 'fips_state']] \
+            .drop_duplicates() \
+            .groupby('fips_state').count() \
+            .reset_index() \
+            .assign(
+                n_years=lambda x: x['fips_state'] \
+                    .map(
+                        lambda state: state_to_years[state]['end_year'] \
+                            - state_to_years[state]['start_year'] + 1
+                    ),
+                year_regions=lambda x: x['n_years']*x[f'fips_{obs_level}']
+            ) \
+            ['year_regions'].sum()
 
-        # Get n_strata_levels
-        strata_levels = 1
-        strata = worker_char + firm_char
-        strata_to_nlevels = c.QWI_STRATA_TO_NLEVELS
-        if not strata_totals:
-            strata_to_nlevels = {k:v - 1 for k,v in strata_to_nlevels.items()}
-        for s in strata:
-            strata_levels *= strata_to_nlevels[s]
-        
-        row_estimate += year_regions*strata_levels*4
+    # Get n_strata_levels
+    strata_levels = 1
+    strata = worker_char + firm_char
+    strata_to_nlevels = c.QWI_STRATA_TO_NLEVELS
+    if not strata_totals:
+        strata_to_nlevels = {k:v - 1 for k,v in strata_to_nlevels.items()}
+    for s in strata:
+        strata_levels *= strata_to_nlevels[s]
+    
+    row_estimate += year_regions*strata_levels*4
 
     return (row_estimate, n_columns)
 

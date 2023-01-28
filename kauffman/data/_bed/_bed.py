@@ -4,7 +4,7 @@ from ._firm_size import _firm_size_data_create
 from ._est_age_surv import _est_age_surv_data_create
 
 
-def bed(series, table, obs_level='all', industry='00'):
+def bed(series, table, obs_level='us', state_list='all', industry='00'):
     """
        todo: go through this doc string
     'https://www.bls.gov/bdm/us_age_naics_00_table1.txt
@@ -36,10 +36,12 @@ def bed(series, table, obs_level='all', industry='00'):
                 size of firm
 
         obs_level: str
-            'all'
             'us'
             'state'
-            state abbreviation code
+
+        state_list: 'all' or list
+            When obs_level is state, the list of states (in postal code
+            abbreviation format) to include in the data pull
 
         industry: str, NAICS codes
             00: All
@@ -77,32 +79,22 @@ def bed(series, table, obs_level='all', industry='00'):
         7: 250-499 , 8: 500-999 , 9: >1000
 
     """
-
-    if type(obs_level) == list:
-        region_lst = obs_level
-    else:
-        if obs_level.lower() == 'state':
-            region_lst = c.STATES
-        elif obs_level.lower() == 'all':
-            region_lst = ['us'] + c.STATES
-        else:
-            region_lst = [obs_level.lower()]
+    state_list = c.STATES if state_list == 'all' else state_list    
+    region_list = state_list if obs_level == 'state' else ['us']
 
     if series == 'firm size':
         return pd.concat(
                 [
                     _firm_size_data_create(table, size)
                     for size in range(1, 10)
-                ],
-                axis=0
+                ]
             )
     elif series == 'establishment age and survival':
         return pd.concat(
                 [
-                    _est_age_surv_data_create(table, region.lower(), industry)
-                    for region in region_lst
-                ],
-                axis=0
+                    _est_age_surv_data_create(table, region, industry)
+                    for region in region_list
+                ]
             )
 
 

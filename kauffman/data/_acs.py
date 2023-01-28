@@ -4,43 +4,29 @@ from kauffman import constants as c
 from kauffman.tools import api_tools as api
 
 
-def _acs_fetch_data(year, var_set, region, state_lst, key, s):
+def _acs_fetch_data(year, var_set, obs_level, state_lst, key, s):
     var_lst = ','.join(var_set)
     base_url = f'https://api.census.gov/data/{year}/acs/acs1?get={var_lst}'
     state_section = ','.join(state_lst)
     
-    in_state = True if region == 'county' else False
-    if region == 'state':
+    in_state = True if obs_level == 'county' else False
+    if obs_level == 'state':
         fips = state_section
-    elif region == 'msa':
+    elif obs_level == 'msa':
         msas = [m for state in state_lst for m in c.STATE_TO_MSA_FIPS[state]]
         fips = ",".join(msas)
     else:
         fips = '*'
     fips_section = '&for=' \
-        + api._fips_section(region, fips, state_section, in_state)
+        + api._fips_section(obs_level, fips, state_section, in_state)
 
     key_section = f'&key={key}' if key else ''
     url = base_url + fips_section + key_section
     return api.fetch_from_url(url, s).assign(year=year)
 
 
-def _acs_data_create(series_lst, region, state_lst, key, n_threads):
-    years = list(range(2005, 2019 + 1))
-    return api.run_in_parallel(
-        data_fetch_fn = _acs_fetch_data,
-        groups = years,
-        constant_inputs = [series_lst, region, state_lst, key],
-        n_threads = n_threads
-    ) \
-        .pipe(api._create_fips, region) \
-        [['fips', 'region', 'year'] + series_lst] \
-        .rename(columns=c.ACS_CODE_TO_VAR) \
-        .sort_values(['fips', 'region', 'year'])
-
-
 def acs(
-    series_lst='all', obs_level='all', state_lst='all',
+    series_lst='all', obs_level='us', state_lst='all',
     key=os.getenv("CENSUS_KEY"), n_threads=1
 ):
     """
@@ -89,33 +75,28 @@ def acs(
     """
     # Handle series_lst
     if series_lst == 'all':
-        series_lst = [k for k,v in c.ACS_CODE_TO_VAR.items()]
+        series_lst = [k for k,v in c.ACS_CODE_TO_VAR.items()]        
 
-    # Create region_lst
-    if type(obs_level) == list:
-        region_lst = obs_level
+    # Handle state_list
+    if state_lst == 'all' or obs_level == 'msa':
+        state_list = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
     else:
-        if obs_level in ['us', 'state', 'msa', 'county']:
-            region_lst = [obs_level]
-        else:
-            region_lst = ['us', 'state', 'msa', 'county']
-
-    if state_lst == 'all':
-        state_lst = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
-    elif type(state_lst) == list:
-        if obs_level != 'msa':
-            state_lst = [c.STATE_ABB_TO_FIPS[s] for s in state_lst]
-        else:
-            state_lst = [c.STATE_ABB_TO_FIPS[s] for s in c.STATES]
+        state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_lst]
 
     # Warn users if they didn't provide a key
     if key == None:
         print('WARNING: You did not provide a key. Too many requests will ' \
             'result in an error.')
 
-    return pd.concat(
-            [
-                _acs_data_create(series_lst, region, state_lst, key, n_threads)
-                for region in region_lst
-            ]
-        ).reset_index(drop=True)
+    years = list(range(2005, 2019 + 1))
+    return api.run_in_parallel(
+            data_fetch_fn = _acs_fetch_data,
+            groups = years,
+            constant_inputs = [series_lst, obs_level, state_list, key],
+            n_threads = n_threads
+        ) \
+            .pipe(api._create_fips, obs_level) \
+            [['fips', 'region', 'year'] + series_lst] \
+            .rename(columns=c.ACS_CODE_TO_VAR) \
+            .sort_values(['fips', 'region', 'year']) \
+            .reset_index(drop=True)

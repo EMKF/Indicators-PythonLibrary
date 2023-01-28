@@ -387,23 +387,12 @@ def _remove_extra_msas(df, state_list, state_list_orig):
             .drop(columns='_keep')
 
 
-def _create_data(
+def _qwi_fetch_data(
     indicator_list, obs_level, state_list, fips_list, private, annualize, 
-    firm_char, worker_char, strata_totals, key, n_threads, state_list_orig=None
+    firm_char, worker_char, key, n_threads
 ):
-    covars = ['time', 'fips', 'region', 'ownercode', 'geo_level'] \
-        + firm_char + worker_char
-
-    state_list_orig = state_list
-    if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
-        state_list = g.geolevel_crosswalk(
-                from_geo='state', to_geo='msa', 
-                from_fips_list=state_list, msa_coidentify_state=True
-            ) \
-            ['fips_state'].unique().tolist()
-
     if obs_level == 'us':
-        df = _scrape_led_data(private, firm_char, worker_char) \
+        return _scrape_led_data(private, firm_char, worker_char) \
             .assign(
                 time=lambda x: x['year'].astype(str) + '-Q' \
                     + x['quarter'].astype(str),
@@ -411,48 +400,36 @@ def _create_data(
                 HirAEndReplr=np.nan
             ) \
             .rename(columns={'HirAS': 'HirAs', 'HirNS': 'HirNs'})
-    else:
-        looped_strata, non_loop_var, max_years_per_call = _loops_info(
-            firm_char + worker_char, obs_level, indicator_list
-        )
-        if fips_list:
-            if obs_level == 'county':
-                fips_list = list(zip([x[:2] for x in fips_list], fips_list))
-            else:
-                fips_list = [
-                    tuple(row)
-                    for row in g.geolevel_crosswalk('msa', 'state', fips_list) \
-                        [['fips_state', 'fips_msa']].values
-                ]
-        groups = _url_groups(
-            obs_level, looped_strata, max_years_per_call, private, state_list, 
-            fips_list, annualize
-        )
-        df = api.run_in_parallel(
-            data_fetch_fn = _qwi_fetch_api_data, 
-            groups = groups,
-            constant_inputs = [
-                non_loop_var, indicator_list, obs_level, private, key
-            ],
-            n_threads=n_threads
-        )
 
-    df.drop_duplicates(inplace=True)
+    looped_strata, non_loop_var, max_years_per_call = _loops_info(
+        firm_char + worker_char, obs_level, indicator_list
+    )
+    if fips_list:
+        if obs_level == 'county':
+            fips_list = list(zip([x[:2] for x in fips_list], fips_list))
+        else:
+            fips_list = [
+                tuple(row)
+                for row in g.geolevel_crosswalk('msa', 'state', fips_list) \
+                    [['fips_state', 'fips_msa']].values
+            ]
+    groups = _url_groups(
+        obs_level, looped_strata, max_years_per_call, private, state_list, 
+        fips_list, annualize
+    )
 
-    return df \
-        .pipe(api._create_fips, obs_level) \
-        .pipe(_cols_to_numeric, indicator_list) \
-        .pipe(_filter_strata_totals, firm_char, worker_char, strata_totals) \
-        .pipe(_aggregate_msas, covars, obs_level) \
-        .pipe(_remove_extra_msas, state_list, state_list_orig) \
-        [covars + indicator_list] \
-        .pipe(_annualize_data, annualize, covars) \
-        .sort_values(covars) \
-        .reset_index(drop=True)
+    return api.run_in_parallel(
+        data_fetch_fn = _qwi_fetch_api_data, 
+        groups = groups,
+        constant_inputs = [
+            non_loop_var, indicator_list, obs_level, private, key
+        ],
+        n_threads=n_threads
+    )
 
 
 def qwi(
-    indicator_list='all', obs_level='all', state_list='all', fips_list=[],
+    indicator_list='all', obs_level='us', state_list='all', fips_list=[],
     private=False, annualize='January', firm_char=[], worker_char=[], 
     strata_totals=False, enforce_release_consistency=False, 
     key=os.getenv("CENSUS_KEY"), n_threads=1
@@ -470,7 +447,6 @@ def qwi(
         'msa': resident population of msa from 1990 through 2019
         'county': resident population of county from 1990 through 2019
         'us': resident population in the united states from 1959 through 2019
-        'all': default, returns data on all of the above observation levels
 
     indicator_list: str, lst
         'all': default, will return all QWI indicators
@@ -553,13 +529,6 @@ def qwi(
 
     if enforce_release_consistency:
         q.consistent_releases(enforce=True)
-    
-    if obs_level in ['us', 'state', 'county', 'msa']:
-        obs_level_lst = [obs_level]
-    elif obs_level == 'all':
-        obs_level_lst = ['us', 'state', 'county', 'msa']
-    else:
-        raise Exception('Invalid input to obs_level.')
 
     state_list = c.STATES if state_list == 'all' else state_list
     state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
@@ -572,7 +541,6 @@ def qwi(
     # todo: keep this?
     # if annualize and any(x in c.qwi_averaged_outcomes for x in indicator_lst):
     #     raise Exception('indicator_list not compatible with annualize==True')
-
 
     firm_char, worker_char = g.as_list(firm_char), g.as_list(worker_char)
 
@@ -603,13 +571,13 @@ def qwi(
 
     strata_totals = False if not (firm_char or worker_char) else strata_totals
 
-    if fips_list and any([l not in ['msa', 'county'] for l in obs_level_lst]):
+    if fips_list and obs_level not in ['county', 'msa']:
         raise Exception(
             'If fips_list is provided, obs_level must be either msa or county.'
         )
 
     estimated_shape = q.estimate_data_shape(
-        indicator_list, obs_level_lst, firm_char, worker_char, strata_totals, 
+        indicator_list, obs_level, firm_char, worker_char, strata_totals, 
         state_list, fips_list
     )
     if estimated_shape[0] * estimated_shape[1] > 100000000:
@@ -623,12 +591,28 @@ def qwi(
         print('WARNING: You did not provide a key. Too many requests will ' \
             'result in an error.')
 
-    return pd.concat(
-        [
-            _create_data(
-                indicator_list, level, state_list, fips_list, private,
-                annualize, firm_char, worker_char, strata_totals, key, n_threads
-            )
-            for level in obs_level_lst
-        ]
-    )
+    covars = ['time', 'fips', 'region', 'ownercode', 'geo_level'] \
+        + firm_char + worker_char
+
+    state_list_orig = state_list
+    if (len(state_list) < 51) and (obs_level == 'msa') and not fips_list:
+        state_list = g.geolevel_crosswalk(
+                from_geo='state', to_geo='msa', 
+                from_fips_list=state_list, msa_coidentify_state=True
+            ) \
+            ['fips_state'].unique().tolist()
+
+    return _qwi_fetch_data(
+            indicator_list, obs_level, state_list, fips_list, private, 
+            annualize, firm_char, worker_char, key, n_threads
+        ) \
+        .drop_duplicates() \
+        .pipe(api._create_fips, obs_level) \
+        .pipe(_cols_to_numeric, indicator_list) \
+        .pipe(_filter_strata_totals, firm_char, worker_char, strata_totals) \
+        .pipe(_aggregate_msas, covars, obs_level) \
+        .pipe(_remove_extra_msas, state_list, state_list_orig) \
+        [covars + indicator_list] \
+        .pipe(_annualize_data, annualize, covars) \
+        .sort_values(covars) \
+        .reset_index(drop=True)
