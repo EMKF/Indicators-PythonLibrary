@@ -205,7 +205,14 @@ def _est_age_surv_data_create(table, region, industry):
     if table in range(1, 5):
         df = table1(_data_lines_survival(table, region, industry))
     if table in [5, 6]:
-        df = table5(_data_lines_survival(table, region, industry))
+        df = table5(_data_lines_survival(table, region, industry)) \
+            .pipe(
+                pd.melt, id_vars=['age_class'], var_name='time', 
+                value_name='establishments'
+            ) \
+            .assign(industry=industry) \
+            .replace({'_':np.NaN}) \
+            [['time', 'industry', 'age_class', 'establishments']]
     if table == 7:
         df = table7(_data_lines_survival(table, region, industry))
     if table == '1bf':
