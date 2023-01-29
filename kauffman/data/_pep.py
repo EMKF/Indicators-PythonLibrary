@@ -291,34 +291,53 @@ def pep(obs_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
     obs_level-- str of the level of observation to pull from.
         'state': resident population of state from 1990 through 2019
         'us': resident population in the united states from 1959 through 2019
+        'county'
+        'msa'
+    state_list--list
+        Postal code abbreviations
     """
     # Warn users if they didn't provide a key
     if key == None:
         print('WARNING: You did not provide a key. Too many requests will ' \
             'result in an error.')
 
+    # state_list
+    state_list = c.STATES if state_list == 'all' else state_list
+    state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
+
+    # Fetch data
     if obs_level in ['county', 'msa']:
         df = pd.concat(
                 [_county_1980_1989(), _county_1990_1999()]
                 + [f('county', key) for f in [_2000_2009, _2010_2019]]
                 + [_2020('county')]
             ) \
-            .assign(region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME))
+            .assign(
+                region=lambda x: x['fips'].map(c.ALL_FIPS_TO_NAME),
+                fips_state=lambda x: x.fips.str[0:2]
+            ) \
+            .query(f'fips_state in {state_list}')
         if obs_level == 'msa':
             df = df \
                 .pipe(g.aggregate_county_to_msa, 'fips', ['population']) \
                 [['fips', 'region', 'time', 'population']]
     elif obs_level == 'state':
         df = pd.concat(
-            [_state_1900_1989(year) for year in range(1900,1981,10)]
-            + [_state_1990_1999(), _2020('state')]
-            + [f('state', key) for f in [_2000_2009, _2010_2019, _2021]]
-        )
+                [_state_1900_1989(year) for year in range(1900,1981,10)]
+                + [_state_1990_1999(), _2020('state')]
+                + [f('state', key) for f in [_2000_2009, _2010_2019, _2021]]
+            ) \
+            .query(f'fips in {state_list}')
     else:
         df = pd.concat(
             [_us_1900_1999(), _2020('us')]
             + [f('us', key) for f in [_2000_2009, _2010_2019, _2021]]
         )
+
+    # TODO: Keep this? Would need to update kese, neb, and eji
+    # columns = ['fips', 'region', 'time', 'population']
+    # if obs_level in ['county', 'msa']:
+    #     columns = ['fips', 'fips_state', 'region', 'time', 'population']
 
     return df \
         .astype({'population': 'float', 'time': 'int'}) \

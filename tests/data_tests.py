@@ -50,6 +50,11 @@ bds8 = "bds(series_lst='all', obs_level='msa', strata = ['EMPSZFI'])"
 bds9 = "bds(series_lst=['JOB_CREATION_BIRTHS', 'JOB_CREATION_CONTINUERS'], obs_level='msa', strata = ['EMPSZFII'])"
 bds10 = "bds(series_lst=['REALLOCATION_RATE'], obs_level='county', strata = ['FAGE'])"
 
+# State_list examples
+bds11 = "bds(series_lst='all', obs_level='state', state_list=['PA', 'TN'])"
+bds12 = "bds(series_lst='all', obs_level='county', state_list=['ND'])"
+bds13 = "bds(series_lst=['FIRM'], obs_level='state', state_list=['NJ', 'NY', 'MI'], strata=['EAGE', 'NAICS'])"
+
 
 ############### BFS tests ###################
 # NEB Usage
@@ -88,6 +93,11 @@ pep1 = "pep(obs_level='us')"
 pep2 = "pep(obs_level='msa')"
 pep3 = "pep(obs_level='county')"
 pep4 = "pep(obs_level='state')"
+
+# State_list examples
+pep5 = "pep(obs_level='msa', state_list=['CO', 'UT'])"
+pep6 = "pep(obs_level='county', state_list=['GA', 'HI'])"
+pep7 = "pep(obs_level='state', state_list=['IN', 'AL', 'AK', 'TX'])"
 
 
 ############### QWI tests ###################
@@ -154,9 +164,9 @@ qwi35 = "qwi(indicator_list=indicators, obs_level='state', worker_char=['sex'], 
 module_to_ntests = {
     'acs': range(1,9),
     'bed': range(1,11),
-    'bds': range(1,11),
+    'bds': range(1,14),
     'bfs': range(1,19),
-    'pep': range(1,5),
+    'pep': range(1,8),
     'qwi': range(1,36)
 }
 

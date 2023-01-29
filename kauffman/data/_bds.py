@@ -6,12 +6,14 @@ import numpy as np
 from kauffman.tools import api_tools as api
 
 
-def _bds_url(variables, obs_level, strata, key, year='*'):
+def _bds_url(variables, obs_level, state_list, strata, key, year):
     flag_var = [f'{var}_F' for var in variables]
     var_string = ",".join(variables + strata + flag_var)
+    state_string = ",".join(state_list)
     
+    fips = state_string if obs_level == 'state' else '*'
     in_state = True if obs_level == 'county' else False
-    fips_section = api._fips_section(obs_level, '*', '*', in_state)
+    fips_section = api._fips_section(obs_level, fips, state_string, in_state)
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     key_section = f'&key={key}' if key else ''
@@ -20,8 +22,8 @@ def _bds_url(variables, obs_level, strata, key, year='*'):
         f'&for={fips_section}&YEAR={year}{naics_string}{key_section}'
 
 
-def _bds_fetch_data(year, variables, obs_level, strata, key, s):
-    url = _bds_url(variables, obs_level, strata, key, year)
+def _bds_fetch_data(year, variables, obs_level, state_list, strata, key, s):
+    url = _bds_url(variables, obs_level, state_list, strata, key, year)
     return api.fetch_from_url(url, s)
 
 
@@ -56,8 +58,8 @@ def check_strata_valid(obs_level, strata):
 
 
 def bds(
-    series_lst='all', obs_level='us', strata=[], get_flags=False, 
-    key=os.getenv('CENSUS_KEY'), n_threads=1
+    series_lst='all', obs_level='us', state_list='all', strata=[], 
+    get_flags=False, key=os.getenv('CENSUS_KEY'), n_threads=1
 ):
     """ 
     Create a pandas data frame with results from a BDS query. 
@@ -118,6 +120,9 @@ def bds(
         SUMLEVEL: Summary Level code
         ucgid: Uniform Census Geography Identifier clause
         YEAR: Year
+    
+    state_list--list
+        Only for county and state (not msa or us)
 
     strata--list of variables by which to stratify
         GEOCOMP: GEO_ID Component
@@ -157,6 +162,9 @@ def bds(
     """
     series_list = c.BDS_SERIES if series_lst == 'all' else series_lst
 
+    state_list = c.STATES if state_list == 'all' else state_list
+    state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
+
     invalid_strata = set(strata) \
         - {'GEOCOMP', 'EAGE', 'EMPSZES', 'EMPSZESI', 'EMPSZFI', 'EMPSZFII', 
             'FAGE', 'NAICS', 'METRO'}
@@ -192,14 +200,14 @@ def bds(
 
     # Data fetch
     if 'NAICS' not in strata or obs_level == 'us':
-        url = _bds_url(series_list, obs_level, strata, key, '*')
+        url = _bds_url(series_list, obs_level, state_list, strata, key, '*')
         df = api.fetch_from_url(url, requests)
     else:
         years = list(range(1978, 2020))
         df = api.run_in_parallel(
             data_fetch_fn = _bds_fetch_data,
             groups = years,
-            constant_inputs = [series_list, obs_level, strata, key],
+            constant_inputs = [series_list, obs_level, state_list, strata, key],
             n_threads = n_threads
         )
 
