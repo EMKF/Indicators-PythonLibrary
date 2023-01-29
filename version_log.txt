@@ -25,3 +25,12 @@
 	--Updated and consolidated import methods for tools
 (1/24/23) Version 2.3.6
 	Added option 'all' for series_lst to bfs and bds
+(1/28/23) Version 2.4.0
+	Standardize formatting, fix broken code, and update function options
+	--Standardize formatting for api modules
+	--Remove unneeded code
+	--Fix broken code in bed (make table 5 code work)
+	--Swallow data_create function into main function for all modules
+	--Remove option 'all' from obs_level
+	--Add state_list option to a few modules (so that all modules have state_list option)
+	--Harmonize the use of the variable 'region' vs 'obs_level'
