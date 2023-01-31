@@ -278,23 +278,24 @@ def _us_1900_1999():
 
 
 def pep(obs_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
-    """ 
-    Create a pandas data frame with results from a PEP query. 
-    Column order: fips, region, time, POP.
+    """
+    Fetches and cleans Population Estimates Program (PEP) data from one of two 
+    sources, depending on the year and obs_level: 
+    (1) The Census's API (https://api.census.gov/data.html, see the pep > 
+        population and pep > int_population datasets)
+    (2) https://www2.census.gov/programs-surveys/popest
 
-    Collects nation- and state-level population data, similar to 
-    https://fred.stlouisfed.org/series/CAPOP, from FRED. Requires an api key...
-    register here: https://research.stlouisfed.org/useraccount/apikey.
-
-    Keyword arguments:
-
-    obs_level-- str of the level of observation to pull from.
-        'state': resident population of state from 1990 through 2019
-        'us': resident population in the united states from 1959 through 2019
-        'county'
-        'msa'
-    state_list--list
-        Postal code abbreviations
+    Parameters
+    ----------
+    obs_level: {'us', 'state', 'msa', 'county'}, default 'us'
+        The geographical level of the data.
+    state_list: list or 'all', default 'all'
+        The list of states to include in the data, identified by postal code 
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for obs_level = 'us'.
+    key: str, default os.getenv("CENSUS_KEY"), optional
+        Census API key. See README for instructions on how to get one, if 
+        desired. Otherwise, user can pass key=None, which will work until the
+        Census's data limit is exceeded.
     """
     # Warn users if they didn't provide a key
     if key == None:

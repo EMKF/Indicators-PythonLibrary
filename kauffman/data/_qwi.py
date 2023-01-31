@@ -435,96 +435,103 @@ def qwi(
     key=os.getenv("CENSUS_KEY"), n_threads=1
 ):
     """
-    Fetches nation-, state-, MSA-, or county-level Quarterly Workforce 
-    Indicators (QWI) data either from the LED extractor tool in the case of 
-    national data (https://ledextract.ces.census.gov/static/data.html) or from 
-    the Census's API in the case of state, MSA, or county 
-    (https://api.census.gov/data/timeseries/qwi/sa/examples.html).
-    FTP: https://lehd.ces.census.gov/data/qwi/R2021Q1/us/
+    Fetches and cleans Quarterly Workforce Indicators (QWI) data either from one
+    of two sources:
+    (1) The LED extractor tool, in the case of national data 
+        (https://ledextract.ces.census.gov/static/data.html)
+    (2) The Census's API, in the case of state, MSA, or county data
+        (https://api.census.gov/data/timeseries/qwi.html). 
+    The raw data for both of these sources can be found at: 
+    https://lehd.ces.census.gov/data/qwi
 
-    obs_level: str
-        'state': resident population of state from 1990 through 2019
-        'msa': resident population of msa from 1990 through 2019
-        'county': resident population of county from 1990 through 2019
-        'us': resident population in the united states from 1959 through 2019
+    Parameters
+    ----------
+    indicator_list: str, default 'all'
+        List of variables to fetch. See:
+            https://api.census.gov/data/timeseries/qwi/rh/variables.html
 
-    indicator_list: str, lst
-        'all': default, will return all QWI indicators
-        otherwise: return list of indicators plus 'time', 'ownercode', 
-            'firmage', and 'fips'
+        If 'all', the following variables will be included:
+        * EarnBeg: End-of-Quarter Employment: Average Monthly Earnings
+        * EarnHirAS: Hires All (Stable): Average Monthly Earnings
+        * EarnHirNS: Hires New (Stable): Average Monthly Earnings
+        * EarnS: Full Quarter Employment (Stable): Average Monthly Earnings
+        * EarnSepS: Separations (Stable): Average Monthly Earnings
+        * Emp: Beginning-of-Quarter Employment: Counts
+        * EmpEnd: End-of-Quarter Employment: Counts
+        * EmpS: Full-Quarter Employment (Stable): Counts
+        * EmpSpv: Full-Quarter Employment in the Previous Quarter: Counts
+        * EmpTotal: Employment-Reference Quarter: Counts
+        * FrmJbC: Firm Job Change:Net Change
+        * FrmJbCS: Job Change (Stable): Net Change
+        * FrmJbGn: Firm Job Gains: Counts (Job Creation)
+        * FrmJbGnS: Firm Job Gains (Stable): Counts
+        * FrmJbLs: Firm Job Loss: Counts (Job Destruction)
+        * FrmJbLsS: Firm Job Loss (Stable): Counts
+        * HirA: Hires All: Counts (Accessions)
+        * HirAEnd: End-of-Quarter Hires
+        * HirAEndR: End-of-Quarter Hiring Rate
+        * HirAEndRepl: Replacement Hires
+        * HirAEndReplr: Replacement Hiring Rate
+        * HirAs: Hires All (Stable): Counts (Flows into Full-QuarterEmployment)
+        * HirN: Hires New: Counts
+        * HirNs: Hires New (Stable): Counts (New Hires to Full-Quarter Status)
+        * HirR: Hires Recalls: Counts
+        * Payroll: Total Quarterly Payroll: Sum
+        * Sep: Separations: Counts
+        * SepBeg: Beginning-of-Quarter Separations
+        * SepBegR: Beginning-of-Quarter Separation Rate
+        * SepS: Separations (Stable): Counts (Flow out of Full-Quarter
+            Employment)
+        * SepSnx: Separations (Stable), Next Quarter: Counts (Flow out of 
+            Full-Quarter Employment)
+        * TurnOvrS: Turnover (Stable)
 
-        EarnBeg: End-of-Quarter Employment: Average Monthly Earnings
-        EarnHirAS: Hires All (Stable): Average Monthly Earnings
-        EarnHirNS: Hires New (Stable): Average Monthly Earnings
-        EarnS: Full Quarter Employment (Stable): Average Monthly Earnings
-        EarnSepS: Separations (Stable): Average Monthly Earnings
-        Emp: Beginning-of-Quarter Employment: Counts
-        EmpEnd: End-of-Quarter Employment: Counts
-        EmpS: Full-Quarter Employment (Stable): Counts
-        EmpSpv: Full-Quarter Employment in the Previous Quarter: Counts
-        EmpTotal: Employment-Reference Quarter: Counts
-        FrmJbC: Firm Job Change:Net Change
-        FrmJbCS: Job Change (Stable): Net Change
-        FrmJbGn: Firm Job Gains: Counts (Job Creation)
-        FrmJbGnS: Firm Job Gains (Stable): Counts
-        FrmJbLs: Firm Job Loss: Counts (Job Destruction)
-        FrmJbLsS: Firm Job Loss (Stable): Counts
-        HirA: Hires All: Counts (Accessions)
-        HirAEnd: End-of-Quarter Hires
-        HirAEndR: End-of-Quarter Hiring Rate
-        HirAEndRepl: Replacement Hires
-        HirAEndReplr: Replacement Hiring Rate
-        HirAs: Hires All (Stable): Counts (Flows into Full-QuarterEmployment)
-        HirN: Hires New: Counts
-        HirNs: Hires New (Stable): Counts (New Hires to Full-Quarter Status)
-        HirR: Hires Recalls: Counts
-        Payroll: Total Quarterly Payroll: Sum
-        Sep: Separations: Counts
-        SepBeg: Beginning-of-Quarter Separations
-        SepBegR: Beginning-of-Quarter Separation Rate
-        SepS: Separations (Stable): Counts (Flow out of Full-Quarter Employment)
-        SepSnx: Separations (Stable), Next Quarter: Counts 
-            (Flow out of Full-Quarter Employment)
-        TurnOvrS: Turnover (Stable)
+        Note: HirAEndRepl, HirAEndReplr are not available for US-level data
 
-        ***HirAEndRepl  HirAEndReplr are not available for US
-
-    state_list: str, lst
-        'all': default, includes all US states and D.C.
-        otherwise: a state or list of states, identified using postal code 
-            abbreviations
-
-    fips_list: lst
-        msa or county fips to pull
-
-    private: bool
-        True: All private only
-        False: All
-        if by_age_size is not None, then private is set to True
-
-    annualize: None, str
-        'None': leave as quarterly data
-        'January': annualize using Q1 as beginning of year
-        'March': annualize using Q2 as beginning of year
-
-    firm_char: lst, str
-        empty: default
-        'firmage': stratify by firm age
-        'firmsize': stratify by firm size
-        'industry': stratify by firm industry, NAICS 2-digit
-
-    worker_char: lst, str
-        'sex': stratify by worker sex
-        'agegrp': stratify by worker age
-
-        'sex': stratify by worker sex
-        'education': stratify by worker education
-
-        'race': worker race
-        'ethnicity': worker ethnicity
-
-    key: str
-        Your Census Data API Key.
+    obs_level: {'us', 'state', 'msa', 'county'}, default 'us'
+        The geographical level of the data.
+    state_list: list or 'all', default 'all'
+        The list of states to include in the data, identified by postal code 
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for obs_level = 'us'.
+        Only one of this argument or fips_list can be specified.
+    fips_list: list, optional
+        List of county or msa fips codes to pull. Only compatible with 
+        obs_level: 'county' or 'msa'. Only one of this argument or state_list
+        can be specified.
+    private: bool, default False
+        Whether to limit the data to jobs from privately owned firms. It is set
+        to true if 'firmsize' or 'firmage' are included in firm_char, or if 
+        fetching US-level data.
+    annualize: {'January', 'April', False}, default 'January'
+        How to annualize the data. If False, leave as quarterly data, otherwise,
+        annualize using either Q1 (annualize = 'January') or Q2 (annualize = 
+        'April') as the first quarter of the year.
+    firm_char: list, optional
+        List of firm characteristics to stratify by. Options: 'firmage', 
+        'firmsize', 'industry'. Industry is identified using 2-digit NAICS 
+        codes. Firmage and firmsize cannot be used together.
+    worker_char: list, optional
+        List of worker characteristics to stratify by. List options come from
+        one of the following sets:
+        {'sex', 'agegrp'}
+        {'sex', 'education'}
+        {'race', 'ethnicity'}
+    strata_totals: bool, default False
+        Whether to include total category for each strata variable in final
+        output.
+    enforce_release_consistency: bool, default False
+        Whether to raise an error if the data for the selected states come from
+        different releases.
+    key: str, default os.getenv("CENSUS_KEY"), optional
+        Census API key. See README for instructions on how to get one, if 
+        desired. Otherwise, user can pass key=None, which will work until user
+        exceeds the Census's data limit for calls without a key.
+    n_threads: int, default 1
+        Number of threads to use for multithreading when fetching the data.
+        n_threads=1 corresponds to no parallelization, and more threads 
+        corresponds to more urls being pulled at a time. The optimal number of
+        threads depends on the user's machine and the amount of data being 
+        pulled.
     """
 
     if enforce_release_consistency:

@@ -161,68 +161,66 @@ def bfs(
     series_lst='all', obs_level='us', state_list='all', industry='00', 
     seasonally_adj=True, annualize=False, march_shift=False
 ):
-    """ 
-    Create a pandas data frame with results from a BFS query. 
-    Column order: fips, region, time, series_lst.
+    """
+    Fetch and clean Business Formation Statistics (BFS) data from the following
+    source: https://www.census.gov/econ_getzippedfile/?programCode=BFS.
 
-    Keyword arguments:
-    series_lst-- lst of variables to be pulled.
-
-        Variables:
-            BA_BA: 'Business Applications'
-            BA_CBA: 'Business Applications from Corporations'
-            BA_HBA: 'High-Propensity Business Applications'
-            BA_WBA: 'Business Applications with Planned Wages'
-            BF_BF4Q: 'Business Formations within Four Quarters'
-            BF_BF8Q: 'Business Formations within Eight Quarters'
-            BF_PBF4Q: Projected Business Formations within Four Quarters
-            BF_PBF8Q: Projected Business Formations within Eight Quarters
-            BF_SBF4Q: Spliced Business Formations within Four Quarter
-            BF_SBF8Q: Spliced Business Formations within Eight Quarters
-            BF_DUR4Q: Average Duration (in Quarters) from Business Application
-                to Formation within Four Quarters
-            BF_DUR8Q: Average Duration (in Quarters) from Business Application 
-                to Formation within Eight Quarters
-
-    obs_level--The level to pull observations for. ('state', 'us')
-
-    state_list: 'all' or list
-        When obs_level is state, the list of states (in postal code
-        abbreviation format) to include in the data pull
-
-    industry
-        Variables:
-            all: all industries and total
-            '00': 'TOTAL',
-            # todo: fix the values
-            '11': 'NAICS11',
-            '21': 'NAICS21',
-            '22': 'NAICS22',
-            '23': 'NAICS23',
-            '31-33': 'NAICSMNF',
-            '42': 'NAICS42',
-            '44-45': 'NAICSRET',
-            '48-49': 'NAICSTW',
-            '51': 'NAICS51',
-            '52': 'NAICS52',
-            '53': 'NAICS53',
-            '54': 'NAICS54',
-            '55': 'NAICS55',
-            '56': 'NAICS56',
-            '61': 'NAICS61',
-            '62': 'NAICS62',
-            '71': 'NAICS71',
-            '72': 'NAICS72',
-            '81': 'NAICS81',
-            'ZZ': 'NONAICS'
-
-    seasonally_adj-- Option to use the census adjustment for seasonality and 
-        smooth the time series. (True or False)
-
-    annualize--Aggregates across months and annulizes data. (True or False)
-
-    march_shift--When True: year end is March; False: year end is December. 
-        (True or False)
+    Parameters
+    ----------
+    series_lst: list or 'all', optional
+        List of variables to fetch. If 'all', the following variables will be 
+        included:
+        * BA_BA: 'Business Applications'
+        * BA_CBA: 'Business Applications from Corporations'
+        * BA_HBA: 'High-Propensity Business Applications'
+        * BA_WBA: 'Business Applications with Planned Wages'
+        * BF_BF4Q: 'Business Formations within Four Quarters'
+        * BF_BF8Q: 'Business Formations within Eight Quarters'
+        * BF_PBF4Q: Projected Business Formations within Four Quarters
+        * BF_PBF8Q: Projected Business Formations within Eight Quarters
+        * BF_SBF4Q: Spliced Business Formations within Four Quarter
+        * BF_SBF8Q: Spliced Business Formations within Eight Quarters
+        * BF_DUR4Q: Average Duration (in Quarters) from Business Application to
+            Formation within Four Quarters
+        * BF_DUR8Q: Average Duration (in Quarters) from Business Application to
+            Formation within Eight Quarters
+    obs_level: {'us', 'state'}, default 'us'
+        The geographical level of the data.
+    state_list: list or 'all', default 'all'
+        The list of states to include in the data, identified by postal code 
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for obs_level = 'us'.
+    industry: list or str or 'all', default '00'
+        The industry (or industries) to include in the data. If 'all', the 
+        following variables will be included:
+        * '00': 'TOTAL',
+        * '11': 'NAICS11',
+        * '21': 'NAICS21',
+        * '22': 'NAICS22',
+        * '23': 'NAICS23',
+        * '31-33': 'NAICSMNF',
+        * '42': 'NAICS42',
+        * '44-45': 'NAICSRET',
+        * '48-49': 'NAICSTW',
+        * '51': 'NAICS51',
+        * '52': 'NAICS52',
+        * '53': 'NAICS53',
+        * '54': 'NAICS54',
+        * '55': 'NAICS55',
+        * '56': 'NAICS56',
+        * '61': 'NAICS61',
+        * '62': 'NAICS62',
+        * '71': 'NAICS71',
+        * '72': 'NAICS72',
+        * '81': 'NAICS81',
+        * 'ZZ': 'NONAICS'
+    seasonally_adj: bool, default True
+        Whether to fetch the to use the census adjustment for seasonality and 
+        smooth the time series.
+    annualize: bool, default False
+        Whether to aggregate the data to the annual level.
+    march_shift: bool, default False
+        Whether to use a "march shift" annualization method, wherein Q2 is 
+        considered the start of the year.
     """
     series_lst = c.BFS_SERIES if series_lst == 'all' else series_lst
     
