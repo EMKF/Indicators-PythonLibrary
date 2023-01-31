@@ -78,12 +78,12 @@ def bed(series, table, obs_level='us', state_list='all', industry='00'):
     state_list = c.STATES if state_list == 'all' else state_list    
     region_list = state_list if obs_level == 'state' else ['us']
 
-    if series == 'firm size' or 'size':
+    if series in ['firm size', 'size']:
         return pd.concat([
                 firm_size_data(table, size)
                 for size in range(1, 10)
             ])
-    elif series == 'establishment age and survival' or 'age':
+    elif series in ['establishment age and survival', 'age']:
         return pd.concat([
                 est_age_surv_data(table, region, industry)
                 for region in region_list

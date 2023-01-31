@@ -149,11 +149,11 @@ qwi26 = "qwi(indicator_list=indicators, obs_level='state', private=True, n_threa
 qwi27 = "qwi(indicator_list=indicators, obs_level='state', worker_char=['agegrp'], private=True, n_threads=30)"
 
 # Annualize examples
-qwi28 = "qwi(indicator_list=indicators, obs_level='county', annualize='March', n_threads=30)"
+qwi28 = "qwi(indicator_list=indicators, obs_level='county', annualize='April', n_threads=30)"
 qwi29 = "qwi(indicator_list=indicators, obs_level='county', annualize=False, n_threads=30)"
-qwi30 = "qwi(indicator_list=indicators, obs_level='msa', firm_char=['firmsize'], annualize='March', n_threads=30)"
+qwi30 = "qwi(indicator_list=indicators, obs_level='msa', firm_char=['firmsize'], annualize='April', n_threads=30)"
 qwi31 = "qwi(indicator_list=indicators, obs_level='msa', annualize=False, n_threads=30)"
-qwi32 = "qwi(indicator_list=indicators, obs_level='state', annualize='March', n_threads=30)"
+qwi32 = "qwi(indicator_list=indicators, obs_level='state', annualize='April', n_threads=30)"
 qwi33 = "qwi(indicator_list=indicators, obs_level='state', firm_char=['industry'], annualize=False, n_threads=30)"
 
 # Strata totals examples
