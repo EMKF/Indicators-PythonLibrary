@@ -34,3 +34,9 @@
 	--Remove option 'all' from obs_level
 	--Add state_list option to a few modules (so that all modules have state_list option)
 	--Harmonize the use of the variable 'region' vs 'obs_level'
+(1/31/23) Version 2.4.1
+	Very minor consistency updates
+	--Some formatting changes (in bed)
+	--Function name updates (in bed)
+	--Function argument option update (in qwi)
+	

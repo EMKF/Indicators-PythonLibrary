@@ -10,7 +10,7 @@ setup(
         'pandas', 'numpy', 'requests', 'joblib', 'selenium', 'openpyxl',
         'webdriver_manager', 'geonamescache', 'boto3', 'lxml', 'xlrd'
     ],
-    version='2.4.0',
+    version='2.4.1',
     license='MIT',
     description='Modules that pull and transform commonly used administrative data from online sources.',
     long_description=open('README.md', encoding='utf8').read(),
