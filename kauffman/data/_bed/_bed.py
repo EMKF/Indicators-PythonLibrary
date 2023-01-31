@@ -1,7 +1,7 @@
 import pandas as pd
 import kauffman.constants as c
-from ._firm_size import _firm_size_data_create
-from ._est_age_surv import _est_age_surv_data_create
+from ._firm_size import firm_size_data
+from ._est_age_surv import est_age_surv_data
 
 
 def bed(series, table, obs_level='us', state_list='all', industry='00'):
@@ -82,19 +82,13 @@ def bed(series, table, obs_level='us', state_list='all', industry='00'):
     state_list = c.STATES if state_list == 'all' else state_list    
     region_list = state_list if obs_level == 'state' else ['us']
 
-    if series == 'firm size':
-        return pd.concat(
-                [
-                    _firm_size_data_create(table, size)
-                    for size in range(1, 10)
-                ]
-            )
-    elif series == 'establishment age and survival':
-        return pd.concat(
-                [
-                    _est_age_surv_data_create(table, region, industry)
-                    for region in region_list
-                ]
-            )
-
-
+    if series == 'firm size' or 'size':
+        return pd.concat([
+                firm_size_data(table, size)
+                for size in range(1, 10)
+            ])
+    elif series == 'establishment age and survival' or 'age':
+        return pd.concat([
+                est_age_surv_data(table, region, industry)
+                for region in region_list
+            ])

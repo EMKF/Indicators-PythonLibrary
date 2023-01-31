@@ -31,7 +31,7 @@ def df_create(lines):
     return df
 
 
-def _firm_size_data_create(table, firm_size):
+def firm_size_data(table, firm_size):
     return df_create(_data_lines_firmsize(table, firm_size)) \
         .assign(
             size=c.BED_SIZE_CODE_TO_LABEL2[firm_size],

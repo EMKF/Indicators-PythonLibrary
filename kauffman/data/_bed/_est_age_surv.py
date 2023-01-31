@@ -201,7 +201,7 @@ def table1bf(df, age=0, size=7):
         .pipe(_values_fix)
 
 
-def _est_age_surv_data_create(table, region, industry):
+def est_age_surv_data(table, region, industry):
     if table in range(1, 5):
         df = table1(_data_lines_survival(table, region, industry))
     if table in [5, 6]:

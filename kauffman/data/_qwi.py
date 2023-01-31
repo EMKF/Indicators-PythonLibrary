@@ -307,7 +307,7 @@ def _cols_to_numeric(df, var_lst):
 def _annualize_data(df, annualize, covars):
     if not annualize:
         return df
-    elif annualize == 'March':
+    elif annualize == 'April':
         df = df \
             .assign(
                 quarter=lambda x: x['time'].str[-1:],
