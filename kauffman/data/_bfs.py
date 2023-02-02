@@ -73,20 +73,20 @@ def clean_data(df, industry_key, series_key, region_key, time_key):
     return df
 
 
-def _seasonal_adjust(df, seasonally_adj, series_lst, bf_helper_lst):
-    if seasonally_adj and any([i.startswith('BF_DUR') for i in series_lst]):
+def _seasonal_adjust(df, seasonally_adj, series_list, bf_helper_list):
+    if seasonally_adj and any([i.startswith('BF_DUR') for i in series_list]):
         # Seasonal adjustment not available for DUR variables, so we just sub
         # in non-adjusted for DUR var and leave everything else the same
         index_var = [
             'time', 'region', 'region_code', 'industry', 'naics', 'is_adj'
         ]
-        df_DUR = df[index_var + [s for s in series_lst if 'DUR' in s]] \
+        df_DUR = df[index_var + [s for s in series_list if 'DUR' in s]] \
             .query('is_adj == False')
         df_non_DUR = df \
             [
                 index_var \
-                + [s for s in series_lst if 'DUR' not in s] \
-                + bf_helper_lst
+                + [s for s in series_list if 'DUR' not in s] \
+                + bf_helper_list
             ] \
             .query('is_adj == True')
         return df_DUR.merge(
@@ -98,15 +98,15 @@ def _seasonal_adjust(df, seasonally_adj, series_lst, bf_helper_lst):
 
 
 def _query_data(
-    df, region_lst, series_lst, bf_helper_lst, industry_lst, seasonally_adj
+    df, region_list, series_list, bf_helper_list, industry_list, seasonally_adj
 ):
     return df \
-        .pipe(_seasonal_adjust, seasonally_adj, series_lst, bf_helper_lst) \
-        .query(f"region_code in {region_lst}") \
-        .query(f"naics in {industry_lst}") \
+        .pipe(_seasonal_adjust, seasonally_adj, series_list, bf_helper_list) \
+        .query(f"region_code in {region_list}") \
+        .query(f"naics in {industry_list}") \
         [
             ['time', 'region', 'region_code', 'industry', 'naics'] \
-            + series_lst + bf_helper_lst
+            + series_list + bf_helper_list
         ]
 
 
@@ -142,8 +142,8 @@ def _BF_DURQ(df):
     return df
 
 
-def _annualize(df, annualize, bf_helper_lst, march_shift):
-    index_cols = ['fips', 'region', 'region_code', 'time', 'industry', 'naics']
+def _annualize(df, annualize, bf_helper_list, march_shift):
+    index_cols = ['time', 'fips', 'region', 'region_code', 'industry', 'naics']
     if annualize:
         return df \
             .pipe(_time_annualize, march_shift) \
@@ -153,12 +153,12 @@ def _annualize(df, annualize, bf_helper_lst, march_shift):
             .pipe(_BF_DURQ) \
             .reset_index(drop=False) \
             .astype({'time':'int'}) \
-            [[col for col in df.columns if col not in bf_helper_lst]]
+            [[col for col in df.columns if col not in bf_helper_list]]
     return df
 
 
 def bfs(
-    series_lst='all', obs_level='us', state_list='all', industry='00', 
+    series_list='all', geo_level='us', state_list='all', industry='00', 
     seasonally_adj=True, annualize=False, march_shift=False
 ):
     """
@@ -167,7 +167,7 @@ def bfs(
 
     Parameters
     ----------
-    series_lst: list or 'all', optional
+    series_list: list or 'all', optional
         List of variables to fetch. If 'all', the following variables will be 
         included:
         * BA_BA: 'Business Applications'
@@ -184,11 +184,11 @@ def bfs(
             Formation within Four Quarters
         * BF_DUR8Q: Average Duration (in Quarters) from Business Application to
             Formation within Eight Quarters
-    obs_level: {'us', 'state'}, default 'us'
+    geo_level: {'us', 'state'}, default 'us'
         The geographical level of the data.
     state_list: list or 'all', default 'all'
         The list of states to include in the data, identified by postal code 
-        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for obs_level = 'us'.
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for geo_level = 'us'.
     industry: list or str or 'all', default '00'
         The industry (or industries) to include in the data. If 'all', the 
         following variables will be included:
@@ -222,10 +222,10 @@ def bfs(
         Whether to use a "march shift" annualization method, wherein Q2 is 
         considered the start of the year.
     """
-    series_lst = c.BFS_SERIES if series_lst == 'all' else series_lst
+    series_list = c.BFS_SERIES if series_list == 'all' else series_list
     
     state_list = c.STATES if state_list == 'all' else state_list    
-    region_list = state_list if obs_level == 'state' else ['US']
+    region_list = state_list if geo_level == 'state' else ['US']
 
     if type(industry) == list:
         industry_list = industry
@@ -236,25 +236,25 @@ def bfs(
 
     if march_shift: annualize = True
 
-    bf_helper_lst = []
+    bf_helper_list = []
     if annualize:
-        if ('BF_DUR4Q' in series_lst) and ('BF_BF4Q' not in series_lst): 
-            bf_helper_lst.append('BF_BF4Q')
-        if ('BF_DUR8Q' in series_lst) and ('BF_BF8Q' not in series_lst): 
-            bf_helper_lst.append('BF_BF8Q')
+        if ('BF_DUR4Q' in series_list) and ('BF_BF4Q' not in series_list): 
+            bf_helper_list.append('BF_BF4Q')
+        if ('BF_DUR8Q' in series_list) and ('BF_BF8Q' not in series_list): 
+            bf_helper_list.append('BF_BF8Q')
 
     df, industry_key, series_key, region_key, time_key = _fetch_data()
 
     return df \
         .pipe(clean_data, industry_key, series_key, region_key, time_key) \
         .pipe(
-            _query_data, region_list, series_lst, bf_helper_lst, industry_list, 
-            seasonally_adj
+            _query_data, region_list, series_list, bf_helper_list, 
+            industry_list, seasonally_adj
         ) \
         .assign(
             time=lambda x: pd.to_datetime(x['time'], format='%b-%Y'),
             fips=lambda x: x.region_code.map(c.STATE_ABB_TO_FIPS)
         ) \
-        .pipe(_annualize, annualize, bf_helper_lst, march_shift) \
-        [['fips', 'region', 'naics', 'industry', 'time'] + series_lst] \
+        .pipe(_annualize, annualize, bf_helper_list, march_shift) \
+        [['time', 'fips', 'region', 'naics', 'industry'] + series_list] \
         .reset_index(drop=True)

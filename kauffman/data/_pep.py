@@ -277,21 +277,21 @@ def _us_1900_1999():
             .dropna()
 
 
-def pep(obs_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
+def pep(geo_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
     """
     Fetches and cleans Population Estimates Program (PEP) data from one of two 
-    sources, depending on the year and obs_level: 
+    sources, depending on the year and geo_level: 
     (1) The Census's API (https://api.census.gov/data.html, see the pep > 
         population and pep > int_population datasets)
     (2) https://www2.census.gov/programs-surveys/popest
 
     Parameters
     ----------
-    obs_level: {'us', 'state', 'msa', 'county'}, default 'us'
+    geo_level: {'us', 'state', 'msa', 'county'}, default 'us'
         The geographical level of the data.
     state_list: list or 'all', default 'all'
         The list of states to include in the data, identified by postal code 
-        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for obs_level = 'us'.
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for geo_level = 'us'.
     key: str, default os.getenv("CENSUS_KEY"), optional
         Census API key. See README for instructions on how to get one, if 
         desired. Otherwise, user can pass key=None, which will work until the
@@ -307,7 +307,7 @@ def pep(obs_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
     state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
 
     # Fetch data
-    if obs_level in ['county', 'msa']:
+    if geo_level in ['county', 'msa']:
         df = pd.concat(
                 [_county_1980_1989(), _county_1990_1999()]
                 + [f('county', key) for f in [_2000_2009, _2010_2019]]
@@ -318,11 +318,11 @@ def pep(obs_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
                 fips_state=lambda x: x.fips.str[0:2]
             ) \
             .query(f'fips_state in {state_list}')
-        if obs_level == 'msa':
+        if geo_level == 'msa':
             df = df \
                 .pipe(g.aggregate_county_to_msa, 'fips', ['population']) \
                 [['fips', 'region', 'time', 'population']]
-    elif obs_level == 'state':
+    elif geo_level == 'state':
         df = pd.concat(
                 [_state_1900_1989(year) for year in range(1900,1981,10)]
                 + [_state_1990_1999(), _2020('state')]
@@ -335,13 +335,11 @@ def pep(obs_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
             + [f('us', key) for f in [_2000_2009, _2010_2019, _2021]]
         )
 
-    # TODO: Keep this? Would need to update kese, neb, and eji
-    # columns = ['fips', 'region', 'time', 'population']
-    # if obs_level in ['county', 'msa']:
-    #     columns = ['fips', 'fips_state', 'region', 'time', 'population']
+    index = ['time', 'fips', 'region', 'geo_level']
 
     return df \
         .astype({'population': 'float', 'time': 'int'}) \
-        .sort_values(['fips', 'time']) \
+        .assign(geo_level=geo_level) \
+        .sort_values(index) \
         .reset_index(drop=True) \
-        [['fips', 'region', 'time', 'population']]
+        [index + ['population']]

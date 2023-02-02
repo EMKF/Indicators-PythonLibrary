@@ -73,24 +73,24 @@ def _format_covars7(df):
 def table1(lines):
     cohort = 1994
     age = 1
-    data_lst = []
+    data_list = []
     for ind, line in enumerate(lines[9:-2]):
         if 'Less than one year' in line:
-            data_lst.append([cohort] + ['age 0'] + line.split()[-7:])
+            data_list.append([cohort] + ['age 0'] + line.split()[-7:])
         if 'Born before March' in line:
-            data_lst.append([cohort] + ['pre 1993'] + line.split()[-7:])
+            data_list.append([cohort] + ['pre 1993'] + line.split()[-7:])
         if 'Total' in line:
-            data_lst.append([cohort] + ['total'] + line.split()[-7:])
+            data_list.append([cohort] + ['total'] + line.split()[-7:])
             cohort += 1
             age = 1
         if '{} year'.format(age) in line:
-            data_lst.append(
+            data_list.append(
                 [cohort] + ['age {}'.format(age)] + line.split()[-7:]
             )
             age += 1
 
     return pd.DataFrame(
-            data_lst,
+            data_list,
             columns=[
                 'time', 'age', 'net_change', 'total_gains', 
                 'gross_job_gains_expanding_ests', 
@@ -108,10 +108,10 @@ def table5(lines):
     df_out = pd.DataFrame(columns=['age_class'])
     for ind, line in enumerate(lines[6:-2]):
         if 'Less than one year' in line:
-            data_lst = []
-            data_lst.append(['Less than one year'] + line.split()[4:])
+            data_list = []
+            data_list.append(['Less than one year'] + line.split()[4:])
         if '{} year'.format(age) in line:
-            data_lst.append(
+            data_list.append(
                 ['{age} {year}'.format(
                     age=age, year='year' if age == 1 else 'years'
                 )] \
@@ -119,14 +119,14 @@ def table5(lines):
             )
             age += 1
         if 'Born before March' in line:
-            data_lst.append(['Born before March 1993'] + line.split()[4:])
+            data_list.append(['Born before March 1993'] + line.split()[4:])
         if 'Total' in line:
-            data_lst.append(line.split())
+            data_list.append(line.split())
             df_out = df_out.merge(
                 pd.DataFrame(
-                    data_lst, 
+                    data_list, 
                     columns=['age_class'] \
-                        + list(range(cohort, cohort + len(data_lst[0]) - 1))
+                        + list(range(cohort, cohort + len(data_list[0]) - 1))
                 ), how='right', on='age_class'
             )
             age = 1
@@ -136,16 +136,16 @@ def table5(lines):
 
 def table7(lines):
     cohort = 1994
-    data_lst = []
+    data_list = []
     for ind, line in enumerate(lines[11:-2]):
         if (not line.split()) or ('openings' in line) or ('ended' in line):
             continue
-        data_lst.append([cohort] + line.split()[1:])
+        data_list.append([cohort] + line.split()[1:])
         if 'March 2021' in line:  # this needs to be incremented yearly
             cohort += 1
 
     return pd.DataFrame(
-            data_lst,
+            data_list,
             columns=[
                 'time', 'end_year', 'establishments', 'employment', 
                 'survival_since_birth', 'survival_previous_year', 'average_emp'
@@ -161,10 +161,10 @@ def _extract_rows(df, age, size):
         'losses by age and base size of firm'
     
     mask = df[title] == title
-    ind_lst = df.index[mask].tolist()
+    ind_list = df.index[mask].tolist()
 
-    num_rows = ind_lst[1] - ind_lst[0] - 1
-    ind = ind_lst[c.BED_AGE_SIZE_LIST.index((age, size))]
+    num_rows = ind_list[1] - ind_list[0] - 1
+    ind = ind_list[c.BED_AGE_SIZE_LIST.index((age, size))]
 
     return df.iloc[(ind - num_rows) + 4:ind]
 
@@ -229,4 +229,4 @@ def est_age_surv_data(table, region, industry):
         ) \
         .sort_values(['fips', 'time']) \
         .reset_index(drop=True) \
-        [['fips', 'region', 'time'] + covars]
+        [['time', 'fips', 'region'] + covars]

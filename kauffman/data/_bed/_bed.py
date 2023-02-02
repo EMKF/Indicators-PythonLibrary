@@ -4,7 +4,7 @@ from ._firm_size import firm_size_data
 from ._est_age_surv import est_age_surv_data
 
 
-def bed(series, table, obs_level='us', state_list='all', industry='00'):
+def bed(series, table, geo_level='us', state_list='all', industry='00'):
     """
     Fetch and clean Business Employment Dynamics (BED) data from 
     https://www.bls.gov/bdm.
@@ -44,11 +44,11 @@ def bed(series, table, obs_level='us', state_list='all', industry='00'):
         3: As % Employment Seasonally Adjusted
         4: As % Employment Not Seasonally Adjusted
         
-    obs_level: {'us', 'state'}, default 'us'
+    geo_level: {'us', 'state'}, default 'us'
         The geographical level of the data.
     state_list: list or 'all', default 'all'
         The list of states to include in the data, identified by postal code 
-        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for obs_level = 'us'.
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for geo_level = 'us'.
     industry: str, default '00'
         The industry to fetch data for, identified by 2-digit NAICS codes. Only 
         available for series = 'establishment age and survival'.
@@ -76,7 +76,7 @@ def bed(series, table, obs_level='us', state_list='all', industry='00'):
         81: Other services (except public administration)
     """
     state_list = c.STATES if state_list == 'all' else state_list    
-    region_list = state_list if obs_level == 'state' else ['us']
+    region_list = state_list if geo_level == 'state' else ['us']
 
     if series in ['firm size', 'size']:
         return pd.concat([

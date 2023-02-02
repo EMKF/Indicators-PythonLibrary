@@ -40,6 +40,6 @@ def firm_size_data(table, firm_size):
             quarter=lambda x: x['quarter'].map(c.MONTH_TO_QUARTER)
         ) \
         [
-            ['fips', 'region', 'time', 'quarter', 'size']
+            ['time', 'fips', 'region', 'quarter', 'size']
             + c.BED_TABLE_FIRM_SIZE_COLS[2:]
         ]

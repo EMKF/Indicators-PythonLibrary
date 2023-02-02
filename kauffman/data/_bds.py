@@ -6,14 +6,14 @@ import numpy as np
 from kauffman.tools import api_tools as api
 
 
-def _bds_url(variables, obs_level, state_list, strata, key, year):
+def _bds_url(variables, geo_level, state_list, strata, key, year):
     flag_var = [f'{var}_F' for var in variables]
     var_string = ",".join(variables + strata + flag_var)
     state_string = ",".join(state_list)
     
-    fips = state_string if obs_level == 'state' else '*'
-    in_state = True if obs_level == 'county' else False
-    fips_section = api._fips_section(obs_level, fips, state_string, in_state)
+    fips = state_string if geo_level == 'state' else '*'
+    in_state = True if geo_level == 'county' else False
+    fips_section = api._fips_section(geo_level, fips, state_string, in_state)
 
     naics_string = '&NAICS=00' if 'NAICS' not in strata else ''
     key_section = f'&key={key}' if key else ''
@@ -22,8 +22,8 @@ def _bds_url(variables, obs_level, state_list, strata, key, year):
         f'&for={fips_section}&YEAR={year}{naics_string}{key_section}'
 
 
-def _bds_fetch_data(year, variables, obs_level, state_list, strata, key, s):
-    url = _bds_url(variables, obs_level, state_list, strata, key, year)
+def _bds_fetch_data(year, variables, geo_level, state_list, strata, key, s):
+    url = _bds_url(variables, geo_level, state_list, strata, key, year)
     return api.fetch_from_url(url, s)
 
 
@@ -37,15 +37,15 @@ def _mark_flagged(df, variables):
     return df  
 
 
-def check_strata_valid(obs_level, strata):
+def check_strata_valid(geo_level, strata):
     valid_crosses = c.BDS_VALID_CROSSES
 
     if not strata:
         valid = True
-    elif obs_level in ['state', 'county', 'msa']:
-        strata = set(strata + [obs_level.upper()])
+    elif geo_level in ['state', 'county', 'msa']:
+        strata = set(strata + [geo_level.upper()])
         valid = strata in valid_crosses
-    elif obs_level == 'all':
+    elif geo_level == 'all':
         valid = all(
             set(strata + [o.upper()]) in valid_crosses 
             for o in ['us', 'state', 'msa', 'county']
@@ -58,7 +58,7 @@ def check_strata_valid(obs_level, strata):
 
 
 def bds(
-    series_lst='all', obs_level='us', state_list='all', strata=[], 
+    series_list='all', geo_level='us', state_list='all', strata=[], 
     get_flags=False, key=os.getenv('CENSUS_KEY'), n_threads=1
 ):
     """
@@ -67,7 +67,7 @@ def bds(
 
     Parameters
     ----------
-    series_lst: list or 'all', default 'all'
+    series_list: list or 'all', default 'all'
         List of variables to fetch. See:
             https://www.census.gov/content/dam/Census/programs-surveys/business-dynamics-statistics/BDS_Codebook.pdf 
             or 
@@ -117,11 +117,11 @@ def bds(
             months
         * REALLOCATION_RATE: Rate of reallocation during the last 12 months
 
-    obs_level: {'us', 'state', 'msa', 'county'}, default 'us'
+    geo_level: {'us', 'state', 'msa', 'county'}, default 'us'
         The geographical level of the data.
     state_list: list or 'all', default 'all'
         The list of states to include in the data, identified by postal code 
-        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for obs_level = 'us'.
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for geo_level = 'us'.
     strata: list, optional
         The variables to stratify the data by.
 
@@ -169,7 +169,7 @@ def bds(
         threads depends on the user's machine and the amount of data being 
         pulled.
     """
-    series_list = c.BDS_SERIES if series_lst == 'all' else series_lst
+    series_list = c.BDS_SERIES if series_list == 'all' else series_list
 
     state_list = c.STATES if state_list == 'all' else state_list
     state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
@@ -191,10 +191,10 @@ def bds(
             f'Variable {missing_var} has been added to strata list.')
 
     # Test that we have a valid strata crossing
-    if not check_strata_valid(obs_level, strata):
+    if not check_strata_valid(geo_level, strata):
         raise Exception(
-            f'This is not a valid combination of strata for obs_level ' \
-            f'{obs_level}. See ' \
+            f'This is not a valid combination of strata for geo_level ' \
+            f'{geo_level}. See ' \
             'https://www.census.gov/data/datasets/time-series/econ/bds/bds-datasets.html' \
             ' for a list of valid crossings.'
         )
@@ -208,37 +208,37 @@ def bds(
             'result in an error.')
 
     # Data fetch
-    if 'NAICS' not in strata or obs_level == 'us':
-        url = _bds_url(series_list, obs_level, state_list, strata, key, '*')
+    if 'NAICS' not in strata or geo_level == 'us':
+        url = _bds_url(series_list, geo_level, state_list, strata, key, '*')
         df = api.fetch_from_url(url, requests)
     else:
         years = list(range(1978, 2020))
         df = api.run_in_parallel(
             data_fetch_fn = _bds_fetch_data,
             groups = years,
-            constant_inputs = [series_list, obs_level, state_list, strata, key],
+            constant_inputs = [series_list, geo_level, state_list, strata, key],
             n_threads = n_threads
         )
 
     flags = [f'{var}_F' for var in series_list] if get_flags else []
+    index = ['time', 'fips', 'region', 'geo_level']
 
     return df \
-        .pipe(api._create_fips, obs_level) \
+        .pipe(api._create_fips, geo_level) \
         .rename(columns={
             **{'YEAR': 'time', 'NAICS':'naics'}, 
             **{x:x.lower() for x in strata}
             }
         ) \
-        .assign(industry=lambda x: x['naics'].map(c.NAICS_CODE_TO_ABB(2))) \
+        .assign(
+            industry=lambda x: x['naics'].map(c.NAICS_CODE_TO_ABB(2)),
+            geo_level=geo_level
+        ) \
         .apply(
             lambda x: pd.to_numeric(x, errors='ignore') \
                 if x.name in series_list + ['time'] else x
         ) \
         .pipe(_mark_flagged, series_list) \
-        .sort_values(['fips', 'time'] + [x.lower() for x in strata]) \
+        .sort_values(index + [x.lower() for x in strata]) \
         .reset_index(drop=True) \
-        [
-            ['fips', 'region', 'time'] \
-            + [x.lower() for x in strata] \
-            + series_list + flags
-        ]
+        [index + [x.lower() for x in strata] + series_list + flags]
