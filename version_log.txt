@@ -39,4 +39,8 @@
 	--Some formatting changes (in bed)
 	--Function name updates (in bed)
 	--Function argument option update (in qwi)
-	
+(2/2/23) Version 2.5.0
+	Restructuring and consistency updates
+	--Rename data folder to data_fetch
+	--Implement consistent variable naming, argument naming, column order, column naming, sorting
+	--Add geo_level as a column in modules with geo_level is county or msa
