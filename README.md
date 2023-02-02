@@ -17,7 +17,7 @@ A few of the functions (`acs`, `qwi`, `bds`, and `pep`) obtain data through the 
 # Library Structure
 The kauffman library contains two packages:
 
-### 1. `data`
+### 1. `data_fetch`
 This package contains several functions for fetching and cleaning raw data related to entrepreneurship from publicly available sources, as displayed in the following table:
 
 Function | Source Dataset Title                   | Source Organization        |

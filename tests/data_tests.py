@@ -1,5 +1,5 @@
 import kauffman.constants as c
-from kauffman.data import acs, bfs, bds, pep, bed, qwi
+from kauffman.data_fetch import acs, bfs, bds, pep, bed, qwi
 from datetime import datetime as dt
 
 

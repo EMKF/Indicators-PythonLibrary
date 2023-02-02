@@ -1,9 +1,6 @@
-import io
 import boto3
-import requests
 import pandas as pd
 from kauffman import constants as c
-from zipfile import ZipFile
 
 
 def file_to_s3(file, s3_bucket, s3_file):
