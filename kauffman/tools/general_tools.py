@@ -181,6 +181,7 @@ def weighted_sum(df, strata = [], var_list = 'all', weight_var=None):
 
 
 def as_list(object):
+    """Return list of passed object, unless already a list"""
     if type(object) == list:
         return object
     else:

@@ -1,7 +1,7 @@
 import pandas as pd
 import geonamescache
 from itertools import product
-import os
+
 
 STATES = [
     "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI",
@@ -118,6 +118,7 @@ ALL_FIPS_TO_NAME = {
         for k, v in STATE_FIPS_TO_ABB.items() if v != 'PR'
     }
 }
+
 ALL_NAME_TO_FIPS = dict(map(reversed, ALL_FIPS_TO_NAME.items()))
 
 
@@ -145,7 +146,7 @@ for k, v in MSA_TO_STATE_FIPS.items():
         STATE_TO_MSA_FIPS.setdefault(x,[]).append(k)
 
 
-AGE_CODE_TO_LABEL = {
+BED_AGE_CODE_TO_LABEL = {
     0: 'Less than one year old',
     1: '1 to 4 years',
     2: '5 to 9 years',
@@ -163,7 +164,11 @@ BED_SIZE_CODE_TO_LABEL = {
     6: '500 or more employees',
     7: 'All'
 }
-BED_AGE_SIZE_LIST = list(product(AGE_CODE_TO_LABEL.keys(), BED_SIZE_CODE_TO_LABEL.keys()))
+
+BED_AGE_SIZE_LIST = list(product(
+    BED_AGE_CODE_TO_LABEL.keys(), 
+    BED_SIZE_CODE_TO_LABEL.keys()
+))
 
 BED_TABLE1BF_COLS = [
     'time', 'firms', 'establishments', 'net_change', 'total_job_gains',
@@ -199,6 +204,7 @@ MONTH_TO_QUARTER = {
 
 API_CELL_LIMIT = 400000
 API_MSA_STRING = 'metropolitan statistical area/micropolitan statistical area'
+
 
 QWI_WORKER_CROSSES = [
     {'sex', 'agegrp'}, {'sex', 'education'}, {'education'}, 

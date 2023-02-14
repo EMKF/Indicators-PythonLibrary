@@ -69,7 +69,8 @@ def acs(
         The geographical level of the data.
     state_list: list or 'all', default 'all'
         The list of states to include in the data, identified by postal code 
-        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for geo_level = 'us'.
+        abbreviation. (Ex: 'AK', 'UT', etc.) Not available for geo_level = 'us'
+        or 'msa'.
     key: str, default os.getenv("CENSUS_KEY"), optional
         Census API key. See README for instructions on how to get one, if 
         desired. Otherwise, user can pass key=None, which will work until the
