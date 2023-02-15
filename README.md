@@ -41,6 +41,7 @@ This package contains several functions for processing entrepreneurship data, gr
     * `CBSA_crosswalk`
     * `weighted_sum`
     * `as_list`
+    * `naics_code_key`
 *  `qwi_tools`: This file contains tools that relate to the qwi data. Note that there are other functions in this file not listed here that are used internally within this repository.
     * `consistent_releases`
     * `latest_releases`

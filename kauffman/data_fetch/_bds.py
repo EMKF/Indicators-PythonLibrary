@@ -1,9 +1,10 @@
 import requests
 import pandas as pd
-import kauffman.constants as c
+from kauffman import constants as c
 import os
 import numpy as np
 from kauffman.tools import api_tools as api
+from kauffman.tools import general_tools as g
 
 
 def _bds_url(variables, geo_level, state_list, strata, key, year):
@@ -230,10 +231,7 @@ def bds(
             **{x:x.lower() for x in strata}
             }
         ) \
-        .assign(
-            industry=lambda x: x['naics'].map(c.NAICS_CODE_TO_ABB(2)),
-            geo_level=geo_level
-        ) \
+        .assign(geo_level=geo_level) \
         .apply(
             lambda x: pd.to_numeric(x, errors='ignore') \
                 if x.name in series_list + ['time'] else x

@@ -94,7 +94,7 @@ def MSA_FIPS_TO_NAME():
         usecols=[0, 3],
     ) \
         .assign(fips=lambda x: x['CBSA Code'].astype(str)) \
-        .drop('CBSA Code', 1) \
+        .drop(columns='CBSA Code') \
         .drop_duplicates('fips') \
         .set_index(['fips']) \
         .to_dict()['CBSA Title']
@@ -122,23 +122,22 @@ ALL_FIPS_TO_NAME = {
 ALL_NAME_TO_FIPS = dict(map(reversed, ALL_FIPS_TO_NAME.items()))
 
 
-def fetch_msa_to_state_dic():
-    df = pd \
-        .read_excel(
+def get_msa_state_dict():
+    df = pd.read_excel(
             'https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls',
             skiprows=2, skipfooter=4,
             dtype = {'CBSA Code':'str', 'FIPS State Code':'str'}
         ) \
         .rename(columns={"CBSA Code":"fips", "FIPS State Code":"state_fips"}) \
         .drop_duplicates(['fips', 'state_fips']) \
-        [['fips', 'state_fips']]
+        [['fips', 'state_fips']] \
+        .pivot(values='state_fips', columns='fips')
 
-    df2 = df.pivot(values='state_fips', columns='fips')
-    names = df2.columns
-    values = [list(df2[col].dropna().values) for col in df2]
+    names = df.columns
+    values = [list(df[col].dropna().values) for col in df]
     return dict(zip(names, values))
 
-MSA_TO_STATE_FIPS = fetch_msa_to_state_dic()
+MSA_TO_STATE_FIPS = get_msa_state_dict()
 
 STATE_TO_MSA_FIPS = {}
 for k, v in MSA_TO_STATE_FIPS.items():
@@ -304,16 +303,6 @@ ACS_CODE_TO_VAR = {
     'B24092_017E': 'federal_government_f',
     'B24092_018E': 'self_employed_not_inc_f'
 }
-
-
-# todo: at some point might want to include 3 and 4-digit naics codes
-def NAICS_CODE_TO_ABB(digits, pub_admin=False):
-    return pd.read_csv('https://www2.census.gov/programs-surveys/bds/technical-documentation/label_naics.csv') \
-        .query(f'indlevel == {digits}') \
-        .drop('indlevel', 1) \
-        .query('name not in ["Public Administration", "Unclassified"]' if not pub_admin else '') \
-        .set_index(['naics']) \
-        .to_dict()['name']
 
 
 BDS_SERIES = [

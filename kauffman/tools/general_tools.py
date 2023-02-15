@@ -186,3 +186,13 @@ def as_list(object):
         return object
     else:
         return [object]
+
+
+def naics_code_key(digits, pub_admin=False):
+    return pd.read_csv('https://www2.census.gov/programs-surveys/bds/technical-documentation/label_naics.csv') \
+        .query(f'indlevel == {digits}') \
+        .drop(columns='indlevel') \
+        .query(
+            'name not in ["Public Administration", "Unclassified"]'
+            if not pub_admin else ''
+        )
