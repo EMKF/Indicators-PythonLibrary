@@ -64,7 +64,7 @@ bfs3 = "bfs(['BF_SBF8Q'], geo_level='us', march_shift=True)"
 bfs4 = "bfs(['BF_SBF8Q'], geo_level='state', march_shift=True)"
 
 # Industry examples
-bfs5 = "bfs(['BF_DUR4Q', 'BF_SBF8Q'], geo_level='state', industry='11')"
+bfs5 = "bfs(['BF_DUR4Q', 'BF_SBF8Q'], geo_level='us', industry='11')"
 bfs6 = "bfs(['BF_SBF4Q', 'BF_PBF8Q'], geo_level='us', industry='44-45')"
 bfs7 = "bfs(['BA_BA'], geo_level='us', industry='all')"
 

@@ -1,113 +1,69 @@
 import pandas as pd
 import numpy as np
 from kauffman import constants as c
-from zipfile import ZipFile
-from io import BytesIO
-import urllib.request as urllib2
+from kauffman.tools import general_tools as g
 
 
-def _format_df(df):
-    df.columns = df.iloc[1]
-    return df.dropna(axis=1, how='all') \
-        .iloc[2:]
-
-	
-def _fetch_data():
-    link = 'https://www.census.gov/econ_getzippedfile/?programCode=BFS'
-    r = urllib2.urlopen(link).read()
-    file = ZipFile(BytesIO(r)) 
-    bfs_file = file.open("BFS-mf.csv")
-
-    df = pd.read_csv(
-        bfs_file, names=['a', 'b', 'c', 'd', 'e', 'f'], dtype='str'
-    )
-    names = [
-        'CATEGORIES', 'DATA TYPES', 'GEO LEVELS', 'TIME PERIODS', 'NOTES',
-        'DATA'
-    ]
-    row_splits = list(df.query(f'a in {names}').index)
-
-    industry_key, series_key, region_key, time_key = [
-        df[row_splits[i]:row_splits[i+1]] \
-            .pipe(_format_df)
-        for i in range(0,4)
-    ]
-    data = _format_df(df[row_splits[-1]:])
-
-    return data, industry_key, series_key, region_key, time_key
-	
-
-def clean_data(df, industry_key, series_key, region_key, time_key):
-    df = df \
-        .merge(
-            industry_key.drop(columns='cat_indent'), on='cat_idx', how='left'
-        ) \
-        .merge(series_key[['dt_idx', 'dt_code']], on='dt_idx', how='left') \
-        .merge(region_key, on='geo_idx', how='left') \
-        .merge(time_key, on='per_idx', how='left') \
-        .rename(
-            columns={
-                'cat_code':'naics', 'cat_desc':'industry', 'dt_code':'series', 
-                'geo_code':'region_code', 'geo_desc':'region', 'per_name':'time'
-            }
-        ) \
-        .assign(
-            naics=lambda x: x.naics.str.replace('NAICS', '') \
-                .replace({
-                    'TOTAL':'00', 'TW':'48-49', 'RET':'44-45', 'MNF':'31-33', 
-                    'NO':'ZZ'
-                }),
+def _reshape_bfs(df):
+    return df.melt(
+            id_vars = ['year', 'geo', 'naics_sector', 'sa', 'series'],
+            value_vars = [
+                'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 
+                'oct', 'nov', 'dec'
+            ],
+            var_name = 'month'
         ) \
         .pivot(
-            index=[
-                'time', 'region', 'region_code', 'industry', 'naics', 'is_adj'
-            ],
-            columns='series', values='val'
+            index=['year', 'month', 'geo', 'naics_sector', 'sa'], 
+            columns='series',
+            values='value'
         ) \
-        .reset_index() \
-        .replace({'D':np.NaN, 'S':np.NaN}) \
-        .apply(pd.to_numeric, errors='ignore')
-        
-    df.columns.name = None
+        .reset_index()
+
+
+def _clean_bfs_values(df, series_list):
+    df = df \
+        .assign(
+            month=lambda x: x.month.str.capitalize(),
+            is_adj=lambda x: x.sa.map({'A':True, 'U':False}),
+            naics_sector=lambda x: x.naics_sector.map({
+                **{
+                    'TOTAL':'00', 'NONAICS':'ZZ', 'NAICSMNF':'31-33', 
+                    'NAICSTW':'48-49', 'NAICSRET':'44-45'
+                },
+                **{f'NAICS{x}':x for x in [
+                        '56', '81', '72', '71', '62', '61', '55', '11', '54', 
+                        '53', '52', '51', '42', '23', '22', '21'
+                    ]
+                }
+            })
+        ) \
+        .replace({'D': np.NaN, 'S': np.NaN})
+
+    df[series_list] = df[series_list].apply(pd.to_numeric, errors='ignore')
 
     return df
 
 
-def _seasonal_adjust(df, seasonally_adj, series_list, bf_helper_list):
+def _seasonal_adjust(df, seasonally_adj, index, series_list, bf_helper_list):
     if seasonally_adj and any([i.startswith('BF_DUR') for i in series_list]):
         # Seasonal adjustment not available for DUR variables, so we just sub
         # in non-adjusted for DUR var and leave everything else the same
-        index_var = [
-            'time', 'region', 'region_code', 'industry', 'naics', 'is_adj'
-        ]
-        df_DUR = df[index_var + [s for s in series_list if 'DUR' in s]] \
+        df_DUR = df[index + ['is_adj'] + [s for s in series_list if 'DUR' in s]] \
             .query('is_adj == False')
         df_non_DUR = df \
             [
-                index_var \
-                + [s for s in series_list if 'DUR' not in s] \
+                index + ['is_adj']
+                + [s for s in series_list if 'DUR' not in s]
                 + bf_helper_list
             ] \
             .query('is_adj == True')
         return df_DUR.merge(
             df_non_DUR,
-            on=['time', 'region', 'region_code', 'industry', 'naics']
+            on=index
         )
     else:
         return df.query(f'is_adj == {seasonally_adj}')
-
-
-def _query_data(
-    df, region_list, series_list, bf_helper_list, industry_list, seasonally_adj
-):
-    return df \
-        .pipe(_seasonal_adjust, seasonally_adj, series_list, bf_helper_list) \
-        .query(f"region_code in {region_list}") \
-        .query(f"naics in {industry_list}") \
-        [
-            ['time', 'region', 'region_code', 'industry', 'naics'] \
-            + series_list + bf_helper_list
-        ]
 
 
 def _year_create_shift(x):
@@ -142,14 +98,12 @@ def _BF_DURQ(df):
     return df
 
 
-def _annualize(df, annualize, bf_helper_list, march_shift):
-    index_cols = ['time', 'fips', 'region', 'region_code', 'industry', 'naics']
+def _annualize(df, annualize, index, bf_helper_list, march_shift):
     if annualize:
         return df \
             .pipe(_time_annualize, march_shift) \
             .pipe(_DUR_numerator) \
-            .groupby(index_cols) \
-            .sum(min_count=12) \
+            .groupby(index).sum(min_count=12) \
             .pipe(_BF_DURQ) \
             .reset_index(drop=False) \
             .astype({'time':'int'}) \
@@ -163,7 +117,7 @@ def bfs(
 ):
     """
     Fetch and clean Business Formation Statistics (BFS) data from the following
-    source: https://www.census.gov/econ_getzippedfile/?programCode=BFS.
+    source: https://www.census.gov/econ/bfs/csv/bfs_monthly.csv.
 
     Parameters
     ----------
@@ -190,8 +144,8 @@ def bfs(
         The list of states to include in the data, identified by postal code 
         abbreviation. (Ex: 'AK', 'UT', etc.) Not available for geo_level = 'us'.
     industry: list or str or 'all', default '00'
-        The industry (or industries) to include in the data. If 'all', the 
-        following variables will be included:
+        The industry (or industries) to include in the data. Only available for
+        geo_level == 'us'. If 'all', the following variables will be included:
         * '00': 'TOTAL',
         * '11': 'NAICS11',
         * '21': 'NAICS21',
@@ -230,7 +184,7 @@ def bfs(
     if type(industry) == list:
         industry_list = industry
     elif industry == 'all':
-        industry_list = list(c.NAICS_CODE_TO_ABB(2).keys())
+        industry_list = list(g.naics_code_key(2)['naics'])
     else:
         industry_list = [industry]
 
@@ -243,18 +197,27 @@ def bfs(
         if ('BF_DUR8Q' in series_list) and ('BF_BF8Q' not in series_list): 
             bf_helper_list.append('BF_BF8Q')
 
-    df, industry_key, series_key, region_key, time_key = _fetch_data()
+    index = ['time', 'fips', 'region', 'naics', 'industry']
 
-    return df \
-        .pipe(clean_data, industry_key, series_key, region_key, time_key) \
-        .pipe(
-            _query_data, region_list, series_list, bf_helper_list, 
-            industry_list, seasonally_adj
-        ) \
+    return pd.read_csv('https://www.census.gov/econ/bfs/csv/bfs_monthly.csv') \
+        .pipe(_reshape_bfs) \
+        .pipe(_clean_bfs_values, series_list + bf_helper_list) \
+        .rename(columns={'naics_sector':'naics', 'geo':'region_code'}) \
         .assign(
-            time=lambda x: pd.to_datetime(x['time'], format='%b-%Y'),
-            fips=lambda x: x.region_code.map(c.STATE_ABB_TO_FIPS)
+            time=lambda x: pd.to_datetime(
+                x['year'].astype(str) + x['month'], 
+                format='%Y%b'
+            ),
+            fips=lambda x: x.region_code.map(c.STATE_ABB_TO_FIPS),
+            region=lambda x: x.region_code.map(c.STATE_ABB_TO_NAME),
         ) \
-        .pipe(_annualize, annualize, bf_helper_list, march_shift) \
-        [['time', 'fips', 'region', 'naics', 'industry'] + series_list] \
+        .merge(g.naics_code_key(2)).rename(columns={'name': 'industry'}) \
+        .query(f"region_code in {region_list} and naics in {industry_list}") \
+        .pipe(
+            _seasonal_adjust, seasonally_adj, index, series_list, bf_helper_list
+        ) \
+        [index + series_list + bf_helper_list] \
+        .pipe(_annualize, annualize, index, bf_helper_list, march_shift) \
+        .dropna(subset=series_list, how='all') \
+        .sort_values(index) \
         .reset_index(drop=True)
