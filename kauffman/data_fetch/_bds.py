@@ -229,8 +229,7 @@ def bds(
         .rename(columns={
             **{'YEAR': 'time', 'NAICS':'naics'}, 
             **{x:x.lower() for x in strata}
-            }
-        ) \
+        }) \
         .assign(geo_level=geo_level) \
         .apply(
             lambda x: pd.to_numeric(x, errors='ignore') \

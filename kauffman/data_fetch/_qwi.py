@@ -535,8 +535,7 @@ def qwi(
         pulled.
     """
 
-    if enforce_release_consistency:
-        q.consistent_releases(enforce=True)
+    if enforce_release_consistency: q.consistent_releases(enforce=True)
 
     state_list = c.STATES if state_list == 'all' else state_list
     state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]

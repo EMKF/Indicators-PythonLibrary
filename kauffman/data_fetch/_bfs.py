@@ -66,49 +66,30 @@ def _seasonal_adjust(df, seasonally_adj, index, series_list, bf_helper_list):
         return df.query(f'is_adj == {seasonally_adj}')
 
 
-def _year_create_shift(x):
-    if x['time'].month <= 3:
-        return x['time'].year
-    return x['time'].year + 1
-
-
-def _time_annualize(df, march_shift):
-    if march_shift:
-        return df.assign(time=lambda x: x.apply(_year_create_shift, axis=1))
-    return df.assign(time=lambda x: x['time'].dt.year)
-
-
-def _DUR_numerator(df):
-    if 'BF_DUR4Q' in df.columns:
-        df = df.assign(DUR4_numerator=lambda x: x['BF_DUR4Q'] * x['BF_BF4Q'])
-    if 'BF_DUR8Q' in df.columns:
-        df = df.assign(DUR8_numerator=lambda x: x['BF_DUR8Q'] * x['BF_BF8Q'])
-    return df
-
-
-def _BF_DURQ(df):
-    if 'BF_DUR4Q' in df.columns:
-        df = df \
-            .assign(BF_DUR4Q=lambda x: x['DUR4_numerator'] / x['BF_BF4Q']) \
-            .drop('DUR4_numerator', 1)
-    if 'BF_DUR8Q' in df.columns:
-        df = df \
-            .assign(BF_DUR8Q=lambda x: x['DUR8_numerator'] / x['BF_BF8Q']) \
-            .drop('DUR8_numerator', 1)
-    return df
-
-
 def _annualize(df, annualize, index, bf_helper_list, march_shift):
-    if annualize:
-        return df \
-            .pipe(_time_annualize, march_shift) \
-            .pipe(_DUR_numerator) \
-            .groupby(index).sum(min_count=12) \
-            .pipe(_BF_DURQ) \
-            .reset_index(drop=False) \
-            .astype({'time':'int'}) \
-            [[col for col in df.columns if col not in bf_helper_list]]
-    return df
+    if not annualize:
+        return df
+
+    # Annualize time variable
+    df['time'] = df.time.apply(
+        lambda x: x.year + 1 if march_shift and x.month > 3 else x.year
+    )
+    
+    # Annualize main data
+    for x in [4, 8]:
+        if f'BF_DUR{x}Q' in df.columns:
+            df[f'DUR{x}_numerator'] = df[f'BF_DUR{x}Q'] * df[f'BF_BF{x}Q']
+
+    df = df.groupby(index).sum(min_count=12).reset_index()
+
+    for x in [4, 8]:
+        if f'BF_DUR{x}Q' in df.columns:
+            df[f'BF_DUR{x}Q'] = df[f'DUR{x}_numerator'] / df[f'BF_BF{x}Q']
+            df = df.drop(columns=f'DUR{x}_numerator')
+
+    return df \
+        .astype({'time':'int'}) \
+        [[col for col in df.columns if col not in bf_helper_list]]
 
 
 def bfs(
@@ -209,7 +190,7 @@ def bfs(
                 format='%Y%b'
             ),
             fips=lambda x: x.region_code.map(c.STATE_ABB_TO_FIPS),
-            region=lambda x: x.region_code.map(c.STATE_ABB_TO_NAME),
+            region=lambda x: x.region_code.map(c.STATE_ABB_TO_NAME)
         ) \
         .merge(g.naics_code_key(2)).rename(columns={'name': 'industry'}) \
         .query(f"region_code in {region_list} and naics in {industry_list}") \

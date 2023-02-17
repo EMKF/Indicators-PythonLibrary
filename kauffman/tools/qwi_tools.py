@@ -6,6 +6,7 @@ from kauffman.tools.general_tools import CBSA_crosswalk
 
 
 def _get_state_release_info(state, session):
+    """Get the QWI latest release information for a given state."""
     url = 'https://lehd.ces.census.gov/data/qwi/latest_release/' \
         f'{state}/version_qwi.txt'
     r = session.get(url)
@@ -29,7 +30,22 @@ def _get_state_release_info(state, session):
         print('ERROR for state ', state, ': r = ', r)
 
 
-def latest_releases(state_list, n_threads):
+def latest_releases(state_list, n_threads=30):
+    """
+    Get the latest release of QWI data by state.
+
+    Parameters
+    ----------
+    state_list: list
+        The list of states to get release info for
+    n_threads: int, default 30
+        Number of threads to use in parallelization of the code
+
+    Returns
+    -------
+    DataFrame
+        The release info
+    """
     s = requests.Session()
     parallel = Parallel(n_jobs=n_threads, backend='threading')
     with parallel:
@@ -51,6 +67,24 @@ def latest_releases(state_list, n_threads):
 
 
 def consistent_releases(state_list='all', n_threads=30, enforce=False):
+    """
+    Check whether the QWI data on the Census API comes from consistent releases 
+    at the moment.
+
+    Parameters
+    ----------
+    state_list: str, default 'all'
+        List of states to check across
+    n_threads: int, default 30
+        Number of threads to use in parallelization of the code
+    enforce: bool, default False
+        Whether to throw an error if there are not consistent releases
+
+    Returns
+    -------
+    Bool
+        Whether there are consistent releases across all states in state_list
+    """
     state_list = c.STATES if state_list == 'all' else state_list
 
     df_releases = latest_releases(state_list, n_threads)
@@ -68,7 +102,23 @@ def consistent_releases(state_list='all', n_threads=30, enforce=False):
     return True
 
 
-def _get_state_to_years(annualize=None):
+def _get_state_to_years(annualize=False):
+    """
+    Fetch the dictionary mapping state to the years (and quarters, optionally)
+    that the state's QWI data is available for.
+
+    Parameters
+    ----------
+    annualize: {'January', 'April', False}
+        The annualization method, if any. If 'January', Q1 is considered the
+        start of the year; if 'April', Q2 is considered the start of the year.
+        If False, get both the year and quarter of availability.
+
+    Returns
+    -------
+    Dict
+        Mapping of state to QWI availability.
+    """
     df = pd.read_html('https://ledextract.ces.census.gov/loading_status.html') \
         [0][['State', 'Start Quarter', 'End Quarter']] \
         .assign(
@@ -97,6 +147,7 @@ def estimate_data_shape(
     indicator_list, geo_level, firm_char, worker_char, strata_totals, 
     state_list, fips_list
 ):
+    """Given qwi function inputs, estimate shape of raw data."""
     n_columns = len(
         indicator_list + firm_char + worker_char \
         + ['time', 'fips', 'region', 'ownercode']
@@ -158,13 +209,13 @@ annualize, strata_totals):
 
     Parameters
     ----------
-    df : DataFrame
+    df: DataFrame
         The QWI data
-    geo_level : {'county', 'msa', 'state', 'us'}
+    geo_level: {'county', 'msa', 'state', 'us'}
         The geographical level of the data
-    worker_char : list
+    worker_char: list
         The worker characteristics the data is stratified by
-    firm_char : list
+    firm_char: list
         The firm characteristics the data is stratified by
 
     Returns
