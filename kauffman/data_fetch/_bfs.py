@@ -3,6 +3,10 @@ import numpy as np
 from kauffman import constants as c
 from kauffman.tools import general_tools as g
 
+ALL_VARIABLES = [
+    'BA_BA', 'BA_CBA', 'BA_HBA', 'BA_WBA', 'BF_BF4Q', 'BF_BF8Q', 'BF_PBF4Q', 
+    'BF_PBF8Q', 'BF_SBF4Q', 'BF_SBF8Q', 'BF_DUR4Q', 'BF_DUR8Q'
+]
 
 def _reshape_bfs(df):
     return df.melt(
@@ -157,7 +161,7 @@ def bfs(
         Whether to use a "march shift" annualization method, wherein Q2 is 
         considered the start of the year.
     """
-    series_list = c.BFS_SERIES if series_list == 'all' else series_list
+    series_list = ALL_VARIABLES if series_list == 'all' else series_list
     
     state_list = c.STATES if state_list == 'all' else state_list    
     region_list = state_list if geo_level == 'state' else ['US']

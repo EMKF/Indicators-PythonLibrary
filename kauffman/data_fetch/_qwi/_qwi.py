@@ -1,20 +1,14 @@
 import os
-import time
 import numpy as np
 import pandas as pd
 from math import ceil
 from itertools import product
-from kauffman import constants as c
 from kauffman.tools import qwi_tools as q
 from kauffman.tools import general_tools as g
 from kauffman.tools import api_tools as api
-from webdriver_manager.chrome import ChromeDriverManager
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from kauffman import constants as c
+from kauffman.data_fetch._qwi import _qwi_constants as qc
+from kauffman.data_fetch._qwi import _scrape_led as led
 
 
 def _year_groups(state_dict, max_years_per_call):
@@ -34,7 +28,7 @@ def _url_groups(
     state_to_years = q._get_state_to_years(annualize)
 
     var_to_levels = {
-        **c.QWI_STRATA_TO_LEVELS,
+        **qc.STRATA_TO_LEVELS,
         **{'quarter':[x for x in range(1,5)]}
     }
     if private and 'industry' in looped_strata:
@@ -55,8 +49,8 @@ def _url_groups(
             for year in _year_groups(state_to_years[state], max_years_per_call)
         ]
         if geo_level in ['county', 'msa']:
-            missing_dict = c.QWI_MISSING_COUNTIES if geo_level == 'county' \
-                else c.QWI_MISSING_MSAS
+            missing_dict = qc.MISSING_COUNTIES if geo_level == 'county' \
+                else qc.MISSING_MSAS
             region_years += [
                 (state, ','.join(missing_dict[state]), year)
                 for state in set(missing_dict) & set(state_list)
@@ -98,7 +92,7 @@ def _qwi_url(loop_var, non_loop_var, indicator_list, geo_level, private, key):
     # Including this code to only include the 2-digit level industries for now
     if 'industry' in non_loop_var:
         non_loop_var = [x for x in non_loop_var if x != 'industry']
-        industries = c.QWI_STRATA_TO_LEVELS['industry']
+        industries = qc.STRATA_TO_LEVELS['industry']
         if private:
             industries = [x for x in industries if x != "92"]
         loop_var['industry'] = '&industry='.join(industries)
@@ -125,131 +119,6 @@ def _qwi_url(loop_var, non_loop_var, indicator_list, geo_level, private, key):
         + f'&ownercode={ownercode}&{loop_section}{key_section}'
 
 
-def _scrape_led_data(private, firm_char, worker_char):
-    pause1 = 1
-    pause2 = 3
-
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument("window-size=1920x1080")
-
-    driver = webdriver.Chrome(
-        ChromeDriverManager().install(),
-        options=chrome_options
-    )
-    driver.get('https://ledextract.ces.census.gov/static/data.html')
-
-    time.sleep(pause1)
-    driver.find_element(By.LINK_TEXT, 'All QWI Measures').click()
-    time.sleep(pause1)
-
-    # Reset selected states
-    # For some reason, the default right now is to select Wisconsin, so this
-    # code is to reset that (by unchecking and then rechecking "all")
-    # TODO: We need to come up with a way to handle changes to the default 
-    # checkboxes...
-    time.sleep(pause1)
-    driver.find_element(By.XPATH, '//input[@name="areas_list_all"]').click()
-    driver.find_element(By.XPATH, '//input[@name="areas_list_all"]').click()
-    time.sleep(pause1)
-
-    # Select US
-    driver.find_element(
-        By.XPATH, 
-        '//input[@aria-label="National (50 States + DC) 00"]'
-    ).click()
-    time.sleep(pause1)
-    driver.find_element(By.XPATH, '//*[text()="Continue to Firm Characteristics"]').click()
-
-    # Firm Characteristics
-    if not private:
-        driver.find_element(By.XPATH, '//input[@data-label="All Ownership"]') \
-            .click()
-
-    if 'firmage' in firm_char:
-        driver.find_element(
-            By.XPATH, 
-            '//*[text()="Firm Age, Private Ownership"]'
-        ).click()
-        driver.find_element(By.XPATH, '//input[@name="firmage_all"]').click()
-
-    if 'firmsize' in firm_char:
-        driver.find_element(
-            By.XPATH, 
-            '//*[text()="Firm Size, Private Ownership"]'
-        ).click()
-        driver.find_element(By.XPATH, '//input[@name="firmsize_all"]').click()
-
-    if 'industry' in firm_char:
-        driver.find_element(By.XPATH, '//input[@name="industries_list_all"]') \
-            .click()
-
-    driver.find_element(By.XPATH, '//*[text()="Continue to Worker Characteristics"]').click()
-
-    # Worker Characteristics
-    if set(worker_char) in [{'sex', 'agegrp'}, {'sex'}, {'agegrp'}]:
-        if 'sex' in worker_char:
-            driver.find_element(
-                By.XPATH, '//input[@name="worker_sa_sex_all"]'
-            ).click()
-        if 'agegrp' in worker_char:
-            driver.find_element(
-                By.XPATH, '//input[@name="worker_sa_age_all"]'
-            ).click()
-    elif set(worker_char) in [{'sex', 'education'}, {'education'}]:
-        driver.find_element(By.XPATH, '//*[text()="Sex and Education"]').click()
-        if 'sex' in worker_char:
-            driver.find_element(
-                By.XPATH, '//input[@name="worker_se_sex_all"]'
-            ).click()
-        if 'education' in worker_char:
-            driver.find_element(
-                By.XPATH, '//input[@name="worker_se_education_all"]'
-            ).click()
-    else:
-        driver.find_element(By.XPATH, '//*[text()="Race and Ethnicity"]') \
-            .click()
-        if 'race' in worker_char:
-            driver.find_element(
-                By.XPATH, '//input[@name="worker_rh_race_all"]'
-            ).click()
-        if 'ethnicity' in worker_char:
-            driver.find_element(
-                By.XPATH, '//input[@name="worker_rh_ethnicity_all"]'
-            ).click()
-
-    driver.find_element(By.XPATH, '//*[text()="Continue to Indicators"]').click()
-
-    # Indicators
-    driver.find_element(By.NAME, 'indicators_all').click()
-    driver.find_element(By.XPATH, f'//*[text()="Employment Change, Individual"]').click()
-    driver.find_element(By.XPATH, '//*[@data-part="indicators_employment_change_individual"]//*[@name="indicators_all"]').click()
-    driver.find_element(By.XPATH, f'//*[text()="Employment Change, Firm"]').click()
-    driver.find_element(By.XPATH, '//*[@data-part="indicators_employment_change_firm"]//*[@name="indicators_all"]').click()
-    driver.find_element(By.XPATH, f'//*[text()="Earnings"]').click()
-    driver.find_element(By.XPATH, '//*[@data-part="indicators_earnings"]//*[@name="indicators_all"]').click()
-
-    driver.find_element(By.XPATH, '//*[text()="Continue to Quarters"]').click()
-
-    # Quarters
-    for quarter in range(1, 5):
-        driver.find_element(
-            By.XPATH, '//*[@title="Check All Q{}"]'.format(quarter)
-        ).click()
-    driver.find_element(By.XPATH, '//*[text()="Continue to Summary and Export"]').click()
-
-    # Summary and Export
-    time.sleep(pause2)
-    driver.find_element(By.XPATH, '//*[text()="Submit Request"]').click()
-
-    try:
-        element = WebDriverWait(driver, 60) \
-            .until(EC.presence_of_element_located((By.LINK_TEXT, 'CSV')))
-    finally:
-        href = driver.find_element(By.LINK_TEXT, 'CSV').get_attribute('href')
-        return pd.read_csv(href)
-
-
 def _optimal_loops(group, target, winning_combo):
     product = 1
     for c in group.values():
@@ -271,15 +140,15 @@ def _optimal_loops(group, target, winning_combo):
 
 def _loops_info(strata, geo_level, indicator_list):
     loopable_dict = {
-        **{k:v for k,v in c.QWI_STRATA_TO_NLEVELS.items() if k in strata},
+        **{k:v for k,v in qc.STRATA_TO_NLEVELS.items() if k in strata},
         **{'quarter':4}
     }
     n_columns = len(
         strata + indicator_list \
         + ['quarter', 'region', 'state', 'ownercode', 'time', 'key']
     )
-    target = (c.API_CELL_LIMIT/n_columns) \
-        / c.QWI_GEO_TO_MAX_CARDINALITY[geo_level]
+    target = (qc.API_CELL_LIMIT/n_columns) \
+        / qc.GEO_TO_MAX_CARDINALITY[geo_level]
 
     winning_combo = _optimal_loops(loopable_dict, target, (None, 0))
     loop_over_list = [
@@ -318,12 +187,10 @@ def _annualize_data(df, annualize, covars):
                     axis=1
                 )
             ) \
-            .drop('quarter', 1)
+            .drop(columns='quarter')
     else:
-        df = df \
-            .assign(
-                time=lambda x: x['time'].str[:4].astype(int),
-            )
+        df = df.assign(time=lambda x: x['time'].str[:4].astype(int))
+
     return df \
         .assign(
             row_count=lambda x: x['fips'] \
@@ -341,7 +208,7 @@ def _filter_strata_totals(df, firm_char, worker_char, strata_totals):
     df = df.astype(dict(zip(strata, ['string'] * len(strata))))
 
     if not strata_totals and strata:
-        strata_to_total_cat = {s:c.QWI_STRATA_TO_LEVELS[s][0] for s in strata}
+        strata_to_total_cat = {s:qc.STRATA_TO_LEVELS[s][0] for s in strata}
         df = df.query(
             'and '.join([
                 f'{stratum} != "{strata_to_total_cat[stratum]}"'
@@ -370,9 +237,8 @@ def _aggregate_msas(df, covars, geo_level):
 
 def _state_overlap(x, state_list_orig):
     if list(set(x.split(', ')[1].split('-')) & set(state_list_orig)):
-        return 1
-    else:
-        return 0
+        return True
+    return False
 
 
 def _remove_extra_msas(df, state_list, state_list_orig):
@@ -384,7 +250,7 @@ def _remove_extra_msas(df, state_list, state_list_orig):
                 .apply(lambda y: _state_overlap(
                     y, [c.STATE_FIPS_TO_ABB[fips] for fips in state_list_orig]
                 ))) \
-            .query('_keep == 1') \
+            .query('_keep == True') \
             .drop(columns='_keep')
 
 
@@ -393,7 +259,7 @@ def _qwi_fetch_data(
     firm_char, worker_char, key, n_threads
 ):
     if geo_level == 'us':
-        return _scrape_led_data(private, firm_char, worker_char) \
+        return led._scrape_led_data(private, firm_char, worker_char) \
             .assign(
                 time=lambda x: x['year'].astype(str) + '-Q' \
                     + x['quarter'].astype(str),
@@ -420,8 +286,8 @@ def _qwi_fetch_data(
     )
 
     return api.run_in_parallel(
-        data_fetch_fn = _qwi_fetch_api_data, 
-        groups = groups,
+        data_fetch_fn=_qwi_fetch_api_data, 
+        groups=groups,
         constant_inputs = [
             non_loop_var, indicator_list, geo_level, private, key
         ],
@@ -534,55 +400,27 @@ def qwi(
         threads depends on the user's machine and the amount of data being 
         pulled.
     """
-
-    if enforce_release_consistency: q.consistent_releases(enforce=True)
-
+    # Clean user input
     state_list = c.STATES if state_list == 'all' else state_list
     state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
 
-    if indicator_list == 'all':
-        indicator_list = c.QWI_OUTCOMES
-    elif type(indicator_list) == str:
-        indicator_list = [indicator_list]
-
-    # todo: keep this?
-    # if annualize and any(x in c.qwi_averaged_outcomes for x in indicator_list):
-    #     raise Exception('indicator_list not compatible with annualize==True')
+    indicator_list = qc.OUTCOMES if indicator_list == 'all' \
+        else g.as_list(indicator_list)
 
     firm_char, worker_char = g.as_list(firm_char), g.as_list(worker_char)
 
+    if not (firm_char or worker_char): strata_totals = False
+
+    # Warnings
     if any(x in ['firmage', 'firmsize'] for x in firm_char):
         private = True
-        print(
-            'Warning: Firmage, firmsize only available when private = True.',
-            'Variable private has been set to True.'
-        )
-    if geo_level in ['us', 'all'] and private == False:
+        print(qc.PRIVATE_FIRM_CHAR_WARN)
+
+    if geo_level == 'us' and private == False:
         private = True
-        print(
-            'Warning: US-level data is only available when private=True.',
-            'Variable "private" has been set to True.'
-        )
+        print(qc.PRIVATE_US_WARN)
 
-    if set(worker_char) not in c.QWI_WORKER_CROSSES:
-        raise Exception(
-            'Invalid input to worker_char. See function documentation for' 
-            'valid groups.'
-        )
-
-    if 'firmage' in firm_char and 'firmsize' in firm_char:
-        raise Exception(
-            'Invalid input to firm_char. Can only specify one of firmage or'
-            'firmsize.'
-        )
-
-    if not (firm_char or worker_char):
-        strata_totals = False
-
-    if fips_list and geo_level not in ['county', 'msa']:
-        raise Exception(
-            'If fips_list is provided, geo_level must be either msa or county.'
-        )
+    if key == None: print(c.KEY_WARN)
 
     estimated_shape = q.estimate_data_shape(
         indicator_list, geo_level, firm_char, worker_char, strata_totals, 
@@ -594,11 +432,23 @@ def qwi(
             f'shape {estimated_shape}. You may experience memory errors.'
         )
 
-    # Warn users if they didn't provide a key
-    if key == None:
-        print('WARNING: You did not provide a key. Too many requests will ' \
-            'result in an error.')
+    # Raise Errors
+    if enforce_release_consistency: q.consistent_releases(enforce=True)
 
+    if set(worker_char) not in qc.WORKER_CROSSES:
+        raise Exception(qc.WORKER_CHAR_ERROR)
+
+    if 'firmage' in firm_char and 'firmsize' in firm_char:
+        raise Exception(qc.FIRM_CHAR_ERROR)
+
+    if fips_list and geo_level not in ['county', 'msa']:
+        raise Exception(qc.FIPS_LIST_ERROR)
+
+    # TODO: keep this?
+    # if annualize and any(x in qc.AVERAGED_OUTCOMES for x in indicator_list):
+    #     raise Exception('indicator_list not compatible with annualize==True')
+
+    # Prep variables
     covars = ['time', 'fips', 'region', 'geo_level', 'ownercode'] \
         + firm_char + worker_char
 

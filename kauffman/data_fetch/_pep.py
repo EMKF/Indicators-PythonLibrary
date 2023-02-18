@@ -298,9 +298,7 @@ def pep(geo_level='us', state_list='all', key=os.getenv("CENSUS_KEY")):
         Census's data limit is exceeded.
     """
     # Warn users if they didn't provide a key
-    if key == None:
-        print('WARNING: You did not provide a key. Too many requests will ' \
-            'result in an error.')
+    if key == None: print(c.KEY_WARN)
 
     # state_list
     state_list = c.STATES if state_list == 'all' else state_list

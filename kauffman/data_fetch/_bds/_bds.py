@@ -4,8 +4,7 @@ from kauffman import constants as c
 import os
 import numpy as np
 from kauffman.tools import api_tools as api
-from kauffman.tools import general_tools as g
-
+from kauffman.data_fetch._bds import _helpers as h
 
 def _bds_url(variables, geo_level, state_list, strata, key, year):
     flag_var = [f'{var}_F' for var in variables]
@@ -29,33 +28,12 @@ def _bds_fetch_data(year, variables, geo_level, state_list, strata, key, s):
 
 
 def _mark_flagged(df, variables):
-    df[variables] = df[variables] \
-        .apply(
-            lambda x: df[f'{x.name}_F'] \
-                .where(df[f'{x.name}_F'].isin(['D', 'S', 'X']), x) \
-                .replace(['D', 'S', 'X'], np.NaN)
-        )
+    df[variables] = df[variables].apply(
+        lambda x: df[f'{x.name}_F'] \
+            .where(df[f'{x.name}_F'].isin(['D', 'S', 'X']), x) \
+            .replace(['D', 'S', 'X'], np.NaN)
+    )
     return df  
-
-
-def check_strata_valid(geo_level, strata):
-    valid_crosses = c.BDS_VALID_CROSSES
-
-    if not strata:
-        valid = True
-    elif geo_level in ['state', 'county', 'msa']:
-        strata = set(strata + [geo_level.upper()])
-        valid = strata in valid_crosses
-    elif geo_level == 'all':
-        valid = all(
-            set(strata + [o.upper()]) in valid_crosses 
-            for o in ['us', 'state', 'msa', 'county']
-        )
-    else:
-        strata = set(strata)
-        valid = strata in valid_crosses
-
-    return valid
 
 
 def bds(
@@ -170,43 +148,26 @@ def bds(
         threads depends on the user's machine and the amount of data being 
         pulled.
     """
-    series_list = c.BDS_SERIES if series_list == 'all' else series_list
+    series_list = h.ALL_VARIABLES if series_list == 'all' else series_list
 
     state_list = c.STATES if state_list == 'all' else state_list
     state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
+    
 
-    invalid_strata = set(strata) \
-        - {'GEOCOMP', 'EAGE', 'EMPSZES', 'EMPSZESI', 'EMPSZFI', 'EMPSZFII', 
-            'FAGE', 'NAICS', 'METRO'}
-    if invalid_strata:
-        raise Exception(
-            f'Variables {invalid_strata} are invalid inputs to strata ' \
-            'argument. Refer to the function documentation for valid strata.'
-        )
+    # Warnings/checks
+    if key == None: print(c.KEY_WARN)
+    h.check_strata_valid(geo_level, strata)
     
     if len({'METRO', 'GEOCOMP'} - set(strata)) == 1:
         missing_var = {'METRO', 'GEOCOMP'} - set(strata)
         strata = strata + list(missing_var)
         print(
             'Warning: Variables METRO and GEOCOMP must be used together. ' \
-            f'Variable {missing_var} has been added to strata list.')
-
-    # Test that we have a valid strata crossing
-    if not check_strata_valid(geo_level, strata):
-        raise Exception(
-            f'This is not a valid combination of strata for geo_level ' \
-            f'{geo_level}. See ' \
-            'https://www.census.gov/data/datasets/time-series/econ/bds/bds-datasets.html' \
-            ' for a list of valid crossings.'
+            f'Variable {missing_var} has been added to strata list.'
         )
-    
+
     # Convert coded variables to their labeled versions
     strata = strata + [f'{var}_LABEL' for var in strata if var != 'GEOCOMP']
-
-    # Warn users if they didn't provide a key
-    if key == None:
-        print('WARNING: You did not provide a key. Too many requests will ' \
-            'result in an error.')
 
     # Data fetch
     if 'NAICS' not in strata or geo_level == 'us':

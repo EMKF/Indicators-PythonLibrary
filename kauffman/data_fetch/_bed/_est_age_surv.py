@@ -2,6 +2,7 @@ import requests
 import numpy as np
 import pandas as pd
 import kauffman.constants as c
+from kauffman.data_fetch._bed import _bed_constants as bc
 
 
 def _data_lines_survival(table, region, industry):
@@ -126,18 +127,18 @@ def table1bf(df, age=0, size=7):
         'and base size of firm'
     title_indices = df.index[df[title] == title].tolist()
     num_rows = title_indices[1] - title_indices[0] - 1
-    ind = title_indices[c.BED_AGE_SIZE_LIST.index((age, size))]
+    ind = title_indices[bc.AGE_SIZE_LIST.index((age, size))]
     df = df.iloc[(ind - num_rows) + 4:ind]
     last_year_ind = df.index[df[title] == 2021].tolist()[0]
     df = df.loc[:last_year_ind].reset_index(drop=True)
-    df.columns = c.BED_TABLE1BF_COLS
+    df.columns = bc.TABLE1BF_COLS
 
     return df \
         .replace('_', np.nan, regex=True) \
         .replace('N', np.nan, regex=True) \
         .replace(',', '', regex=True) \
         .astype(dict(
-            zip(c.BED_TABLE1BF_COLS[1:], [float] * len(c.BED_TABLE1BF_COLS[1:]))
+            zip(bc.TABLE1BF_COLS[1:], [float] * len(bc.TABLE1BF_COLS[1:]))
         ))
 
 

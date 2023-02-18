@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 from joblib import Parallel, delayed
 from kauffman import constants as c
+from kauffman.data_fetch._qwi import _qwi_constants as qc
 from kauffman.tools.general_tools import CBSA_crosswalk
 
 
@@ -187,7 +188,7 @@ def estimate_data_shape(
     # Get n_strata_levels
     strata_levels = 1
     strata = worker_char + firm_char
-    strata_to_nlevels = c.QWI_STRATA_TO_NLEVELS
+    strata_to_nlevels = qc.STRATA_TO_NLEVELS
     if not strata_totals:
         strata_to_nlevels = {k:v - 1 for k,v in strata_to_nlevels.items()}
     for s in strata:
@@ -250,8 +251,8 @@ annualize, strata_totals):
             .explode('time')
 
         strata = worker_char + firm_char
-        strata_dict = c.QWI_STRATA_TO_LEVELS if strata_totals else {
-            k:v[1:] for k,v in c.QWI_STRATA_TO_LEVELS.items()
+        strata_dict = qc.STRATA_TO_LEVELS if strata_totals else {
+            k:v[1:] for k,v in qc.STRATA_TO_LEVELS.items()
         }
         for s in strata:
             expected_index[s] = [strata_dict[s]] * len(expected_index)

@@ -2,6 +2,14 @@ import os
 from kauffman import constants as c
 from kauffman.tools import api_tools as api
 
+ALL_VARIABLES = [
+    'B24081_001E', 'B24081_002E', 'B24081_003E', 'B24081_004E', 'B24081_005E', 
+    'B24081_006E', 'B24081_007E', 'B24081_008E', 'B24081_009E', 'B24092_001E', 
+    'B24092_002E', 'B24092_003E', 'B24092_004E', 'B24092_005E', 'B24092_006E', 
+    'B24092_007E', 'B24092_008E', 'B24092_009E', 'B24092_010E', 'B24092_011E', 
+    'B24092_012E', 'B24092_013E', 'B24092_014E', 'B24092_015E', 'B24092_016E', 
+    'B24092_017E', 'B24092_018E'
+]
 
 def _acs_fetch_data(year, var_set, geo_level, state_list, key, s):
     var_list = ','.join(var_set)
@@ -38,33 +46,33 @@ def acs(
         The list of variables to fetch. The list of options can be found at:
         https://api.census.gov/data/2019/acs/acs1/variables.html. If 'all', the 
         following variables will be included:
-        * 'B24081_001E': 'total',
-        * 'B24081_002E': 'private',
-        * 'B24081_003E': 'private_employee',
-        * 'B24081_004E': 'private_self_employed',
-        * 'B24081_005E': 'non_profit',
-        * 'B24081_006E': 'local_government',
-        * 'B24081_007E': 'state_government',
-        * 'B24081_008E': 'federal_government',
-        * 'B24081_009E': 'self_employed_not_inc',
-        * 'B24092_001E': 'total_m',
-        * 'B24092_002E': 'private_m',
-        * 'B24092_003E': 'private_employee_m',
-        * 'B24092_004E': 'private_self_employed_m',
-        * 'B24092_005E': 'non_profit_m',
-        * 'B24092_006E': 'local_government_m',
-        * 'B24092_007E': 'state_government_m',
-        * 'B24092_008E': 'federal_government_m',
-        * 'B24092_009E': 'self_employed_not_inc_m',
-        * 'B24092_010E': 'total_f',
-        * 'B24092_011E': 'private_f',
-        * 'B24092_012E': 'private_employee_f',
-        * 'B24092_013E': 'private_self_employed_f',
-        * 'B24092_014E': 'non_profit_f',
-        * 'B24092_015E': 'local_government_f',
-        * 'B24092_016E': 'state_government_f',
-        * 'B24092_017E': 'federal_government_f',
-        * 'B24092_018E': 'self_employed_not_inc_f'
+        * 'B24081_001E'
+        * 'B24081_002E'
+        * 'B24081_003E'
+        * 'B24081_004E'
+        * 'B24081_005E'
+        * 'B24081_006E'
+        * 'B24081_007E'
+        * 'B24081_008E'
+        * 'B24081_009E'
+        * 'B24092_001E'
+        * 'B24092_002E'
+        * 'B24092_003E'
+        * 'B24092_004E'
+        * 'B24092_005E'
+        * 'B24092_006E'
+        * 'B24092_007E'
+        * 'B24092_008E'
+        * 'B24092_009E'
+        * 'B24092_010E'
+        * 'B24092_011E'
+        * 'B24092_012E'
+        * 'B24092_013E'
+        * 'B24092_014E'
+        * 'B24092_015E'
+        * 'B24092_016E'
+        * 'B24092_017E'
+        * 'B24092_018E'
     geo_level: {'us', 'state', 'msa', 'county'}, default 'us'
         The geographical level of the data.
     state_list: list or 'all', default 'all'
@@ -83,8 +91,7 @@ def acs(
         pulled.
     """
     # Handle series_list
-    if series_list == 'all':
-        series_list = [k for k,v in c.ACS_CODE_TO_VAR.items()]        
+    if series_list == 'all': series_list = ALL_VARIABLES   
 
     # Handle state_list
     if state_list == 'all' or geo_level == 'msa':
@@ -93,9 +100,7 @@ def acs(
         state_list = [c.STATE_ABB_TO_FIPS[s] for s in state_list]
 
     # Warn users if they didn't provide a key
-    if key == None:
-        print('WARNING: You did not provide a key. Too many requests will ' \
-            'result in an error.')
+    if key == None: print(c.KEY_WARN)
 
     years = list(range(2005, 2019 + 1))
     index = ['time', 'fips', 'region', 'geo_level']
@@ -109,6 +114,5 @@ def acs(
             .pipe(api._create_fips, geo_level) \
             .assign(geo_level=geo_level) \
             [index + series_list] \
-            .rename(columns=c.ACS_CODE_TO_VAR) \
             .sort_values(index) \
             .reset_index(drop=True)
