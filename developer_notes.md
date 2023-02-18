@@ -90,7 +90,7 @@ Additional notes:
     * Firm size: https://www.bls.gov/bdm/bdmfirmsize.htm
     * Establishment Age and Survival: https://www.bls.gov/bdm/bdmage.htm
 * **To do:** This code is pretty messy--need to clean up at some point
-* **Misc. note:** The code seems to randomly break sometimes--it will say “link cannot be found” one day and then work just fine on another day. It is currently not working for table1bf, and if that ever becomes permanent, the code may need to be updated.
+* **IMPORTANT NOTE:** The code seems to randomly break sometimes--it will say "link cannot be found" one day and then work just fine on another day. However, the code for table1bf is not working, and it currently looks like Table 1-B-F might no longer be produced--if so, this majorly impacts our KESE repo. Need to look into this/verify/figure out solution if so.
 
 ## `bds` 
 * **Used in:** neb
