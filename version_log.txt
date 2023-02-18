@@ -44,3 +44,11 @@
 	--Rename data folder to data_fetch
 	--Implement consistent variable naming, argument naming, column order, column naming, sorting
 	--Add geo_level as a column in modules with geo_level is county or msa
+(2/18/23) Version 2.5.1
+	Restructure of constants system, miscellaneous cleanup
+	* Reorganize functions to better fit their files
+	* Consistent formatting
+	* Update data source for BFS
+	* Consolidate several functions into one
+	* Add some docstrings to tools
+	* Update constants system: Constants at the top of their files, or else in a module-specific constants file within module folder, folders created for qwi and bds, warnings put in constants, remove all module name prefixes on constants names
